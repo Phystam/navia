@@ -1,36 +1,101 @@
-import zstd # zstd圧縮ライブラリ
-import xml.etree.ElementTree as ET # XMLパース用
+import zstd
 import os
-import re # 正規表現用
+import re
 from PySide6.QtCore import QObject, QTimer, Signal, Slot, QDateTime, QUrl, QByteArray
-from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply # QtNetwork関連のインポート
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+from lxml import etree # lxmlをインポート
+from lxml.etree import XMLSchema, XMLParser, parse, Resolver # Resolverをインポート
+
+# カスタムResolverクラス
+class LocalXSDResolver(Resolver):
+    def __init__(self, xsd_dir):
+        super().__init__()
+        self.xsd_dir = xsd_dir
+        print(f"LocalXSDResolver initialized with xsd_dir: {self.xsd_dir}")
+
+    def resolve(self, url, public_id, context):
+        """
+        スキーマロケーションのURLをローカルファイルパスに解決します。
+        JMAのスキーマロケーションの例:
+        "http://xml.kishou.go.jp/jmaxml1/body/seismology1/1.0 Vxse50_10_00_Earthquake.xsd"
+        この場合、urlは "http://xml.kishou.go.jp/jmaxml1/body/seismology1/1.0"
+        または "Vxse50_10_00_Earthquake.xsd" になります。
+        """
+        print(f"Resolving URL: {url}, Public ID: {public_id}")
+
+        # URLがファイル名（.xsdで終わる）の場合、ローカルのxsd_dirから探す
+        if url.endswith(".xsd"):
+            local_path = os.path.join(self.xsd_dir, os.path.basename(url))
+            if os.path.exists(local_path):
+                print(f"Resolved to local file: {local_path}")
+                return self.resolve_filename(local_path, context)
+        
+        # JMAのXML名前空間URIをローカルのjmx.xsdにマッピングする例
+        # ただし、JMAのXMLはschemaLocationで直接ファイル名を指定することが多いため、
+        # この部分は主にスキーマが外部URIをインポートしている場合に役立つ
+        if "http://xml.kishou.go.jp/jmaxml1/" in url:
+            # ここでは一般的なjmx.xsdにマッピングするが、
+            # 実際にはURIとXSDファイルの対応関係を正確に把握する必要がある
+            # 例: jmaxml1/jmx.xsd
+            # informationBasis1/jma_ib.xsd
+            # body/seismology1/jma_seis.xsd
+            # body/meteorology1/jma_mete.xsd
+            
+            # URLから対応するローカルXSDパスを推測するロジックを実装
+            # 例: http://xml.kishou.go.jp/jmaxml1/body/seismology1/1.0 -> xsd/jmaxml1/body/seismology1/jma_seis.xsd
+            # JMAのXSDの構造に合わせて調整が必要
+            
+            # 簡単な例として、URLの最後の部分からファイル名を推測
+            # ただし、これは非常に単純なマッピングであり、すべてのJMA XSDに適用できるわけではない
+            # 正しいマッピングは、JMAのスキーマ構造を理解して実装する必要がある
+            
+            # 例: http://xml.kishou.go.jp/jmaxml1/ -> jmaxml1/jmx.xsd
+            # http://xml.kishou.go.jp/jmaxml1/informationBasis1/ -> jmaxml1/informationBasis1/jma_ib.xsd
+            # http://xml.kishou.go.jp/jmaxml1/body/seismology1/ -> jmaxml1/body/seismology1/jma_seis.xsd
+            
+            # URLをファイルパスに変換するロジック
+            relative_path = url.replace("http://xml.kishou.go.jp/", "")
+            if relative_path.endswith("/"):
+                relative_path = relative_path[:-1] # 末尾のスラッシュを削除
+            
+            # JMAのXSDファイル名がURIの最後のセグメントに 'jmx.xsd', 'jma_ib.xsd' などのパターンで対応している場合
+            # ここでは仮に 'jmx.xsd' にマッピングするが、これは正確ではない可能性がある
+            if "jmaxml1" in relative_path and "informationBasis1" not in relative_path and "body" not in relative_path:
+                local_path = os.path.join(self.xsd_dir, "jmaxml1", "jmx.xsd")
+            elif "informationBasis1" in relative_path:
+                local_path = os.path.join(self.xsd_dir, "jmaxml1", "informationBasis1", "jma_ib.xsd")
+            elif "body/seismology1" in relative_path:
+                local_path = os.path.join(self.xsd_dir, "jmaxml1", "body", "seismology1", "jma_seis.xsd")
+            # 他のスキーマパスも同様に追加
+            else:
+                local_path = None # マッピングできない場合
+
+            if local_path and os.path.exists(local_path):
+                print(f"Resolved JMA URI to local file: {local_path}")
+                return self.resolve_filename(local_path, context)
+
+        # デフォルトの解決方法にフォールバック
+        return super().resolve(url, public_id, context)
+
 
 class JMADataFetcher(QObject):
-    # 新しいデータが取得され、保存されたことを通知するシグナル
-    # 引数として保存されたファイルのパスを渡します
     dataFetched = Signal(str)
-    # エラーが発生したことを通知するシグナル
-    # 引数としてエラーメッセージを渡します
     errorOccurred = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 対象とするAtomフィードのURL
         self.feed_url = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
-        # 前回の取得時のLast-Modifiedヘッダー値を保存（If-Modified-Since用）
         self.last_modified = None
-        # 圧縮データを保存するディレクトリ
         self.data_dir = "jmadata"
-        # ダウンロード済みのデータIDを保持するセット
+        self.xsd_dir = "jmaxml1" # XSDファイルが置かれているディレクトリ
         self.downloaded_ids = set()
-
-        # QNetworkAccessManagerのインスタンスを作成
         self.network_manager = QNetworkAccessManager(self)
 
-        # データ保存ディレクトリが存在しない場合は作成
         os.makedirs(self.data_dir, exist_ok=True)
+        os.makedirs(self.xsd_dir, exist_ok=True) # XSDディレクトリも存在確認
 
-        # 既存のダウンロード済みIDをロード
+        self.xsd_schemas = {} # ロードしたXSDスキーマをキャッシュする辞書
+
         self._load_existing_ids()
 
         # 定期的に更新をチェックするためのタイマーを設定
@@ -50,12 +115,7 @@ class JMADataFetcher(QObject):
         print(f"既存のダウンロード済みデータをロード中... {self.data_dir}")
         for filename in os.listdir(self.data_dir):
             if filename.endswith(".zst"):
-                # ファイル名から元のIDを抽出（例: VXSE50_10_00_20230709080000.zst -> VXSE50_10_00_20230709080000）
-                # JMAのIDは 'https://www.data.jma.go.jp/developer/xml/data/VXSE50_10_00_20230709080000' のような形式なので、
-                # ファイル名はその末尾部分 'VXSE50_10_00_20230709080000' に対応します。
-                # ファイル名が 'ID.zst' 形式であることを前提とします。
                 extracted_id_part = filename[:-4] # '.zst' を削除
-                # 完全なIDを再構築（AtomフィードのIDと比較するため）
                 full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"
                 self.downloaded_ids.add(full_id)
         print(f"ロード完了。ダウンロード済みID数: {len(self.downloaded_ids)}")
@@ -70,17 +130,14 @@ class JMADataFetcher(QObject):
         target_second = 20 # 毎分20秒に取得したい
 
         if current_second < target_second:
-            # 現在の秒がターゲット秒より小さい場合、次のターゲット秒まで待つ
             delay_seconds = target_second - current_second
         else:
-            # 現在の秒がターゲット秒以上の場合、次の分のターゲット秒まで待つ
             delay_seconds = (60 - current_second) + target_second
         
-        # ミリ秒に変換
         initial_delay_ms = delay_seconds * 1000
         
         print(f"現在の秒: {current_second}秒. 次の取得まで {delay_seconds}秒 ({initial_delay_ms}ms) 待ちます。")
-        self.fetch_timer.setSingleShot(True) # 最初の一回だけ実行
+        self.fetch_timer.setSingleShot(True)
         self.fetch_timer.setInterval(initial_delay_ms)
         self.fetch_timer.start()
 
@@ -90,14 +147,12 @@ class JMADataFetcher(QObject):
         タイマーがトリガーされたときに呼び出されるスロット。
         初回実行後、タイマーを毎分実行に設定し直します。
         """
-        # 初回実行後、タイマーを毎分（60秒）に設定し直す
         if self.fetch_timer.isSingleShot():
             self.fetch_timer.setSingleShot(False)
             self.fetch_timer.setInterval(60 * 1000) # 60秒（1分）ごとにタイムアウト
             self.fetch_timer.start()
             print("タイマー間隔を毎分に設定しました。")
 
-        # データ更新チェックを実行
         self.checkForUpdates()
 
     @Slot()
@@ -107,13 +162,9 @@ class JMADataFetcher(QObject):
         更新があれば、新しいエントリのXMLデータを取得・処理します。
         """
         request = QNetworkRequest(QUrl(self.feed_url))
-
-        # 前回取得時のLast-Modifiedがあれば、If-Modified-Sinceヘッダーに追加
         if self.last_modified:
-            # QNetworkRequestのヘッダーはバイト配列で設定
             request.setRawHeader(QByteArray(b"If-Modified-Since"), QByteArray(self.last_modified.encode('utf-8')))
 
-        # GETリクエストを送信し、返信が完了したらhandleFeedReplyスロットを呼び出す
         reply = self.network_manager.get(request)
         reply.finished.connect(lambda: self.handleFeedReply(reply))
 
@@ -124,48 +175,35 @@ class JMADataFetcher(QObject):
         """
         try:
             if reply.error() != QNetworkReply.NoError:
-                # ネットワークエラーが発生した場合
                 self.errorOccurred.emit(f"フィード取得時のネットワークエラー {self.feed_url}: {reply.errorString()}")
                 return
 
-            # HTTPステータスコードを取得
             status_code = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-
-            # ステータスコードが304 Not Modifiedの場合、更新がないので処理を終了
             if status_code == 304:
                 print(f"フィードは更新されていません: {self.feed_url}")
                 return
 
-            # Last-Modifiedヘッダーを更新
             last_modified_header = reply.rawHeader("Last-Modified").data().decode('utf-8')
             if last_modified_header:
                 self.last_modified = last_modified_header
             else:
-                self.last_modified = None # ヘッダーがない場合はリセット
+                self.last_modified = None
 
-            # AtomフィードのXMLコンテンツを読み込む
             feed_content = reply.readAll().data()
-
-            # AtomフィードのXMLをパース
-            feed_root = ET.fromstring(feed_content)
-            # AtomフィードのXML名前空間を定義
+            feed_root = etree.fromstring(feed_content) # lxmlでパース
             ATOM_NS = "{http://www.w3.org/2005/Atom}"
 
-            # 新しいエントリを格納するリスト
             new_entries = []
-            # feed > entry から新しいエントリを検索
             for entry in feed_root.findall(f"{ATOM_NS}entry"):
                 entry_id = entry.find(f"{ATOM_NS}id").text
-                entry_updated = entry.find(f"{ATOM_NS}updated").text # ISO 8601形式
+                entry_updated = entry.find(f"{ATOM_NS}updated").text
                 entry_title = entry.find(f"{ATOM_NS}title").text
-                # JMAのAtomフィードでは、idタグが実際のレポートXMLへのリンクになっている
                 report_url = entry_id
 
-                # すでにダウンロード済みのIDであればスキップ
                 if entry_id in self.downloaded_ids:
                     print(f"ID '{entry_id}' のデータはすでにダウンロード済みです。スキップします。")
                     continue
-                print(f"新しいエントリを検出: ID='{entry_id}', 更新日時='{entry_updated}', タイトル='{entry_title}'")
+
                 new_entries.append({'id': entry_id, 'updated': entry_updated, 'title': entry_title, 'url': report_url})
 
             if new_entries:
@@ -175,14 +213,50 @@ class JMADataFetcher(QObject):
             else:
                 print("新しい未ダウンロードのエントリは見つかりませんでした。")
 
-        except ET.ParseError as e:
-            # XMLパースエラーを捕捉
+        except etree.ParseError as e: # lxmlのパースエラーを捕捉
             self.errorOccurred.emit(f"フィードXMLパースエラー {self.feed_url}: {e}")
         except Exception as e:
-            # その他の予期せぬエラーを捕捉
             self.errorOccurred.emit(f"フィード処理中に予期せぬエラーが発生しました: {e}")
         finally:
-            reply.deleteLater() # QNetworkReplyオブジェクトを解放
+            reply.deleteLater()
+
+    def _get_xsd_schema(self, xsd_filename):
+        """
+        指定されたXSDファイルをロードし、キャッシュします。
+        """
+        if xsd_filename in self.xsd_schemas:
+            return self.xsd_schemas[xsd_filename]
+
+        xsd_path = os.path.join(self.xsd_dir, xsd_filename)
+        if not os.path.exists(xsd_path):
+            self.errorOccurred.emit(f"XSDファイルが見つかりません: {xsd_path}")
+            return None
+
+        try:
+            # カスタムResolverを設定
+            parser = etree.XMLParser(
+                load_dtd=True,
+                no_network=False, # ネットワークアクセスを許可（参照先のXSDが外部にある場合）
+                resolve_entities=True,
+                attribute_defaults=True,
+                dtd_validation=False,
+                schema_validation=False
+            )
+            parser.resolvers.add(LocalXSDResolver(self.xsd_dir)) # カスタムResolverを追加
+
+            # etree.parse()にbase_urlを指定することで、相対パスのXSD参照を解決できる
+            # ただし、Resolverが優先される
+            schema_doc = etree.parse(xsd_path, parser=parser, base_url=f"file://{os.path.abspath(self.xsd_dir)}/")
+            schema = etree.XMLSchema(schema_doc)
+            self.xsd_schemas[xsd_filename] = schema
+            print(f"XSDスキーマをロードしました: {xsd_filename}")
+            return schema
+        except etree.XMLSchemaParseError as e:
+            self.errorOccurred.emit(f"XSDスキーマのパースエラー {xsd_filename}: {e}")
+            return None
+        except Exception as e:
+            self.errorOccurred.emit(f"XSDスキーマのロード中に予期せぬエラーが発生しました: {e}")
+            return None
 
     def fetchAndProcessReport(self, entry_data):
         """
@@ -190,16 +264,14 @@ class JMADataFetcher(QObject):
         """
         report_url = entry_data['url']
         request = QNetworkRequest(QUrl(report_url))
-
-        # GETリクエストを送信し、返信が完了したらhandleReportReplyスロットを呼び出す
         reply = self.network_manager.get(request)
-        # lambdaを使ってentry_dataをスロットに渡す
         reply.finished.connect(lambda: self.handleReportReply(reply, entry_data))
 
     @Slot(QNetworkReply, dict)
     def handleReportReply(self, reply: QNetworkReply, entry_data: dict):
         """
         個別のレポートXMLへのリクエストが完了したときに呼び出されるスロット。
+        lxmlとXSDを使ってパース・検証を行います。
         """
         try:
             if reply.error() != QNetworkReply.NoError:
@@ -208,43 +280,113 @@ class JMADataFetcher(QObject):
 
             report_xml_content = reply.readAll().data()
 
+            # カスタムResolverを設定したXMLParserを使用
+            parser = etree.XMLParser()
+            parser.resolvers.add(LocalXSDResolver(self.xsd_dir)) # カスタムResolverを追加
+            report_tree = etree.fromstring(report_xml_content, parser) # lxmlでパース
+
+            # ルート要素からxsi:schemaLocation属性を取得し、XSDファイル名を特定
+            xsi_namespace = "{http://www.w3.org/2001/XMLSchema-instance}"
+            schema_location_attr = report_tree.get(f"{xsi_namespace}schemaLocation")
+
+            xsd_filename = None
+            if schema_location_attr:
+                parts = schema_location_attr.split()
+                if len(parts) % 2 == 0:
+                    xsd_filename = parts[-1] 
+                    if not xsd_filename.endswith(".xsd"):
+                        xsd_filename = None
+
+            schema = None
+            if xsd_filename:
+                schema = self._get_xsd_schema(xsd_filename)
+            else:
+                print("xsi:schemaLocation属性からXSDファイル名を特定できませんでした。スキーマ検証なしでパースします。")
+
+            # XSDスキーマ検証
+            if schema:
+                if not schema.validate(report_tree):
+                    print(f"XMLスキーマ検証エラー: {entry_data['url']}")
+                    for error in schema.error_log:
+                        print(f"  - {error.message} (Line: {error.line}, Column: {error.column})")
+                    # エラーがあっても処理は続行（必要に応じて中断）
+                else:
+                    print(f"XMLスキーマ検証成功: {entry_data['url']}")
+            else:
+                print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。")
+
             # 取得したXMLコンテンツをzstdで圧縮して保存
-            # ファイル名はエントリIDの末尾部分を使用
             filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
             output_filename = os.path.join(self.data_dir, f"{filename_base}.zst")
-
-            # ファイルがすでに存在するかチェック（念のため）
-            if os.path.exists(output_filename):
-                print(f"ファイル '{output_filename}' はすでに存在します。上書きします。")
             
             with open(output_filename, 'wb') as f:
                 f.write(zstd.compress(report_xml_content))
 
             print(f"圧縮データを保存しました: {output_filename}")
-            # データが取得・保存されたことをメインアプリケーションに通知
             self.dataFetched.emit(output_filename)
-
-            # ダウンロード済みIDリストに追加
             self.downloaded_ids.add(entry_data['id'])
 
-            # レポートXMLの基本的なパース（XSD検証は行いません）
-            report_root = ET.fromstring(report_xml_content)
-            root_tag = report_root.tag
-            ns_match = re.match(r'\{([^}]+)\}(.*)', root_tag)
-            report_ns = ns_match.group(1) if ns_match else '' # ルート要素の名前空間
+            # データ抽出 (XPathを使用)
+            # JMAのXML構造は多様なため、一般的なパスを試みます。
+            # 実際のレポートタイプに応じてXPathを調整する必要があります。
+            
+            # 名前空間を辞書で定義 (JMA XMLの共通名前空間)
+            # JMAのXMLは、ルート要素のxmlnsと、Head/Bodyなどの子要素のxmlnsで異なるURIを使用することが多い
+            # そのため、XPathで要素を検索する際には、その要素が属する名前空間を正確に指定する必要がある
+            # uploaded:20250708162708_0_VXSE53_270000.xml の例から名前空間を定義
+            namespaces = {
+                'jmx': "http://xml.kishou.go.jp/jmaxml1/", # ルートのxmlns
+                'jmx_ib': "http://xml.kishou.go.jp/jmaxml1/informationBasis1/", # Headのxmlns
+                'jmx_seis': "http://xml.kishou.go.jp/jmaxml1/body/seismology1/", # Bodyのxmlns
+                'jmx_seis': "http://xml.kishou.go.jp/jmaxml1/body/volcanology1/",
+                'jmx_mete': "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/", # Bodyのxmlns
+                'jmx_add': "http://xml.kishou.go.jp/jmaxml1/body/additional1/", # Bodyの追加情報用
+                'jmx_eb': "http://xml.kishou.go.jp/jmaxml1/elementBasis1/", # jmx_eb:Coordinate など
+                'xsi': "http://www.w3.org/2001/XMLSchema"
+            }
 
-            # 例: レポートのタイトルとヘッドラインを抽出
-            title_element = report_root.find(f"{{{report_ns}}}Head/{{{report_ns}}}Title")
-            headline_element = report_root.find(f"{{{report_ns}}}Head/{{{report_ns}}}Headline/{{{report_ns}}}Text")
+            # 例: 震源・震度情報 (VXSE53) の場合
+            # Control/Title
+            control_title = report_tree.xpath('/jmx:Report/jmx:Control/jmx:Title/text()', namespaces=namespaces)
+            # Head/Title
+            head_title = report_tree.xpath('/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces=namespaces)
+            # Head/Headline/Text
+            headline_text = report_tree.xpath('/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces=namespaces)
+            # Body/Earthquake/Hypocenter/Area/Name (震央地名)
+            hypocenter_name = report_tree.xpath('/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces=namespaces)
+            # Body/Earthquake/Magnitude/@description (マグニチュードの説明)
+            magnitude_description = report_tree.xpath('/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/@description', namespaces=namespaces)
+            # Body/Earthquake/Magnitude/Value (マグニチュードの値)
+            magnitude_value = report_tree.xpath('/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces=namespaces)
+            # Body/Intensity/Observation/MaxInt (最大震度)
+            max_intensity = report_tree.xpath('/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces=namespaces)
+            # Body/Comments/ForecastComment/Text (津波の心配など)
+            forecast_comment = report_tree.xpath('/jmx:Report/jmx_seis:Body/jmx_seis:Comments/jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces=namespaces)
 
-            report_title = title_element.text if title_element is not None else "タイトルなし"
-            report_headline = headline_element.text if headline_element is not None else "ヘッドラインなし"
 
-            print(f"レポートをパースしました: タイトル='{report_title}', ヘッドライン='{report_headline}'")
+            parsed_control_title = control_title[0] if control_title else "Control Titleなし"
+            parsed_head_title = head_title[0] if head_title else "Head Titleなし"
+            parsed_headline_text = headline_text[0] if headline_text else "Headline Textなし"
+            parsed_hypocenter_name = hypocenter_name[0] if hypocenter_name else "震央地名なし"
+            parsed_magnitude_description = magnitude_description[0] if magnitude_description else "マグニチュード説明なし"
+            parsed_magnitude_value = magnitude_value[0] if magnitude_value else "マグニチュード値なし"
+            parsed_max_intensity = max_intensity[0] if max_intensity else "最大震度なし"
+            parsed_forecast_comment = forecast_comment[0] if forecast_comment else "予報コメントなし"
 
-        except ET.ParseError as e:
-            self.errorOccurred.emit(f"レポートXMLパースエラー {entry_data['url']}: {e}")
+
+            print(f"--- レポート詳細 ({entry_data['id']}) ---")
+            print(f"Control Title: {parsed_control_title}")
+            print(f"Head Title: {parsed_head_title}")
+            print(f"Headline: {parsed_headline_text}")
+            print(f"震央地名: {parsed_hypocenter_name}")
+            print(f"マグニチュード: {parsed_magnitude_description} ({parsed_magnitude_value})")
+            print(f"最大震度: {parsed_max_intensity}")
+            print(f"予報コメント: {parsed_forecast_comment}")
+            print(f"------------------------------------")
+
+        except etree.XMLSyntaxError as e: # lxmlの構文エラーを捕捉
+            self.errorOccurred.emit(f"レポートXML構文エラー {entry_data['url']}: {e}")
         except Exception as e:
             self.errorOccurred.emit(f"レポート処理中に予期せぬエラーが発生しました: {e}")
         finally:
-            reply.deleteLater() # QNetworkReplyオブジェクトを解放
+            reply.deleteLater()
