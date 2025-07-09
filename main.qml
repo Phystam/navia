@@ -1,3 +1,4 @@
+// main.qml (Updated)
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
@@ -13,40 +14,14 @@ Window {
     flags: Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
     color: "transparent" // 背景を透明にする
 
-    // 時刻表示部分
-    Rectangle {
-        id: clockDisplay
-        width: 200
-        height: 100
-        x: 20 // 左からのマージン
-        y: 20 // 上からのマージン
-        //color: "rgba(0, 0, 0, 0.7)" // 半透明の黒背景
-        color: "#B2000000"
-        radius: 10 // 角を丸くする
-
-        // 時刻と日付を表示するテキスト
-        Text {
-            id: timeText
-            text: clockApp.currentTime // Pythonから渡される時刻プロパティ
-            anchors.centerIn: parent
-            color: "white"
-            font.pixelSize: 36
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            lineHeight: 1.2 // 行間を調整
-        }
-
-        // 1秒ごとにQML側で時刻を更新するタイマー（Python側でも更新しているが、QML側で表示を更新するため）
-        Timer {
-            interval: 1000
-            running: true
-            repeat: true
-            onTriggered: {
-                // Pythonオブジェクトのプロパティが更新されたときにQMLも更新される
-                // ここでは明示的な更新処理は不要だが、QML側で何か処理をしたい場合に使える
-            }
-        }
+    // clock.qml コンポーネントをロードして表示
+    // clock.qml は main.qml と同じディレクトリにあると仮定
+    Loader {
+        source: "clock.qml"
+        // 親ウィンドウの左上に配置
+        anchors.top: parent.top
+        anchors.left: parent.left
+        //anchors.fill: parent // 親ウィンドウ全体に広げる（clock.qml内で位置が指定されているため、これは必須ではないが、コンポーネントの配置を柔軟にする）
     }
 
     // ウィンドウを移動可能にするためのMouseArea (開発用)
