@@ -12,9 +12,9 @@ class VXSE53(BaseJMAParser):
         """
         print(f"地震情報 ({self.data_type}) を解析中...")
         parsed_data = {}
-
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
+        parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
@@ -34,3 +34,30 @@ class VXSE53(BaseJMAParser):
 
         self.parsedData.emit(self.data_type, parsed_data)
         return parsed_data
+    
+    def content(self, xml_tree, namespaces, telop_dict):
+        """
+        XMLツリーと名前空間を受け取り、地震情報の内容を解析して辞書として返します。
+        telop_dict: テロップ情報の辞書, logoとtextのペアをリストとして持つ。
+        """
+        logo_list = []
+        text_list = []
+        publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        title = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
+        logo_list.append(["", ""])
+        text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
+        
+        headline = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        hypocenter_name = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
+        magnitude_value = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces)
+        max_intensity = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
+        coordinates = self._get_coordinates(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
+        
+        message=f"震源は{hypocenter_name} 深さ{-int(coordinates[0]['altitude']/1000)}km マグニチュード{magnitude_value} 最大震度 {max_intensity}"
+        logo_list.append(["", ""])
+        text_list.append([headline, message])
+        telop_dict = {
+            'logo_list': logo_list,
+            'text_list': text_list
+        }
+        return telop_dict

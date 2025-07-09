@@ -7,7 +7,9 @@ from lxml import etree
 from lxml.etree import XMLSchema, XMLParser, parse, Resolver
 
 # パーサーをインポート
+from jma_parsers.VGSK53 import VGSK53
 from jma_parsers.VXSE53 import VXSE53
+from jma_parsers.VFVO53 import VFVO53
 #from jma_parsers.jma_volcano_parser import VolcanoParser # 仮のパーサー
 
 # カスタムResolverクラス (変更なし、ただしxsd_dirのパスが適切であることを確認)
@@ -20,7 +22,7 @@ class LocalXSDResolver(Resolver):
             "http://xml.kishou.go.jp/jmaxml1/": os.path.join("jmaxml1", "jmx.xsd"),
             "http://xml.kishou.go.jp/jmaxml1/informationBasis1/": os.path.join("jmaxml1", "informationBasis1", "jma_ib.xsd"),
             "http://xml.kishou.go.jp/jmaxml1/body/seismology1/": os.path.join("jmaxml1", "body", "seismology1", "jma_seis.xsd"),
-            "http://xml.kishou.go.jp/jmaxml1/body/seismology1/1.0": os.path.join("jmaxml1", "body", "seismology1", "jma_seis.xsd"), # バージョン付きURIの場合
+            "http://xml.kishou.go.jp/jmaxml1/body/seismology1/": os.path.join("jmaxml1", "body", "seismology1", "jma_seis.xsd"), # バージョン付きURIの場合
             "http://xml.kishou.go.jp/jmaxml1/body/volcanology1/": os.path.join("jmaxml1", "body", "volcanology1", "jma_volc.xsd"),
             "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/": os.path.join("jmaxml1", "body", "meteorology1", "jma_mete.xsd"),
             "http://xml.kishou.go.jp/jmaxml1/elementBasis1/": os.path.join("jmaxml1", "elementBasis1", "jma_eb.xsd"),
@@ -71,7 +73,11 @@ class JMADataFetcher(QObject):
 
         # パーサーのインスタンスを辞書に登録
         self.parsers = {
-            "VXSE53": VXSE53(self) # 地震情報
+            "VGSK50": VGSK50(self), # 季節観測
+            "VXSE53": VXSE53(self), # 地震情報
+            "VFVO53": VFVO53(self), # 降灰予報 (定時) (仮)
+            "VFVO54": VFVO53(self), # 降灰予報 (速報) 
+            "VFVO55": VFVO53(self), # 降灰予報 (詳細)
             #"VFVO53": VolcanoParser(self),    # 火山情報 (仮)
             # 他のデータタイプもここに追加
         }
@@ -93,6 +99,13 @@ class JMADataFetcher(QObject):
         for filename in os.listdir(self.data_dir):
             if filename.endswith(".zst"):
                 extracted_id_part = filename[:-4]
+                with open(os.path.join(self.data_dir, filename), 'rb') as f:
+                    try:
+                        filedata=zstd.decompress(f.read())  # Zstandard圧縮を解凍
+                    except zstd.ZstdError as e:
+                        print(f"Zstandard解凍エラー: {e}")
+                        continue
+                    self.processReport({'id': extracted_id_part}, filedata) 
                 full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"
                 self.downloaded_ids.add(full_id)
         print(f"ロード完了。ダウンロード済みID数: {len(self.downloaded_ids)}")
@@ -228,83 +241,88 @@ class JMADataFetcher(QObject):
                 return
 
             report_xml_content = reply.readAll().data()
-
-            parser = etree.XMLParser()
-            parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
-            report_tree = etree.fromstring(report_xml_content, parser)
-
-            # IDからデータタイプコードを抽出
-            id_parts = entry_data['id'].split('/')
-            filename_with_timestamp = id_parts[-1]
-            data_type_code = filename_with_timestamp.split('_')[2]
-
-            # ルート要素からxsi:schemaLocation属性を取得し、XSDファイル名を特定
-            xsi_namespace = "{http://www.w3.org/2001/XMLSchema-instance}"
-            schema_location_attr = report_tree.get(f"{xsi_namespace}schemaLocation")
-
-            xsd_filename = None
-            if schema_location_attr:
-                parts = schema_location_attr.split()
-                if len(parts) % 2 == 0:
-                    xsd_filename = parts[-1] 
-                    if not xsd_filename.endswith(".xsd"):
-                        xsd_filename = None
-
-            schema = None
-            if xsd_filename:
-                schema = self._get_xsd_schema(xsd_filename)
-            else:
-                print("xsi:schemaLocation属性からXSDファイル名を特定できませんでした。スキーマ検証なしでパースします。")
-
-            # XSDスキーマ検証
-            if schema:
-                if not schema.validate(report_tree):
-                    print(f"XMLスキーマ検証エラー: {entry_data['id']}")
-                    for error in schema.error_log:
-                        print(f"  - {error.message} (Line: {error.line}, Column: {error.column})")
-                else:
-                    print(f"XMLスキーマ検証成功: {entry_data['id']}")
-            else:
-                print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。", end="\n\n")
-
-            # 取得したXMLコンテンツをzstdで圧縮して保存
-            # ここを修正: ファイル名をデータタイプコードではなく、元のIDの末尾部分を使用
-            filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
-            output_filename = os.path.join(self.data_dir, f"{filename_base}.zst")
-            
-            with open(output_filename, 'wb') as f:
-                f.write(zstd.compress(report_xml_content))
-
-            print(f"圧縮データを保存しました: {output_filename}")
-            self.downloaded_ids.add(entry_data['id'])
-
-            # データタイプに基づいて適切なパーサーに処理を振り分け
-            parsed_data = {}
-            if data_type_code in self.parsers:
-                parser_instance = self.parsers[data_type_code]
-                # JMA XMLの共通名前空間をパーサーに渡す
-                namespaces = {
-                    'jmx': "http://xml.kishou.go.jp/jmaxml1/",
-                    'jmx_ib': "http://xml.kishou.go.jp/jmaxml1/informationBasis1/",
-                    'jmx_seis': "http://xml.kishou.go.jp/jmaxml1/body/seismology1/",
-                    'jmx_volc': "http://xml.kishou.go.jp/jmaxml1/body/volcanology1/",
-                    'jmx_mete': "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/",
-                    'jmx_add': "http://xml.kishou.go.jp/jmaxml1/body/additional1/",
-                    'jmx_eb': "http://xml.kishou.go.jp/jmaxml1/elementBasis1/",
-                    'xsi': "http://www.w3.org/2001/XMLSchema-instance" # xsi名前空間も必要
-                }
-                parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
-                print(f"パーサー ({data_type_code}) による解析結果: {parsed_data}")
-            else:
-                print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
-                parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
-
-            # 解析済みデータをメインアプリケーションに通知
-            self.dataFetched.emit(output_filename, data_type_code, parsed_data)
-
+            self.processReport(entry_data, report_xml_content)
         except etree.XMLSyntaxError as e:
             self.errorOccurred.emit(f"レポートXML構文エラー {entry_data['id']}: {e}")
         except Exception as e:
             self.errorOccurred.emit(f"レポート処理中に予期せぬエラーが発生しました: {e}")
         finally:
             reply.deleteLater()
+            
+    def processReport(self, entry_data, report_xml_content):
+        parser = etree.XMLParser()
+        parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
+        report_tree = etree.fromstring(report_xml_content, parser)
+
+        # IDからデータタイプコードを抽出
+        id_parts = entry_data['id'].split('/')
+        filename_with_timestamp = id_parts[-1]
+        data_type_code = filename_with_timestamp.split('_')[2]
+
+        # ルート要素からxsi:schemaLocation属性を取得し、XSDファイル名を特定
+        xsi_namespace = "{http://www.w3.org/2001/XMLSchema-instance}"
+        schema_location_attr = report_tree.get(f"{xsi_namespace}schemaLocation")
+
+        xsd_filename = None
+        if schema_location_attr:
+            parts = schema_location_attr.split()
+            if len(parts) % 2 == 0:
+                xsd_filename = parts[-1] 
+                if not xsd_filename.endswith(".xsd"):
+                    xsd_filename = None
+
+        schema = None
+        if xsd_filename:
+            schema = self._get_xsd_schema(xsd_filename)
+        else:
+            print("xsi:schemaLocation属性からXSDファイル名を特定できませんでした。スキーマ検証なしでパースします。")
+
+        # XSDスキーマ検証
+        if schema:
+            if not schema.validate(report_tree):
+                print(f"XMLスキーマ検証エラー: {entry_data['id']}")
+                for error in schema.error_log:
+                    print(f"  - {error.message} (Line: {error.line}, Column: {error.column})")
+            else:
+                print(f"XMLスキーマ検証成功: {entry_data['id']}")
+        else:
+            print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。", end="\n\n")
+
+        # 取得したXMLコンテンツをzstdで圧縮して保存
+        # ここを修正: ファイル名をデータタイプコードではなく、元のIDの末尾部分を使用
+        filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
+        output_filename = os.path.join(self.data_dir, f"{filename_base}.zst")
+        
+        with open(output_filename, 'wb') as f:
+            f.write(zstd.compress(report_xml_content))
+
+        print(f"圧縮データを保存しました: {output_filename}")
+        self.downloaded_ids.add(entry_data['id'])
+
+        # データタイプに基づいて適切なパーサーに処理を振り分け
+        parsed_data = {}
+        if data_type_code in self.parsers:
+            parser_instance = self.parsers[data_type_code]
+            # JMA XMLの共通名前空間をパーサーに渡す
+            namespaces = {
+                'jmx': "http://xml.kishou.go.jp/jmaxml1/",
+                'jmx_ib': "http://xml.kishou.go.jp/jmaxml1/informationBasis1/",
+                'jmx_seis': "http://xml.kishou.go.jp/jmaxml1/body/seismology1/",
+                'jmx_volc': "http://xml.kishou.go.jp/jmaxml1/body/volcanology1/",
+                'jmx_mete': "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/",
+                'jmx_add': "http://xml.kishou.go.jp/jmaxml1/body/additional1/",
+                'jmx_eb': "http://xml.kishou.go.jp/jmaxml1/elementBasis1/",
+                'xsi': "http://www.w3.org/2001/XMLSchema-instance" # xsi名前空間も必要
+            }
+            parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+            telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
+            print(f"パーサー ({data_type_code}) による解析結果: {parsed_data}")
+            print(f"テロップ情報: {telop_dict}")
+        else:
+            print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
+            parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
+
+        # 解析済みデータをメインアプリケーションに通知
+        self.dataFetched.emit(output_filename, data_type_code, parsed_data)
+
+        
