@@ -1,3 +1,4 @@
 materials/icons.afdesign~lock~
 __pycache__/*.pyc
 jmadata/
+jma_parsers/__pycache__/*.pyc
