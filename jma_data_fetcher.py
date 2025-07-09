@@ -21,6 +21,8 @@ class JMADataFetcher(QObject):
         self.last_modified = None
         # 圧縮データを保存するディレクトリ
         self.data_dir = "jmadata"
+        # ダウンロード済みのデータIDを保持するセット
+        self.downloaded_ids = set()
 
         # QNetworkAccessManagerのインスタンスを作成
         self.network_manager = QNetworkAccessManager(self)
@@ -28,13 +30,74 @@ class JMADataFetcher(QObject):
         # データ保存ディレクトリが存在しない場合は作成
         os.makedirs(self.data_dir, exist_ok=True)
 
+        # 既存のダウンロード済みIDをロード
+        self._load_existing_ids()
+
         # 定期的に更新をチェックするためのタイマーを設定
         self.fetch_timer = QTimer(self)
-        self.fetch_timer.setInterval(20 * 1000) # 20秒ごとにタイムアウト
-        self.fetch_timer.timeout.connect(self.checkForUpdates)
-        self.fetch_timer.start()
+        self.fetch_timer.timeout.connect(self._on_fetch_timer_triggered) # 新しいスロットに接続
+
+        # 毎分20秒にタイマーをトリガーするための初期遅延を計算
+        self._set_initial_fetch_timer()
 
         # アプリケーション起動時に一度更新をチェック
+        self.checkForUpdates()
+
+    def _load_existing_ids(self):
+        """
+        'jmadata'ディレクトリ内の既存のファイルから、ダウンロード済みのデータIDをロードします。
+        """
+        print(f"既存のダウンロード済みデータをロード中... {self.data_dir}")
+        for filename in os.listdir(self.data_dir):
+            if filename.endswith(".zst"):
+                # ファイル名から元のIDを抽出（例: VXSE50_10_00_20230709080000.zst -> VXSE50_10_00_20230709080000）
+                # JMAのIDは 'https://www.data.jma.go.jp/developer/xml/data/VXSE50_10_00_20230709080000' のような形式なので、
+                # ファイル名はその末尾部分 'VXSE50_10_00_20230709080000' に対応します。
+                # ファイル名が 'ID.zst' 形式であることを前提とします。
+                extracted_id_part = filename[:-4] # '.zst' を削除
+                # 完全なIDを再構築（AtomフィードのIDと比較するため）
+                full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"
+                self.downloaded_ids.add(full_id)
+        print(f"ロード完了。ダウンロード済みID数: {len(self.downloaded_ids)}")
+
+    def _set_initial_fetch_timer(self):
+        """
+        毎分20秒にタイマーがトリガーされるように初期遅延を設定します。
+        """
+        current_time = QDateTime.currentDateTime()
+        current_second = current_time.time().second()
+        
+        target_second = 20 # 毎分20秒に取得したい
+
+        if current_second < target_second:
+            # 現在の秒がターゲット秒より小さい場合、次のターゲット秒まで待つ
+            delay_seconds = target_second - current_second
+        else:
+            # 現在の秒がターゲット秒以上の場合、次の分のターゲット秒まで待つ
+            delay_seconds = (60 - current_second) + target_second
+        
+        # ミリ秒に変換
+        initial_delay_ms = delay_seconds * 1000
+        
+        print(f"現在の秒: {current_second}秒. 次の取得まで {delay_seconds}秒 ({initial_delay_ms}ms) 待ちます。")
+        self.fetch_timer.setSingleShot(True) # 最初の一回だけ実行
+        self.fetch_timer.setInterval(initial_delay_ms)
+        self.fetch_timer.start()
+
+    @Slot()
+    def _on_fetch_timer_triggered(self):
+        """
+        タイマーがトリガーされたときに呼び出されるスロット。
+        初回実行後、タイマーを毎分実行に設定し直します。
+        """
+        # 初回実行後、タイマーを毎分（60秒）に設定し直す
+        if self.fetch_timer.isSingleShot():
+            self.fetch_timer.setSingleShot(False)
+            self.fetch_timer.setInterval(60 * 1000) # 60秒（1分）ごとにタイムアウト
+            self.fetch_timer.start()
+            print("タイマー間隔を毎分に設定しました。")
+
+        # データ更新チェックを実行
         self.checkForUpdates()
 
     @Slot()
@@ -74,7 +137,6 @@ class JMADataFetcher(QObject):
                 return
 
             # Last-Modifiedヘッダーを更新
-            # rawHeaderの引数をQByteArrayからstrに変更
             last_modified_header = reply.rawHeader("Last-Modified").data().decode('utf-8')
             if last_modified_header:
                 self.last_modified = last_modified_header
@@ -99,12 +161,19 @@ class JMADataFetcher(QObject):
                 # JMAのAtomフィードでは、idタグが実際のレポートXMLへのリンクになっている
                 report_url = entry_id
 
+                # すでにダウンロード済みのIDであればスキップ
+                if entry_id in self.downloaded_ids:
+                    print(f"ID '{entry_id}' のデータはすでにダウンロード済みです。スキップします。")
+                    continue
+                print(f"新しいエントリを検出: ID='{entry_id}', 更新日時='{entry_updated}', タイトル='{entry_title}'")
                 new_entries.append({'id': entry_id, 'updated': entry_updated, 'title': entry_title, 'url': report_url})
 
             if new_entries:
                 print(f"新しいエントリが {len(new_entries)} 件見つかりました。")
                 for entry_data in new_entries:
                     self.fetchAndProcessReport(entry_data)
+            else:
+                print("新しい未ダウンロードのエントリは見つかりませんでした。")
 
         except ET.ParseError as e:
             # XMLパースエラーを捕捉
@@ -140,15 +209,23 @@ class JMADataFetcher(QObject):
             report_xml_content = reply.readAll().data()
 
             # 取得したXMLコンテンツをzstdで圧縮して保存
-            # ファイル名はエントリIDとタイムスタンプから生成し、特殊文字を置換して安全にする
+            # ファイル名はエントリIDの末尾部分を使用
             filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
             output_filename = os.path.join(self.data_dir, f"{filename_base}.zst")
+
+            # ファイルがすでに存在するかチェック（念のため）
+            if os.path.exists(output_filename):
+                print(f"ファイル '{output_filename}' はすでに存在します。上書きします。")
+            
             with open(output_filename, 'wb') as f:
                 f.write(zstd.compress(report_xml_content))
 
             print(f"圧縮データを保存しました: {output_filename}")
             # データが取得・保存されたことをメインアプリケーションに通知
             self.dataFetched.emit(output_filename)
+
+            # ダウンロード済みIDリストに追加
+            self.downloaded_ids.add(entry_data['id'])
 
             # レポートXMLの基本的なパース（XSD検証は行いません）
             report_root = ET.fromstring(report_xml_content)
