@@ -7,7 +7,7 @@ from lxml import etree
 from lxml.etree import XMLSchema, XMLParser, parse, Resolver
 
 # パーサーをインポート
-from jma_parsers.VGSK53 import VGSK53
+from jma_parsers.VGSK50 import VGSK50
 from jma_parsers.VXSE53 import VXSE53
 from jma_parsers.VFVO53 import VFVO53
 #from jma_parsers.jma_volcano_parser import VolcanoParser # 仮のパーサー
@@ -59,8 +59,10 @@ class JMADataFetcher(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.feed_url = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
-        self.last_modified = None
+        self.feed_urls = ["https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
+                          "https://www.data.jma.go.jp/developer/xml/feed/regular.xml",
+                          "https://www.data.jma.go.jp/developer/xml/feed/extra.xml"]
+        self.last_modifieds = [None, None, None]
         self.data_dir = "jmadata"
         self.xsd_dir = "jmaxml1" # XSDファイルが置かれているルートディレクトリ
         self.downloaded_ids = set()
@@ -139,30 +141,31 @@ class JMADataFetcher(QObject):
 
     @Slot()
     def checkForUpdates(self):
-        request = QNetworkRequest(QUrl(self.feed_url))
-        if self.last_modified:
-            request.setRawHeader(QByteArray(b"If-Modified-Since"), QByteArray(self.last_modified.encode('utf-8')))
+        for i,feed_url in enumerate(self.feed_urls):
+            request = QNetworkRequest(QUrl(feed_url))
+            if self.last_modifieds[i]:
+                request.setRawHeader(QByteArray(b"If-Modified-Since"), QByteArray(self.last_modifieds[i].encode('utf-8')))
 
-        reply = self.network_manager.get(request)
-        reply.finished.connect(lambda: self.handleFeedReply(reply))
+            reply = self.network_manager.get(request)
+            reply.finished.connect(lambda: self.handleFeedReply(i,reply))
 
     @Slot(QNetworkReply)
-    def handleFeedReply(self, reply: QNetworkReply):
+    def handleFeedReply(self, i, reply: QNetworkReply):
         try:
             if reply.error() != QNetworkReply.NoError:
-                self.errorOccurred.emit(f"フィード取得時のネットワークエラー {self.feed_url}: {reply.errorString()}")
+                self.errorOccurred.emit(f"フィード取得時のネットワークエラー {self.feed_urls[i]}: {reply.errorString()}")
                 return
 
             status_code = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
             if status_code == 304:
-                print(f"フィードは更新されていません: {self.feed_url}")
+                print(f"フィードは更新されていません: {self.feed_urls[i]}")
                 return
 
             last_modified_header = reply.rawHeader("Last-Modified").data().decode('utf-8')
             if last_modified_header:
-                self.last_modified = last_modified_header
+                self.last_modifieds[i] = last_modified_header
             else:
-                self.last_modified = None
+                self.last_modifieds[i] = None
 
             feed_content = reply.readAll().data()
             feed_root = etree.fromstring(feed_content)
@@ -171,9 +174,6 @@ class JMADataFetcher(QObject):
             new_entries = []
             for entry in feed_root.findall(f"{ATOM_NS}entry"):
                 entry_id = entry.find(f"{ATOM_NS}id").text
-                # entry_updated = entry.find(f"{ATOM_NS}updated").text # 今回は未使用だが残しておく
-                # entry_title = entry.find(f"{ATOM_NS}title").text # 今回は未使用だが残しておく
-                # report_url = entry_id # 今回は未使用だが残しておく
 
                 if entry_id in self.downloaded_ids:
                     print(f"ID '{entry_id}' のデータはすでにダウンロード済みです。スキップします。")
@@ -189,7 +189,7 @@ class JMADataFetcher(QObject):
                 print("新しい未ダウンロードのエントリは見つかりませんでした。")
 
         except etree.ParseError as e:
-            self.errorOccurred.emit(f"フィードXMLパースエラー {self.feed_url}: {e}")
+            self.errorOccurred.emit(f"フィードXMLパースエラー {self.feed_urls[i]}: {e}")
         except Exception as e:
             self.errorOccurred.emit(f"フィード処理中に予期せぬエラーが発生しました: {e}")
         finally:

@@ -1,10 +1,9 @@
-# jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 
-class VXSE53(BaseJMAParser):
+class VGSK50(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.data_type = "VXSE53" # このパーサーが扱うデータタイプ
+        self.data_type = "VGSK50" # このパーサーが扱うデータタイプ
 
     def parse(self, xml_tree, namespaces, data_type_code):
         """
@@ -52,12 +51,10 @@ class VXSE53(BaseJMAParser):
         magnitude_value = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces)
         max_intensity = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
         coordinates = self._get_coordinates(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
-        comment = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Comments/jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
+        
         message=f"震源は{hypocenter_name} 深さ{-int(coordinates[0]['altitude']/1000)}km マグニチュード{magnitude_value} 最大震度 {max_intensity}"
         logo_list.append(["", ""])
         text_list.append([headline, message])
-        logo_list.append(["", ""])
-        text_list.append([comment, ""])
         telop_dict = {
             'logo_list': logo_list,
             'text_list': text_list
