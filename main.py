@@ -1,12 +1,14 @@
-# main.py (Updated)
+# main.py (Updated with Data Fetcher)
 import sys
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Slot, Signal # アプリ部分を移動させても忘れずにimport
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 
 # clock.py から ClockApp をインポート
 from clock import ClockApp
+# jma_data_fetcher.py から JMADataFetcher をインポート
+from jma_data_fetcher import JMADataFetcher
 
 # メインアプリケーションクラス
 class MainApp(QObject): # クラス名を変更して、ClockAppと区別しやすくしました
@@ -14,14 +16,19 @@ class MainApp(QObject): # クラス名を変更して、ClockAppと区別しや�
         super().__init__(parent)
         self.createTrayIcon() # タスクトレイアイコンを作成
 
+        # JMADataFetcher のインスタンスを作成
+        # JMADataFetcherは内部でQTimerを持っており、定期的にデータ取得を行います
+        self.jma_fetcher = JMADataFetcher(self)
+        # JMADataFetcherからのシグナルをメインアプリのメソッドに接続
+        self.jma_fetcher.dataFetched.connect(self.onDataFetched)
+        self.jma_fetcher.errorOccurred.connect(self.onErrorOccurred)
+
     # タスクトレイアイコンを作成するメソッド
     def createTrayIcon(self):
         # タスクトレイアイコンのインスタンスを作成
         self.trayIcon = QSystemTrayIcon(self)
-        # アイコンを設定（一時的にデフォルトのアプリケーションアイコンを使用。後で変更可能）
-        # アイコンファイルが存在しない場合でも動作するように、QIcon.fromTheme()を使用
-        # もしアイコンファイル（例: icon.png）を使用する場合は、QIcon("icon.png") のように指定
-        self.trayIcon.setIcon(QIcon.fromTheme("applications-other", QIcon("materials/icon.svg"))) # 作成したロゴを使用
+        # 作成したロゴを使用（materials/icon.svg が存在しない場合は、適切なパスに変更するか、一時的にコメントアウトしてください）
+        self.trayIcon.setIcon(QIcon.fromTheme("applications-other", QIcon("materials/icon.svg")))
 
         # メニューを作成
         trayMenu = QMenu()
@@ -36,6 +43,23 @@ class MainApp(QObject): # クラス名を変更して、ClockAppと区別しや�
 
         # タスクトレイアイコンを表示
         self.trayIcon.show()
+
+    @Slot(str)
+    def onDataFetched(self, file_path):
+        """
+        JMADataFetcherからデータが取得されたときに呼び出されるスロット。
+        """
+        print(f"メインアプリ: 新しいデータが取得され、保存されました: {file_path}")
+        # ここで取得したデータ（file_path）をQMLに表示したり、読み上げたりする処理を追加できます。
+        # 例: QMLに通知するシグナルを発行するなど
+
+    @Slot(str)
+    def onErrorOccurred(self, message):
+        """
+        JMADataFetcherからエラーが発生したときに呼び出されるスロット。
+        """
+        print(f"メインアプリ: エラー発生: {message}")
+        # ここでユーザーにエラーを通知する（例: メッセージボックス表示）などの処理を追加できます。
 
 
 if __name__ == "__main__":
@@ -54,6 +78,7 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("clockApp", clock_app)
 
     # MainAppのインスタンスを作成し、QMLに公開（タスクトレイアイコン用）
+    # このインスタンス内でJMADataFetcherも初期化されます
     main_app_instance = MainApp()
     engine.rootContext().setContextProperty("mainApp", main_app_instance)
 
