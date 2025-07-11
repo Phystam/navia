@@ -32,12 +32,6 @@ class LocalXSDResolver(Resolver):
         print(f"LocalXSDResolver initialized with xsd_base_dir: {self.xsd_base_dir}")
 
     def resolve(self, url, public_id, context):
-        # URLが直接XSDファイル名の場合 (xsi:schemaLocationから)
-        if url.endswith(".xsd"):
-            local_path = os.path.join(self.xsd_base_dir, os.path.basename(url))
-            if os.path.exists(local_path):
-                print(f"Resolved direct XSD filename to local file: {local_path}")
-                return self.resolve_filename(local_path, context)
 
         # URLがJMAの名前空間URIで、ローカルXSDにマッピングされている場合
         for uri_prefix, relative_path in self.uri_to_local_map.items():
@@ -59,9 +53,10 @@ class JMADataFetcher(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.feed_urls = ["https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
-                          "https://www.data.jma.go.jp/developer/xml/feed/regular.xml",
-                          "https://www.data.jma.go.jp/developer/xml/feed/extra.xml"]
+        self.feed_urls = [
+            #"https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
+            #"https://www.data.jma.go.jp/developer/xml/feed/regular.xml",
+            "https://www.data.jma.go.jp/developer/xml/feed/extra.xml"]
         self.last_modifieds = [None, None, None]
         self.data_dir = "jmadata"
         self.xsd_dir = "jmaxml1" # XSDファイルが置かれているルートディレクトリ
@@ -176,7 +171,7 @@ class JMADataFetcher(QObject):
                 entry_id = entry.find(f"{ATOM_NS}id").text
 
                 if entry_id in self.downloaded_ids:
-                    print(f"ID '{entry_id}' のデータはすでにダウンロード済みです。スキップします。")
+                    #print(f"ID '{entry_id}' のデータはすでにダウンロード済みです。スキップします。")
                     continue
 
                 new_entries.append({'id': entry_id}) # 必要な情報だけを渡す
@@ -253,24 +248,23 @@ class JMADataFetcher(QObject):
         parser = etree.XMLParser()
         parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
         report_tree = etree.fromstring(report_xml_content, parser)
-
         # IDからデータタイプコードを抽出
         id_parts = entry_data['id'].split('/')
         filename_with_timestamp = id_parts[-1]
         data_type_code = filename_with_timestamp.split('_')[2]
 
-        # ルート要素からxsi:schemaLocation属性を取得し、XSDファイル名を特定
-        xsi_namespace = "{http://www.w3.org/2001/XMLSchema-instance}"
-        schema_location_attr = report_tree.get(f"{xsi_namespace}schemaLocation")
-
-        xsd_filename = None
+        # ルート要素からxmlns属性を取得し、XSDファイル名を特定
+        print(f"ルート要素: {report_tree.text}, 属性: {report_tree.attrib}")
+        schema_location_attr = report_tree.get('xmlns:jmx')
+        print(f"取得したXMLのルート要素: {report_tree}, xmlns属性: {schema_location_attr}")
+        #xsd_filename = None
         if schema_location_attr:
             parts = schema_location_attr.split()
             if len(parts) % 2 == 0:
                 xsd_filename = parts[-1] 
                 if not xsd_filename.endswith(".xsd"):
                     xsd_filename = None
-
+        xsd_filename = "http://xml.kishou.go.jp/jmaxml1/"
         schema = None
         if xsd_filename:
             schema = self._get_xsd_schema(xsd_filename)
