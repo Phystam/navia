@@ -20,7 +20,7 @@ class VXSE53(BaseJMAParser):
         # Head/Headline/Text
         parsed_data['headline_text'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
         # Body/Earthquake/Hypocenter/Area/Name (震央地名)
-        parsed_data['hypocenter_name'] = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
+        parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
         # Body/Earthquake/Magnitude/@description (マグニチュードの説明)
         parsed_data['magnitude_description'] = self._get_attribute(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/@description', namespaces)
         # Body/Earthquake/Magnitude/Value (マグニチュードの値)
@@ -40,25 +40,33 @@ class VXSE53(BaseJMAParser):
         XMLツリーと名前空間を受け取り、地震情報の内容を解析して辞書として返します。
         telop_dict: テロップ情報の辞書, logoとtextのペアをリストとして持つ。
         """
+        sound_list = []
         logo_list = []
         text_list = []
         publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
+        max_intensity = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
+        # 最大震度に応じたサウンドを設定
+        sound = f"./sounds/Grade{max_intensity}.wav"  # デフォルトのサウンドファイル
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
-        
+        sound_list.append(sound)
         headline = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
         hypocenter_name = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
         magnitude_value = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces)
-        max_intensity = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
+        
         coordinates = self._get_coordinates(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
         comment = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Comments/jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
         message=f"震源は{hypocenter_name} 深さ{-int(coordinates[0]['altitude']/1000)}km マグニチュード{magnitude_value} 最大震度 {max_intensity}"
         logo_list.append(["", ""])
         text_list.append([headline, message])
+        sound_list.append("")
         logo_list.append(["", ""])
         text_list.append([comment, ""])
+        sound_list.append("")
+
         telop_dict = {
+            'sound_list': sound_list,
             'logo_list': logo_list,
             'text_list': text_list
         }

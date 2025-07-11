@@ -8,6 +8,7 @@ Window {
     width: Screen.width // 画面の幅に合わせる
     height: Screen.height // 画面の高さに合わせる
     visible: true
+    visibility: Window.AutomaticVisibility
     title: "気象情報システム"
 
     // 全画面オーバーレイにするための設定
@@ -21,7 +22,16 @@ Window {
         // 親ウィンドウの左上に配置
         anchors.top: parent.top
         anchors.left: parent.left
-        //anchors.fill: parent // 親ウィンドウ全体に広げる（clock.qml内で位置が指定されているため、これは必須ではないが、コンポーネントの配置を柔軟にする）
+    }
+
+    Loader {
+        id: telopLoader
+        source: "telop.qml" // テロップコンポーネントをロード
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.025 // 上からのマージン
+        width: parent.width * 0.9 // 親ウィンドウの90%の幅
+        height: parent.height * 0.1 // 親ウィンドウの25%の高さ
     }
 
     // ウィンドウを移動可能にするためのMouseArea (開発用)
@@ -31,4 +41,17 @@ Window {
         // 開発中は一時的に WindowTransparentForInput をコメントアウトしてください。
         onPressed: { mouse.accepted = true; rootWindow.startSystemMove(); }
     }
+
+    Component.onCompleted: {
+        // 初期化処理
+        telopLoader.item.init();
+        // 必要に応じて他の初期化処理を追加
+        mainApp.telopDataReceived.connect(onTelopReceived);
+    }
+    
+    function onTelopReceived(data) {
+        telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"]); // ロゴとテキストを設定
+    }
+
+
 }

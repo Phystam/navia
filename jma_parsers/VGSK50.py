@@ -41,22 +41,18 @@ class VGSK50(BaseJMAParser):
         """
         logo_list = []
         text_list = []
+        sound_list = []
         publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
-        
+        sound_list.append("sounds/GeneralInfo.wav")  # デフォルトのサウンドファイル
         headline = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        hypocenter_name = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
-        magnitude_value = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces)
-        max_intensity = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
-        coordinates = self._get_coordinates(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
-        
-        message=f"震源は{hypocenter_name} 深さ{-int(coordinates[0]['altitude']/1000)}km マグニチュード{magnitude_value} 最大震度 {max_intensity}"
         logo_list.append(["", ""])
-        text_list.append([headline, message])
+        text_list.append([headline, ""])
         telop_dict = {
             'logo_list': logo_list,
-            'text_list': text_list
+            'text_list': text_list,
+            'sound_list': sound_list
         }
         return telop_dict

@@ -8,7 +8,9 @@ from lxml.etree import XMLSchema, XMLParser, parse, Resolver
 
 # パーサーをインポート
 from jma_parsers.VGSK50 import VGSK50
+from jma_parsers.VPWW54 import VPWW54
 from jma_parsers.VXSE53 import VXSE53
+from jma_parsers.VFVO52 import VFVO52
 from jma_parsers.VFVO53 import VFVO53
 #from jma_parsers.jma_volcano_parser import VolcanoParser # 仮のパーサー
 
@@ -29,7 +31,7 @@ class LocalXSDResolver(Resolver):
             "http://xml.kishou.go.jp/jmaxml1/body/additional1/": os.path.join("jmaxml1", "body", "additional1", "jma_add.xsd"),
             # 他のスキーマもここに追加
         }
-        print(f"LocalXSDResolver initialized with xsd_base_dir: {self.xsd_base_dir}")
+        #print(f"LocalXSDResolver initialized with xsd_base_dir: {self.xsd_base_dir}")
 
     def resolve(self, url, public_id, context):
 
@@ -50,7 +52,7 @@ class JMADataFetcher(QObject):
     # 引数として保存されたファイルのパスと、解析済みデータを渡します
     dataFetched = Signal(str, str, dict) # file_path, data_type, parsed_data
     errorOccurred = Signal(str)
-
+    telopDataReceived = Signal(dict) # テロップ情報を受け取るためのシグナル
     def __init__(self, parent=None):
         super().__init__(parent)
         self.feed_urls = [
@@ -71,7 +73,9 @@ class JMADataFetcher(QObject):
         # パーサーのインスタンスを辞書に登録
         self.parsers = {
             "VGSK50": VGSK50(self), # 季節観測
+            "VPWW54": VPWW54(self), # 気象警報
             "VXSE53": VXSE53(self), # 地震情報
+            "VFVO52": VFVO52(self), # 噴火に関する火山観測報
             "VFVO53": VFVO53(self), # 降灰予報 (定時) (仮)
             "VFVO54": VFVO53(self), # 降灰予報 (速報) 
             "VFVO55": VFVO53(self), # 降灰予報 (詳細)
@@ -79,19 +83,21 @@ class JMADataFetcher(QObject):
             # 他のデータタイプもここに追加
         }
 
-        self._load_existing_ids()
+        self._load_existing_ids(first=True)
 
         # 定期的に更新をチェックするためのタイマーを設定
-        self.fetch_timer = QTimer(self)
-        self.fetch_timer.timeout.connect(self._on_fetch_timer_triggered) # 新しいスロットに接続
+        self.fetch_timers = [QTimer(self), QTimer(self), QTimer(self)]
+        for j, fetch_timer in enumerate(self.fetch_timers):
+            fetch_timer.timeout.connect(lambda i=j: self._on_fetch_timer_triggered(i)) # 新しいスロットに接続
 
         # 毎分20秒にタイマーをトリガーするための初期遅延を計算
-        self._set_initial_fetch_timer()
+        for i in range(len(self.feed_urls)):
+            self._set_initial_fetch_timer(i)
 
         # アプリケーション起動時に一度更新をチェック
-        self.checkForUpdates()
+            self.checkForUpdates(i)
 
-    def _load_existing_ids(self):
+    def _load_existing_ids(self, first=False):
         print(f"既存のダウンロード済みデータをロード中... {self.data_dir}")
         for filename in os.listdir(self.data_dir):
             if filename.endswith(".zst"):
@@ -102,16 +108,16 @@ class JMADataFetcher(QObject):
                     except zstd.ZstdError as e:
                         print(f"Zstandard解凍エラー: {e}")
                         continue
-                    self.processReport({'id': extracted_id_part}, filedata) 
+                    self.processReport({'id': extracted_id_part}, filedata, playtelop=not first) 
                 full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"
                 self.downloaded_ids.add(full_id)
         print(f"ロード完了。ダウンロード済みID数: {len(self.downloaded_ids)}")
 
-    def _set_initial_fetch_timer(self):
+    def _set_initial_fetch_timer(self,i):
         current_time = QDateTime.currentDateTime()
         current_second = current_time.time().second()
         
-        target_second = 20
+        target_second = 20+i
         if current_second < target_second:
             delay_seconds = target_second - current_second
         else:
@@ -120,29 +126,28 @@ class JMADataFetcher(QObject):
         initial_delay_ms = delay_seconds * 1000
         
         print(f"現在の秒: {current_second}秒. 次の取得まで {initial_delay_ms}ms 待ちます。")
-        self.fetch_timer.setSingleShot(True)
-        self.fetch_timer.setInterval(initial_delay_ms)
-        self.fetch_timer.start()
+        self.fetch_timers[i].setSingleShot(True)
+        self.fetch_timers[i].setInterval(initial_delay_ms)
+        self.fetch_timers[i].start()
 
     @Slot()
-    def _on_fetch_timer_triggered(self):
-        if self.fetch_timer.isSingleShot():
-            self.fetch_timer.setSingleShot(False)
-            self.fetch_timer.setInterval(60 * 1000)
-            self.fetch_timer.start()
+    def _on_fetch_timer_triggered(self, i):
+        if self.fetch_timers[i].isSingleShot():
+            self.fetch_timers[i].setSingleShot(False)
+            self.fetch_timers[i].setInterval(60 * 1000)
+            self.fetch_timers[i].start()
             print("タイマー間隔を毎分に設定しました。")
 
-        self.checkForUpdates()
+        self.checkForUpdates(i)
 
     @Slot()
-    def checkForUpdates(self):
-        for i,feed_url in enumerate(self.feed_urls):
-            request = QNetworkRequest(QUrl(feed_url))
-            if self.last_modifieds[i]:
-                request.setRawHeader(QByteArray(b"If-Modified-Since"), QByteArray(self.last_modifieds[i].encode('utf-8')))
+    def checkForUpdates(self, i):
+        request = QNetworkRequest(QUrl(self.feed_urls[i]))
+        if self.last_modifieds[i]:
+            request.setRawHeader(QByteArray(b"If-Modified-Since"), QByteArray(self.last_modifieds[i].encode('utf-8')))
 
-            reply = self.network_manager.get(request)
-            reply.finished.connect(lambda: self.handleFeedReply(i,reply))
+        reply = self.network_manager.get(request)
+        reply.finished.connect(lambda: self.handleFeedReply(i,reply))
 
     @Slot(QNetworkReply)
     def handleFeedReply(self, i, reply: QNetworkReply):
@@ -236,15 +241,15 @@ class JMADataFetcher(QObject):
                 return
 
             report_xml_content = reply.readAll().data()
-            self.processReport(entry_data, report_xml_content)
+            self.processReport(entry_data, report_xml_content, playtelop=True)
         except etree.XMLSyntaxError as e:
             self.errorOccurred.emit(f"レポートXML構文エラー {entry_data['id']}: {e}")
         except Exception as e:
             self.errorOccurred.emit(f"レポート処理中に予期せぬエラーが発生しました: {e}")
         finally:
             reply.deleteLater()
-            
-    def processReport(self, entry_data, report_xml_content):
+
+    def processReport(self, entry_data, report_xml_content, playtelop=False):
         parser = etree.XMLParser()
         parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
         report_tree = etree.fromstring(report_xml_content, parser)
@@ -269,7 +274,7 @@ class JMADataFetcher(QObject):
         if xsd_filename:
             schema = self._get_xsd_schema(xsd_filename)
         else:
-            print("xsi:schemaLocation属性からXSDファイル名を特定できませんでした。スキーマ検証なしでパースします。")
+            pass #print("xsi:schemaLocation属性からXSDファイル名を特定できませんでした。スキーマ検証なしでパースします。")
 
         # XSDスキーマ検証
         if schema:
@@ -280,7 +285,7 @@ class JMADataFetcher(QObject):
             else:
                 print(f"XMLスキーマ検証成功: {entry_data['id']}")
         else:
-            print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。", end="\n\n")
+            pass #print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。", end="\n\n")
 
         # 取得したXMLコンテンツをzstdで圧縮して保存
         # ここを修正: ファイル名をデータタイプコードではなく、元のIDの末尾部分を使用
@@ -295,6 +300,7 @@ class JMADataFetcher(QObject):
 
         # データタイプに基づいて適切なパーサーに処理を振り分け
         parsed_data = {}
+        telop_dict = {}
         if data_type_code in self.parsers:
             parser_instance = self.parsers[data_type_code]
             # JMA XMLの共通名前空間をパーサーに渡す
@@ -306,17 +312,22 @@ class JMADataFetcher(QObject):
                 'jmx_mete': "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/",
                 'jmx_add': "http://xml.kishou.go.jp/jmaxml1/body/additional1/",
                 'jmx_eb': "http://xml.kishou.go.jp/jmaxml1/elementBasis1/",
-                'xsi': "http://www.w3.org/2001/XMLSchema-instance" # xsi名前空間も必要
+                'xsi': "http://www.w3.org/2001/XMLSchema" # xsi名前空間も必要
             }
-            parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+            #parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+            # 解析済みデータをメインアプリケーションに通知
+            #self.dataFetched.emit(output_filename, data_type_code, parsed_data)
             telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
-            print(f"パーサー ({data_type_code}) による解析結果: {parsed_data}")
             print(f"テロップ情報: {telop_dict}")
+            if playtelop:
+                #telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
+                
+                self.telopDataReceived.emit(telop_dict)
         else:
-            print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
-            parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
+            pass
+            #print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
+            #parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
 
-        # 解析済みデータをメインアプリケーションに通知
-        self.dataFetched.emit(output_filename, data_type_code, parsed_data)
+        
 
         

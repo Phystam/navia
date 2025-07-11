@@ -11,7 +11,10 @@ from clock import ClockApp
 from jma_data_fetcher import JMADataFetcher
 
 # メインアプリケーションクラス
-class MainApp(QObject): # クラス名を変更して、ClockAppと区別しやすくしました
+class MainApp(QObject):
+    
+    telopDataReceived= Signal(dict)  # テロップ情報を受け取るためのシグナル
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.createTrayIcon() # タスクトレイアイコンを作成
@@ -21,7 +24,9 @@ class MainApp(QObject): # クラス名を変更して、ClockAppと区別しや�
         self.jma_fetcher = JMADataFetcher(self)
         # JMADataFetcherからのシグナルをメインアプリのメソッドに接続
         self.jma_fetcher.dataFetched.connect(self.onDataFetched)
+        self.jma_fetcher.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
         self.jma_fetcher.errorOccurred.connect(self.onErrorOccurred)
+        
 
     # タスクトレイアイコンを作成するメソッド
     def createTrayIcon(self):
@@ -53,6 +58,10 @@ class MainApp(QObject): # クラス名を変更して、ClockAppと区別しや�
         # ここで取得したデータ（file_path）をQMLに表示したり、読み上げたりする処理を追加できます。
         # 例: QMLに通知するシグナルを発行するなど
 
+    @Slot(dict)
+    def onTelopDataReceived(self, telop_dict):
+        self.telopDataReceived.emit(telop_dict)
+
     @Slot(str)
     def onErrorOccurred(self, message):
         """
@@ -82,7 +91,7 @@ if __name__ == "__main__":
     main_app_instance = MainApp()
     engine.rootContext().setContextProperty("mainApp", main_app_instance)
 
-
+    engine.rootContext().setContextProperty("clockApp", clock_app)
     # QMLファイルをロード
     # QMLファイルはPythonスクリプトと同じディレクトリにあると仮定
     engine.load("main.qml")
