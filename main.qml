@@ -24,6 +24,16 @@ Window {
         anchors.left: parent.left
     }
 
+    Loader {
+        id: telopLoader
+        source: "telop.qml" // テロップコンポーネントをロード
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.025 // 上からのマージン
+        width: parent.width * 0.9 // 親ウィンドウの90%の幅
+        height: parent.height * 0.1 // 親ウィンドウの25%の高さ
+    }
+
     // ウィンドウを移動可能にするためのMouseArea (開発用)
     MouseArea {
         anchors.fill: parent
@@ -31,4 +41,24 @@ Window {
         // 開発中は一時的に WindowTransparentForInput をコメントアウトしてください。
         onPressed: { mouse.accepted = true; rootWindow.startSystemMove(); }
     }
+
+    Component.onCompleted: {
+        // 初期化処理
+        telopLoader.item.init();
+        // 必要に応じて他の初期化処理を追加
+        mainApp.telopDataReceived.connect(onTelopReceived);
+    }
+    
+    function onTelopReceived(data) {
+        // テロップデータを受信したときの処理
+        
+        var soundpath = data["sound"]; // 音声ファイルのパスを設定
+        console.log("Received telop data:", soundpath);
+        //telopLoader.item.textList = data.textList;
+        //telopLoader.item.logoList = data.logoList;
+        telopLoader.item.init();
+        telopLoader.item.playSound(soundpath); // 音声ファイルを再生
+    }
+
+
 }

@@ -31,7 +31,7 @@ class LocalXSDResolver(Resolver):
             "http://xml.kishou.go.jp/jmaxml1/body/additional1/": os.path.join("jmaxml1", "body", "additional1", "jma_add.xsd"),
             # 他のスキーマもここに追加
         }
-        print(f"LocalXSDResolver initialized with xsd_base_dir: {self.xsd_base_dir}")
+        #print(f"LocalXSDResolver initialized with xsd_base_dir: {self.xsd_base_dir}")
 
     def resolve(self, url, public_id, context):
         # URLが直接XSDファイル名の場合 (xsi:schemaLocationから)
@@ -88,7 +88,7 @@ class JMADataFetcher(QObject):
             # 他のデータタイプもここに追加
         }
 
-        self._load_existing_ids()
+        self._load_existing_ids(first=True)
 
         # 定期的に更新をチェックするためのタイマーを設定
         self.fetch_timers = [QTimer(self), QTimer(self), QTimer(self)]
@@ -102,7 +102,7 @@ class JMADataFetcher(QObject):
         # アプリケーション起動時に一度更新をチェック
             self.checkForUpdates(i)
 
-    def _load_existing_ids(self):
+    def _load_existing_ids(self, first=False):
         print(f"既存のダウンロード済みデータをロード中... {self.data_dir}")
         for filename in os.listdir(self.data_dir):
             if filename.endswith(".zst"):
@@ -113,7 +113,7 @@ class JMADataFetcher(QObject):
                     except zstd.ZstdError as e:
                         print(f"Zstandard解凍エラー: {e}")
                         continue
-                    self.processReport({'id': extracted_id_part}, filedata) 
+                    self.processReport({'id': extracted_id_part}, filedata, playtelop=not first) 
                 full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"
                 self.downloaded_ids.add(full_id)
         print(f"ロード完了。ダウンロード済みID数: {len(self.downloaded_ids)}")
@@ -246,15 +246,15 @@ class JMADataFetcher(QObject):
                 return
 
             report_xml_content = reply.readAll().data()
-            self.processReport(entry_data, report_xml_content)
+            self.processReport(entry_data, report_xml_content, playtelop=True)
         except etree.XMLSyntaxError as e:
             self.errorOccurred.emit(f"レポートXML構文エラー {entry_data['id']}: {e}")
         except Exception as e:
             self.errorOccurred.emit(f"レポート処理中に予期せぬエラーが発生しました: {e}")
         finally:
             reply.deleteLater()
-            
-    def processReport(self, entry_data, report_xml_content):
+
+    def processReport(self, entry_data, report_xml_content, playtelop=False):
         parser = etree.XMLParser()
         parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
         report_tree = etree.fromstring(report_xml_content, parser)
@@ -280,7 +280,7 @@ class JMADataFetcher(QObject):
         if xsd_filename:
             schema = self._get_xsd_schema(xsd_filename)
         else:
-            print("xsi:schemaLocation属性からXSDファイル名を特定できませんでした。スキーマ検証なしでパースします。")
+            pass #print("xsi:schemaLocation属性からXSDファイル名を特定できませんでした。スキーマ検証なしでパースします。")
 
         # XSDスキーマ検証
         if schema:
@@ -291,7 +291,7 @@ class JMADataFetcher(QObject):
             else:
                 print(f"XMLスキーマ検証成功: {entry_data['id']}")
         else:
-            print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。", end="\n\n")
+            pass #print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。", end="\n\n")
 
         # 取得したXMLコンテンツをzstdで圧縮して保存
         # ここを修正: ファイル名をデータタイプコードではなく、元のIDの末尾部分を使用
@@ -306,6 +306,7 @@ class JMADataFetcher(QObject):
 
         # データタイプに基づいて適切なパーサーに処理を振り分け
         parsed_data = {}
+        telop_dict = {}
         if data_type_code in self.parsers:
             parser_instance = self.parsers[data_type_code]
             # JMA XMLの共通名前空間をパーサーに渡す
@@ -319,17 +320,19 @@ class JMADataFetcher(QObject):
                 'jmx_eb': "http://xml.kishou.go.jp/jmaxml1/elementBasis1/",
                 'xsi': "http://www.w3.org/2001/XMLSchema" # xsi名前空間も必要
             }
-            parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+            #parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+            # 解析済みデータをメインアプリケーションに通知
+            #self.dataFetched.emit(output_filename, data_type_code, parsed_data)
             telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
-            print(f"パーサー ({data_type_code}) による解析結果: {parsed_data}")
             print(f"テロップ情報: {telop_dict}")
+            if playtelop:
+                #telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
+                
+                self.telopDataReceived.emit(telop_dict)
         else:
             print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
             parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
 
-        # 解析済みデータをメインアプリケーションに通知
-        self.dataFetched.emit(output_filename, data_type_code, parsed_data)
-        #if telop_dict:
-        #    self.telopDataReceived.emit(telop_dict)
+        
 
         
