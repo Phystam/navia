@@ -56,8 +56,8 @@ class JMADataFetcher(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.feed_urls = [
-            #"https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
-            #"https://www.data.jma.go.jp/developer/xml/feed/regular.xml",
+            "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
+            "https://www.data.jma.go.jp/developer/xml/feed/regular.xml",
             "https://www.data.jma.go.jp/developer/xml/feed/extra.xml"]
         self.last_modifieds = [None, None, None]
         self.data_dir = "jmadata"
@@ -105,8 +105,8 @@ class JMADataFetcher(QObject):
                 with open(os.path.join(self.data_dir, filename), 'rb') as f:
                     try:
                         filedata=zstd.decompress(f.read())  # Zstandard圧縮を解凍
-                    except zstd.ZstdError as e:
-                        print(f"Zstandard解凍エラー: {e}")
+                    except:
+                        print(f"Zstandard解凍エラー")
                         continue
                     self.processReport({'id': extracted_id_part}, filedata, playtelop=not first) 
                 full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"

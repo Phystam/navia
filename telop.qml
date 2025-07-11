@@ -102,8 +102,8 @@ Item{
   }
 
   function nextText(){
-    //logoListModel1.clear()
-    //logoListModel2.clear()
+    logoListModel1.clear()
+    logoListModel2.clear()
     if(soundList[index]!=""){
       playSound(soundList[index])
     }
@@ -113,50 +113,54 @@ Item{
       text1=textList[0][0]
       text2=textList[0][1]
       console.log("telop.textList: " + text1 + ", " + text2)
-
+      txt1.width=parent.width*0.9
+      txt1.horizontalAlignment=Text.AlignHCenter
+      txt1.anchors.horizontalCenter=parent.horizontalCenter
+      txt2.width=parent.width*0.9
+      txt2.horizontalAlignment=Text.AlignHCenter
+      txt2.anchors.horizontalCenter=parent.horizontalCenter
     }
     // ロゴがある場合 → ロゴ(さらにリストになっている)を表示しながらテロップを表示する
     else {
+      var logo1=logoList[0][0]
+      var logo2=logoList[0][1]
+      var logo1array=logo1.split(",")
+      var logo2array=logo2.split(",")
+      //右から順に詰めていくので、左から順番通りにするためには逆順で入れる必要がある
+      for(var i=logo1array.length-1;i>=0;i--){
+        if(logo1array[i]!="no"){
+          logoListModel1.append({"value":logo1array[i]})
+        }else {
+          logoListModel1.append({"value":""})
+        }
+      }
+      for(var i=logo2array.length-1;i>=0;i--){
+        if(logo2array[i]!="no"){
+          logoListModel2.append({"value":logo2array[i]})
+        } else {
+          logoListModel2.append({"value":""})
+        }
+      }
       text1=textList[0][0]
       text2=textList[0][1]
+      txt1.width=parent.width*0.6
+      txt1.horizontalAlignment=Text.AlignLeft
+      txt1.anchors.right=parent.right
+      txt2.width=parent.width*0.6
+      txt2.horizontalAlignment=Text.AlignLeft
+      txt2.anchors.right=parent.right
       console.log("telop.textList: " + text1 + ", " + text2)
     }
     textList.shift() // テキストを表示したらリストから削除
     logoList.shift() 
     console.log("textList.length: " + textList.length)
   }
-      // else {
-      // text1=""
-      // text2=""
-      // var logo3=logoList[index]
-      // text3=textList[index]
-      // index++
-      // var logo4=logoList[index]
-      // text4=textList[index]
-      // index++
-      // var logo3array=logo3.split(",")
-      // var logo4array=logo4.split(",")
-      // //右から順に詰めていくので、左から順番通りにするためには逆順で入れる必要がある
-      // for(var i=logo3array.length-1;i>=0;i--){
-      //   if(logo3array[i]!="no"){
-      //     logoListModel3.append({"value":logo3array[i]})
-      //   }else {
-      //     logoListModel3.append({"value":""})
-      //   }
-      // }
-      // for(var i=logo4array.length-1;i>=0;i--){
-      //   if(logo4array[i]!="no"){
-      //     logoListModel4.append({"value":logo4array[i]})
-      //   } else {
-      //     logoListModel4.append({"value":""})
-      //   }
-      // }
-      //
+
   Text {
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter
     anchors.top: parent.top
-    width:parent.width
+    width:parent.width*0.9
     height:parent.height*5/11
     id: txt1
     text: parent.text1
@@ -173,7 +177,7 @@ Item{
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter
     anchors.top: txt1.bottom
-    width:parent.width
+    width:parent.width*0.9
     height:parent.height*5/11
     id: txt2
     text: parent.text2
@@ -228,7 +232,7 @@ Item{
     id: logoA
     spacing:parent.width*0.005
     Repeater {
-      model: logoListModel3
+      model: logoListModel1
       Image {
         height:parent.height
         fillMode:Image.PreserveAspectFit
@@ -244,7 +248,7 @@ Item{
     id: logoB
     spacing:parent.width*0.005
     Repeater {
-      model: logoListModel4
+      model: logoListModel2
       Image {
         height:parent.height
         fillMode:Image.PreserveAspectFit

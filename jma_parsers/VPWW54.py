@@ -71,6 +71,51 @@ class VPWW54(BaseJMAParser):
                 sound_list.append("")
                 logo_list.append(["", ""])
                 text_list.append(tlist[i-1:i+1])
+                
+        codeCombinationList=[]
+        areaList=[]
+        #気象警報のコードと地域のペアを取得する
+        type="気象警報・注意報（市町村等をまとめた地域等）"
+        #type="気象警報・注意報（市町村等）"
+        itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item',namespaces)
+        lenitem=len(itemelements)
+        for i in range(lenitem):
+            codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
+            areaelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i}]//jmx_ib:Area/jmx_ib:Name/text()',namespaces)
+            if not codeelements in codeCombinationList and len(codeelements)!=0:
+                codeCombinationList.append(codeelements)
+                areaList.append(areaelements) #最初はリストの状態で追加する
+            else: #すでに登録した場合
+                #該当するものを探す
+                for j, codelist in enumerate(codeCombinationList):
+                    if codeelements == codelist:
+                        areaList[j].append(areaelements[0]) #テキストで追加する
+                pass
+        #print(f"{codeCombinationList}:{areaList}")
+        
+        #logo, textに整形する
+        logos=[]
+        texts=[]
+        for i in range(len(codeCombinationList)):
+            logo=""
+            areatext=""
+            for code in codeCombinationList[i]:
+                logo+=f"materials/{code}.svg,"
+            logos.append(logo[:-1]) #最後の,を除いておく
+            for area in areaList[i]:
+                areatext+=f"{area} "
+            texts.append(areatext[:-1]) #最後の を除いておく
+        #print(f"{logos} : {texts}")
+        if len(logos)%2==1:
+            logos.append("")
+            texts.append("")
+        #2行組に分けていく
+        for i in range(len(logos)):
+            if i%2 == 1:
+                logo_list.append(logos[i-1:i+1])
+                text_list.append(texts[i-1:i+1])
+                sound_list.append("")
+            
         telop_dict = {
             'sound_list': sound_list,
             'logo_list': logo_list,
