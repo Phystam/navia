@@ -50,14 +50,7 @@ Window {
     }
     
     function onTelopReceived(data) {
-        // テロップデータを受信したときの処理
-        
-        var soundpath = data["sound"]; // 音声ファイルのパスを設定
-        console.log("Received telop data:", soundpath);
-        //telopLoader.item.textList = data.textList;
-        //telopLoader.item.logoList = data.logoList;
-        telopLoader.item.init();
-        telopLoader.item.playSound(soundpath); // 音声ファイルを再生
+        telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"]); // ロゴとテキストを設定
     }
 
 

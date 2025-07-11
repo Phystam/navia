@@ -30,30 +30,35 @@ class VPWW54(BaseJMAParser):
         """
         logo_list = []
         text_list = []
+        sound_list = []
         publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
-        logo_list.append(["", ""])
-        text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
+
         
         headline = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
         if "最大級の警戒" in headline or "安全の確保" in headline:
-            sound="sound/EEWalert.wav"
+            sound="sounds/EEWalert.wav"
             level=5
         elif "厳重に警戒" in headline:
-            sound="sound/Grade5-.wav"
+            sound="sounds/Grade5-.wav"
             level=4
         elif "警戒" in headline:
-            sound="sound/GeneralWarning.wav"
+            sound="sounds/GeneralWarning.wav"
             level=3
         elif "注意" in headline:
-            sound="sound/GeneralInfo.wav"
+            sound="sounds/GeneralInfo.wav"
             level=2
         if "解除" in headline:
-            sound="sound/Forecast.wav"
+            sound="sounds/Forecast.wav"
             level=0
 
+        logo_list.append(["", ""])
+        text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
+        sound_list.append(sound)
         # headlineを句点で分割
         tlist=headline.split("。")
+        # 最後。で終わるので、最後尾の要素を削除する
+        tlist=tlist[:-1]
         # 要素数が奇数の場合、空文字を追加して偶数にする
         if len(tlist) %2 != 0:
             tlist.append("")
@@ -61,13 +66,13 @@ class VPWW54(BaseJMAParser):
             # 消された句点を復元
             if tlist[i] !="":
                 tlist[i] = f"{tlist[i]}。"
-            # 偶数番目のとき、2行分のリストを追加
-            if i % 2 == 0:
+            # 奇数番目のとき、2行分のリストを追加
+            if i % 2 == 1:
+                sound_list.append("")
                 logo_list.append(["", ""])
-                text_list.append(tlist[i:i+2])
-
+                text_list.append(tlist[i-1:i+1])
         telop_dict = {
-            'sound': sound,
+            'sound_list': sound_list,
             'logo_list': logo_list,
             'text_list': text_list
         }

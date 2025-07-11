@@ -330,8 +330,9 @@ class JMADataFetcher(QObject):
                 
                 self.telopDataReceived.emit(telop_dict)
         else:
-            print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
-            parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
+            pass
+            #print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
+            #parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
 
         
 

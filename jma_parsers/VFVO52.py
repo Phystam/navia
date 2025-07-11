@@ -32,11 +32,13 @@ class VFVO52(BaseJMAParser):
         """
         logo_list = []
         text_list = []
+        sound_list = []
         publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
+        sound = "sounds/GeneralInfo.wav"  # デフォルトのサウンドファイル
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
-        
+        sound_list.append(sound)
         # 火山名
         volcname = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Information/jmx_ib:Item/jmx_ib:Areas/jmx_ib:Area/jmx_ib:Name/text()', namespaces)
         # 火山の状態
@@ -53,9 +55,9 @@ class VFVO52(BaseJMAParser):
             direction = "不明"
         logo_list.append(["", ""])
         text_list.append([kind,f"火口上噴煙高度 {height} 噴煙の流向 {direction}"])
-        sound = "sounds/GeneralInfo.wav"  # デフォルトのサウンドファイル
+        sound_list.append("")
         telop_dict = {
-            'sound': sound,
+            'sound_list': sound_list,
             'logo_list': logo_list,
             'text_list': text_list
         }

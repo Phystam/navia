@@ -10,25 +10,60 @@ Item{
   anchors.topMargin: parent.height*0.05
   width:parent.width*0.8
   height:parent.height*0.11
-  property list<string> textList: []
-  property list<string> logoList: []
+  property var soundList: []
+  property var textList: []
+  property var logoList: []
   ListModel {
-    id: logoListModel3
+    id: logoListModel1
   }
   ListModel {
-    id: logoListModel4
+    id: logoListModel2
   }
   //テキスト用: プロパティバインディングのため配列ではない
   property string text1 : "<b>テキスト1</b>"
   property string text2 : "<テキスト2>"
+  //緊急地震速報テキスト用。他のテロップと被った時にしか使わない
   property string text3 : "<テキスト3>"
   property string text4 : "<テキスト4>"
-  property int index:0
-  signal readyNext
+  property int index: 0
+
+  Timer {
+    id: telopTimer1
+    interval: 4000 // 4秒ごとにテキストを表示
+    repeat: true
+    running:false
+    triggeredOnStart: true
+    onTriggered: {
+      if (parent.textList.length > 0) {
+        nextText()
+      } else {
+        init()
+        running=false
+      }
+    }
+  }
+  //緊急地震速報用のタイマー
+  Timer {
+    id: telopTimer2
+    interval: 4000 // 4秒ごとにテキストを表示
+    repeat: true
+    running:false
+    triggeredOnStart: true
+    onTriggered: {
+      repeat=true
+      running=true
+      //if (content_object !== null) {
+      //  var end = content_object.nextText();
+      //} else {
+        repeat=false
+        running=false
+      //}
+    }
+  }
   //音声発出用
   SoundEffect {
     id: sound
-    source: "sound/Grade3.wav"
+    source: "sounds/Grade3.wav"
   }
 
   function init(){
@@ -36,64 +71,87 @@ Item{
     text2=""
     text3=""
     text4=""
-    index=0
-    textList=[]
-    logoList=[]
+    telopTimer1.stop()
   }
 
   function playSound(filename) {
     sound.source=filename
     sound.play()
   }
-  //function nextText(){
-  //  logoListModel3.clear()
-  //  logoListModel4.clear()
-  //  if(index<textList.length){
-  //    if(logoList[index]=="" && logoList[index+1]==""){
-  //      text1=textList[index]
-  //      index++
-  //      text2=textList[index]
-  //      index++
-  //      text3=""
-  //      text4=""
-  //    } else {
-  //      text1=""
-  //      text2=""
-  //      var logo3=logoList[index]
-  //      text3=textList[index]
-  //      index++
-  //      var logo4=logoList[index]
-  //      text4=textList[index]
-  //      index++
-  //      var logo3array=logo3.split(",")
-  //      var logo4array=logo4.split(",")
-  //      //右から順に詰めていくので、左から順番通りにするためには逆順で入れる必要がある
-  //      for(var i=logo3array.length-1;i>=0;i--){
-  //        if(logo3array[i]!="no"){
-  //          logoListModel3.append({"value":logo3array[i]})
-  //        }else {
-  //          logoListModel3.append({"value":""})
-  //        }
-  //      }
-  //      for(var i=logo4array.length-1;i>=0;i--){
-  //        if(logo4array[i]!="no"){
-  //          logoListModel4.append({"value":logo4array[i]})
-  //        } else {
-  //          logoListModel4.append({"value":""})
-  //        }
-  //      }
-  //    }
-  //  } else {
-  //    init()
-  //    readyNext()
-  //    news_content.destroy()
-  //    return true
-  //  }
-  //  return false
-  //}
-  //onCompleted: {
-  //  playSound.play()
-  //}
+  function push(_soundList, _logoList, _textList) {
+    // 現在入っているリストが空であるか確認
+    var is_first=false;
+    if (telop.textList.length == 0) {
+      // 既存のリストをクリア
+      is_first=true;
+    }
+    for(var i=0;i<_soundList.length;i++){
+      telop.soundList.push(_soundList[i])
+    }
+    for(var i=0;i<_logoList.length;i++){
+      telop.logoList.push(_logoList[i])
+    }
+    for(var i=0;i<_textList.length;i++){
+      telop.textList.push(_textList[i])
+      console.log("telop.textList.push: " + _textList[i]) 
+    }
+    if (is_first) {
+      //初期化時に何も表示されていない場合は、最初のテキストを表示する
+      telopTimer1.start()
+    }
+  }
+
+  function nextText(){
+    //logoListModel1.clear()
+    //logoListModel2.clear()
+    if(soundList[index]!=""){
+      playSound(soundList[index])
+    }
+    soundList.shift() // 音声も同様に削除
+    // ロゴがない場合 → 上部全体を使ってテロップを表示する
+    if (logoList[0][0]=="" && logoList[0][1]==""){
+      text1=textList[0][0]
+      text2=textList[0][1]
+      console.log("telop.textList: " + text1 + ", " + text2)
+
+    }
+    // ロゴがある場合 → ロゴ(さらにリストになっている)を表示しながらテロップを表示する
+    else {
+      text1=textList[0][0]
+      text2=textList[0][1]
+      console.log("telop.textList: " + text1 + ", " + text2)
+    }
+    textList.shift() // テキストを表示したらリストから削除
+    logoList.shift() 
+    console.log("textList.length: " + textList.length)
+  }
+      // else {
+      // text1=""
+      // text2=""
+      // var logo3=logoList[index]
+      // text3=textList[index]
+      // index++
+      // var logo4=logoList[index]
+      // text4=textList[index]
+      // index++
+      // var logo3array=logo3.split(",")
+      // var logo4array=logo4.split(",")
+      // //右から順に詰めていくので、左から順番通りにするためには逆順で入れる必要がある
+      // for(var i=logo3array.length-1;i>=0;i--){
+      //   if(logo3array[i]!="no"){
+      //     logoListModel3.append({"value":logo3array[i]})
+      //   }else {
+      //     logoListModel3.append({"value":""})
+      //   }
+      // }
+      // for(var i=logo4array.length-1;i>=0;i--){
+      //   if(logo4array[i]!="no"){
+      //     logoListModel4.append({"value":logo4array[i]})
+      //   } else {
+      //     logoListModel4.append({"value":""})
+      //   }
+      // }
+      //
   Text {
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter
@@ -161,37 +219,38 @@ Item{
     styleColor: "black"
     fontSizeMode:Text.Fit
   }
-  //Row{
-  //  anchors.top: parent.top
-  //  anchors.right:txt3.left
-  //  height:parent.height*5/11
-  //  layoutDirection:Qt.RightToLeft
-  //  id: logoA
-  //  spacing:parent.width*0.005
-  //  Repeater {
-  //    model: logoListModel3
-  //    Image {
-  //      height:parent.height
-  //      fillMode:Image.PreserveAspectFit
-  //      source: model.value
-  //    }
-  //  }
-  //}
-  //Row{
-  //  anchors.bottom:parent.bottom
-  //  anchors.right:txt4.left
-  //  height:parent.height*5/11
-  //  layoutDirection:Qt.RightToLeft
-  //  id: logoB
-  //  spacing:parent.width*0.005
-  //  Repeater {
-  //    model: logoListModel4
-  //    Image {
-  //      height:parent.height
-  //      fillMode:Image.PreserveAspectFit
-  //      source: model.value
-  //    }
-  //  }
-  //}
+  // 震度や警報・注意報のロゴを表示する部分
+  Row{
+    anchors.top: parent.top
+    anchors.right:txt3.left
+    height:parent.height*5/11
+    layoutDirection:Qt.RightToLeft
+    id: logoA
+    spacing:parent.width*0.005
+    Repeater {
+      model: logoListModel3
+      Image {
+        height:parent.height
+        fillMode:Image.PreserveAspectFit
+        source: model.value
+      }
+    }
+  }
+  Row{
+    anchors.bottom:parent.bottom
+    anchors.right:txt4.left
+    height:parent.height*5/11
+    layoutDirection:Qt.RightToLeft
+    id: logoB
+    spacing:parent.width*0.005
+    Repeater {
+      model: logoListModel4
+      Image {
+        height:parent.height
+        fillMode:Image.PreserveAspectFit
+        source: model.value
+      }
+    }
+  }
 
 }
