@@ -58,7 +58,11 @@ class VXSE53(BaseJMAParser):
         text_list.append([headline, message])
         logo_list.append(["", ""])
         text_list.append([comment, ""])
+        # 最大震度に応じたサウンドを設定
+        sound = f"./sounds/Grade{max_intensity}.mp3"  # デフォルトのサウンドファイル
+
         telop_dict = {
+            'sound': sound,
             'logo_list': logo_list,
             'text_list': text_list
         }

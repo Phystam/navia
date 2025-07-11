@@ -8,6 +8,7 @@ Window {
     width: Screen.width // 画面の幅に合わせる
     height: Screen.height // 画面の高さに合わせる
     visible: true
+    visibility: Window.AutomaticVisibility
     title: "気象情報システム"
 
     // 全画面オーバーレイにするための設定
@@ -21,7 +22,6 @@ Window {
         // 親ウィンドウの左上に配置
         anchors.top: parent.top
         anchors.left: parent.left
-        //anchors.fill: parent // 親ウィンドウ全体に広げる（clock.qml内で位置が指定されているため、これは必須ではないが、コンポーネントの配置を柔軟にする）
     }
 
     // ウィンドウを移動可能にするためのMouseArea (開発用)
