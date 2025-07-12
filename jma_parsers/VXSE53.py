@@ -110,17 +110,37 @@ class VXSE53(BaseJMAParser):
         print(f"{shindoList}:{areaList}")
         
         # areasが6箇所以上より長いとき、分割する。
-        #for i in range(len(shindoList)):
-        #    if len(areaList[i])>6:
-        #        areaList[i][6:]
+        ndiv=5
+        shindoList_div=[]
+        areaList_div=[]
+        
+        row_counter=0
+        for i in range(len(shindoList)):
+            counter=0    
+            for j in range(0, len(areaList[i]), ndiv):
+                if row_counter%2==0 or counter==0:
+                    shindoList_div.append(shindoList[i])
+                else:
+                    shindoList_div.append("")
+                areaList_div.append(areaList[i][j:j+ndiv])
+                counter+=1
+                row_counter+=1
+            if counter>1 and row_counter%2==1:
+                areaList_div.append([])
+                shindoList_div.append("")
+                row_counter+=1
+                
         #logo, textに整形する
         logos=[]
         texts=[]
-        for i in range(len(shindoList)):
+        for i in range(len(shindoList_div)):
             logo=""
             areatext=""
-            logos.append(f"materials/grade{shindoList[i]}.svg")
-            for area in areaList[i]:
+            if(shindoList_div[i]!=""):
+                logos.append(f"materials/grade{shindoList_div[i]}.svg")
+            else:
+                logos.append("")
+            for area in areaList_div[i]:
                 areatext+=f"{area} "
             texts.append(areatext[:-1]) #最後の を除いておく
         #print(f"{logos} : {texts}")
