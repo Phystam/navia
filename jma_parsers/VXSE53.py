@@ -43,6 +43,16 @@ class VXSE53(BaseJMAParser):
         sound_list = []
         logo_list = []
         text_list = []
+        shindo_codelist = {"震度７": "7",
+                       "震度６強": "6+",
+                       "震度６弱": "6-",
+                       "震度５強": "5+",
+                       "震度５弱": "5-",
+                       "震度４": "4",
+                       "震度３": "3",
+                       "震度２": "2",
+                       "震度１": "1"
+                       }
         publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
         max_intensity = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
@@ -61,9 +71,68 @@ class VXSE53(BaseJMAParser):
         logo_list.append(["", ""])
         text_list.append([headline, message])
         sound_list.append("")
-        logo_list.append(["", ""])
-        text_list.append([comment, ""])
-        sound_list.append("")
+        
+        # headlineを句点で分割
+        comment=comment.replace("\n","")
+        tlist=comment.split("。")
+        # 最後。で終わるので、最後尾の要素を削除する
+        tlist=tlist[:-1]
+        # 要素数が奇数の場合、空文字を追加して偶数にする
+        if len(tlist) %2 != 0:
+            tlist.append("")
+        for i in range(len(tlist)):
+            # 消された句点を復元
+            if tlist[i] !="":
+                tlist[i] = f"{tlist[i]}。"
+            # 奇数番目のとき、2行分のリストを追加
+            if i % 2 == 1:
+                sound_list.append("")
+                logo_list.append(["", ""])
+                text_list.append(tlist[i-1:i+1])
+
+        #気象警報のコードと地域のペアを取得する
+        type="震源・震度に関する情報（細分区域）"
+        #type="気象警報・注意報（市町村等）"
+        shindoList=[]
+        areaList=[]
+        itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item',namespaces)
+        lenitem=len(itemelements)
+        for i in range(lenitem):
+            shindo = shindo_codelist[ self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Name/text()',namespaces) ]
+            areaselements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Areas/jmx_ib:Area',namespaces)
+            shindoList.append(shindo)
+            areas=[]
+            for j in range(len(areaselements)):
+                area = self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Areas/jmx_ib:Area[{j+1}]/jmx_ib:Name/text()',namespaces)
+                areas.append(area)
+            areaList.append(areas)
+
+        print(f"{shindoList}:{areaList}")
+        
+        # areasが6箇所以上より長いとき、分割する。
+        #for i in range(len(shindoList)):
+        #    if len(areaList[i])>6:
+        #        areaList[i][6:]
+        #logo, textに整形する
+        logos=[]
+        texts=[]
+        for i in range(len(shindoList)):
+            logo=""
+            areatext=""
+            logos.append(f"materials/grade{shindoList[i]}.svg")
+            for area in areaList[i]:
+                areatext+=f"{area} "
+            texts.append(areatext[:-1]) #最後の を除いておく
+        #print(f"{logos} : {texts}")
+        if len(logos)%2==1:
+            logos.append("")
+            texts.append("")
+        #2行組に分けていく
+        for i in range(len(logos)):
+            if i%2 == 1:
+                logo_list.append(logos[i-1:i+1])
+                text_list.append(texts[i-1:i+1])
+                sound_list.append("")
 
         telop_dict = {
             'sound_list': sound_list,

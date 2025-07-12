@@ -80,8 +80,9 @@ class VPWW54(BaseJMAParser):
         itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item',namespaces)
         lenitem=len(itemelements)
         for i in range(lenitem):
-            codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
-            areaelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i}]//jmx_ib:Area/jmx_ib:Name/text()',namespaces)
+            codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
+            print(codeelements)
+            areaelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]//jmx_ib:Area/jmx_ib:Name/text()',namespaces)
             if not codeelements in codeCombinationList and len(codeelements)!=0:
                 codeCombinationList.append(codeelements)
                 areaList.append(areaelements) #最初はリストの状態で追加する
@@ -91,7 +92,7 @@ class VPWW54(BaseJMAParser):
                     if codeelements == codelist:
                         areaList[j].append(areaelements[0]) #テキストで追加する
                 pass
-        #print(f"{codeCombinationList}:{areaList}")
+        print(f"{codeCombinationList}:{areaList}")
         
         #logo, textに整形する
         logos=[]
@@ -100,7 +101,7 @@ class VPWW54(BaseJMAParser):
             logo=""
             areatext=""
             for code in codeCombinationList[i]:
-                logo+=f"materials/{code}.svg,"
+                logo+=f"materials/code{code}.svg,"
             logos.append(logo[:-1]) #最後の,を除いておく
             for area in areaList[i]:
                 areatext+=f"{area} "

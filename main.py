@@ -42,7 +42,9 @@ class MainApp(QObject):
         quitAction = QAction("終了", self)
         quitAction.triggered.connect(QApplication.quit) # アプリケーション終了に接続
         trayMenu.addAction(quitAction)
-
+        testAction = QAction("試験", self)
+        testAction.triggered.connect(self.onTest)
+        trayMenu.addAction(testAction)
         # タスクトレイアイコンにメニューを設定
         self.trayIcon.setContextMenu(trayMenu)
 
@@ -70,7 +72,15 @@ class MainApp(QObject):
         print(f"メインアプリ: エラー発生: {message}")
         # ここでユーザーにエラーを通知する（例: メッセージボックス表示）などの処理を追加できます。
 
-
+    @Slot()
+    def onTest(self):
+        #entry_data=R"jmaxml_20250710_Samples/15_12_02_161130_VPWW54.xml"
+        entry_data=R"jmaxml_20250710_Samples/32-39_11_05_240613_VXSE53.xml"
+        with open(entry_data,"rb") as f:
+            dataname=R"VXSE53"
+            data=f.read()
+            self.jma_fetcher.processReport(dataname,data,test=True, playtelop=True)
+            
 if __name__ == "__main__":
     # QApplicationを使用するように変更
     app = QApplication(sys.argv)

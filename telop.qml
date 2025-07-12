@@ -8,8 +8,13 @@ Item{
   anchors.horizontalCenter: parent.horizontalCenter
   anchors.top: parent.top
   anchors.topMargin: parent.height*0.05
-  width:parent.width*0.8
+  width:parent.width*0.85
   height:parent.height*0.11
+  Rectangle {
+      anchors.fill: parent
+      color: "transparent"
+      border.color: "blue"
+  }
   property var soundList: []
   property var textList: []
   property var logoList: []
@@ -71,6 +76,8 @@ Item{
     text2=""
     text3=""
     text4=""
+    logoListModel1.clear()
+    logoListModel2.clear()
     telopTimer1.stop()
   }
 
@@ -113,12 +120,15 @@ Item{
       text1=textList[0][0]
       text2=textList[0][1]
       console.log("telop.textList: " + text1 + ", " + text2)
-      txt1.width=parent.width*0.9
       txt1.horizontalAlignment=Text.AlignHCenter
-      txt1.anchors.horizontalCenter=parent.horizontalCenter
-      txt2.width=parent.width*0.9
+      txt1.anchors.left=telop.left
+      txt1.anchors.right=telop.right
       txt2.horizontalAlignment=Text.AlignHCenter
-      txt2.anchors.horizontalCenter=parent.horizontalCenter
+      txt2.anchors.left=telop.left
+      txt2.anchors.right=telop.right
+      txt2.x=0
+      txt1.anchors.leftMargin=0
+      txt2.anchors.leftMargin=0
     }
     // ロゴがある場合 → ロゴ(さらにリストになっている)を表示しながらテロップを表示する
     else {
@@ -126,6 +136,8 @@ Item{
       var logo2=logoList[0][1]
       var logo1array=logo1.split(",")
       var logo2array=logo2.split(",")
+      
+      console.log(logo1array)
       //右から順に詰めていくので、左から順番通りにするためには逆順で入れる必要がある
       for(var i=logo1array.length-1;i>=0;i--){
         if(logo1array[i]!="no"){
@@ -143,12 +155,15 @@ Item{
       }
       text1=textList[0][0]
       text2=textList[0][1]
-      txt1.width=parent.width*0.6
+      //txt1.width=telop.width*0.6
       txt1.horizontalAlignment=Text.AlignLeft
-      txt1.anchors.right=parent.right
-      txt2.width=parent.width*0.6
+      txt1.anchors.left=telop.horizontalCenter
+      txt1.anchors.leftMargin=-telop.width*0.1
+      txt1.anchors.right=telop.right
+      //txt2.width=telop.width*0.6
       txt2.horizontalAlignment=Text.AlignLeft
-      txt2.anchors.right=parent.right
+      txt2.anchors.left=telop.horizontalCenter
+      txt2.anchors.leftMargin=-telop.width*0.1
       console.log("telop.textList: " + text1 + ", " + text2)
     }
     textList.shift() // テキストを表示したらリストから削除
@@ -160,34 +175,48 @@ Item{
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter
     anchors.top: parent.top
-    width:parent.width*0.9
+    anchors.left: parent.left
+    anchors.right: parent.right
+    width:parent.width
     height:parent.height*5/11
     id: txt1
     text: parent.text1
     //font.family: "Neue Haas Grotesk"
     font.family: "Source Han Sans"
     //font.family: "HGS創英角ﾎﾟｯﾌﾟ体"
-    font.pointSize: Screen.height*0.03
+    font.pointSize: parent.height*0.5
     color: "white"
     style: Text.Outline
     styleColor: "black"
     fontSizeMode:Text.Fit
+    Rectangle {
+      anchors.fill: parent
+      color: "transparent"
+      border.color: "red"
+    }
   }
   Text {
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter
-    anchors.top: txt1.bottom
-    width:parent.width*0.9
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    width:parent.width
     height:parent.height*5/11
     id: txt2
     text: parent.text2
     //font.family: "Neue Haas Grotesk"
     font.family: "Source Han Sans"
-    font.pointSize: Screen.height*0.03
+    font.pointSize: parent.height*0.5
     color: "white"
     style: Text.Outline
     styleColor: "black"
     fontSizeMode:Text.Fit
+    Rectangle {
+      anchors.fill: parent
+      color: "transparent"
+      border.color: "red"
+    }
   }
   Text {
     verticalAlignment: Text.AlignVCenter
@@ -226,7 +255,8 @@ Item{
   // 震度や警報・注意報のロゴを表示する部分
   Row{
     anchors.top: parent.top
-    anchors.right:txt3.left
+    anchors.right:txt1.left
+    anchors.rightMargin: parent.width*0.01
     height:parent.height*5/11
     layoutDirection:Qt.RightToLeft
     id: logoA
@@ -242,7 +272,8 @@ Item{
   }
   Row{
     anchors.bottom:parent.bottom
-    anchors.right:txt4.left
+    anchors.right:txt2.left
+    anchors.rightMargin: parent.width*0.01
     height:parent.height*5/11
     layoutDirection:Qt.RightToLeft
     id: logoB

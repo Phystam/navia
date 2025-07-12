@@ -61,7 +61,7 @@ class JMADataFetcher(QObject):
             "https://www.data.jma.go.jp/developer/xml/feed/extra.xml"]
         self.last_modifieds = [None, None, None]
         self.data_dir = "jmadata"
-        self.xsd_dir = "jmaxml1" # XSDファイルが置かれているルートディレクトリ
+        self.xsd_dir = "xsdschema" # XSDファイルが置かれているルートディレクトリ
         self.downloaded_ids = set()
         self.network_manager = QNetworkAccessManager(self)
 
@@ -98,7 +98,7 @@ class JMADataFetcher(QObject):
             self.checkForUpdates(i)
 
     def _load_existing_ids(self, first=False):
-        print(f"既存のダウンロード済みデータをロード中... {self.data_dir}")
+        #print(f"既存のダウンロード済みデータをロード中... {self.data_dir}")
         for filename in os.listdir(self.data_dir):
             if filename.endswith(".zst"):
                 extracted_id_part = filename[:-4]
@@ -108,7 +108,7 @@ class JMADataFetcher(QObject):
                     except:
                         print(f"Zstandard解凍エラー")
                         continue
-                    self.processReport({'id': extracted_id_part}, filedata, playtelop=not first) 
+                    self.processReport({'id': extracted_id_part}, filedata,test=False, playtelop=not first) 
                 full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"
                 self.downloaded_ids.add(full_id)
         print(f"ロード完了。ダウンロード済みID数: {len(self.downloaded_ids)}")
@@ -210,15 +210,15 @@ class JMADataFetcher(QObject):
                 no_network=False,
                 resolve_entities=True,
                 attribute_defaults=True,
-                dtd_validation=False,
-                schema_validation=False
+                dtd_validation=False
+                #schema_validation=False
             )
             parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
 
             schema_doc = etree.parse(xsd_path, parser=parser, base_url=f"file://{os.path.abspath(self.xsd_dir)}/")
             schema = etree.XMLSchema(schema_doc)
             self.xsd_schemas[xsd_filename] = schema
-            print(f"XSDスキーマをロードしました: {xsd_filename}")
+            #print(f"XSDスキーマをロードしました: {xsd_filename}")
             return schema
         except etree.XMLSchemaParseError as e:
             self.errorOccurred.emit(f"XSDスキーマのパースエラー {xsd_filename}: {e}")
@@ -241,7 +241,7 @@ class JMADataFetcher(QObject):
                 return
 
             report_xml_content = reply.readAll().data()
-            self.processReport(entry_data, report_xml_content, playtelop=True)
+            self.processReport(entry_data, report_xml_content, test=False, playtelop=True)
         except etree.XMLSyntaxError as e:
             self.errorOccurred.emit(f"レポートXML構文エラー {entry_data['id']}: {e}")
         except Exception as e:
@@ -249,27 +249,31 @@ class JMADataFetcher(QObject):
         finally:
             reply.deleteLater()
 
-    def processReport(self, entry_data, report_xml_content, playtelop=False):
+    def processReport(self, entry_data, report_xml_content, test=False, playtelop=False):
         parser = etree.XMLParser()
         parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
         report_tree = etree.fromstring(report_xml_content, parser)
         # IDからデータタイプコードを抽出
-        id_parts = entry_data['id'].split('/')
-        filename_with_timestamp = id_parts[-1]
-        data_type_code = filename_with_timestamp.split('_')[2]
+        if test:
+            data_type_code=entry_data
+        else:
+            id_parts = entry_data['id'].split('/')
+            filename_with_timestamp = id_parts[-1]
+            data_type_code = filename_with_timestamp.split('_')[2]
 
         # ルート要素からxmlns属性を取得し、XSDファイル名を特定
-        print(f"ルート要素: {report_tree.text}, 属性: {report_tree.attrib}")
-        schema_location_attr = report_tree.get('xmlns:jmx')
-        print(f"取得したXMLのルート要素: {report_tree}, xmlns属性: {schema_location_attr}")
+        #print(f"ルート要素: {report_tree.text}, 属性: {report_tree.attrib}")
+        #schema_location_attr = report_tree.get('xmlns')
+        #print(f"取得したXMLのルート要素: {report_tree}, xmlns属性: {report_tree.attrib}")
         #xsd_filename = None
-        if schema_location_attr:
-            parts = schema_location_attr.split()
-            if len(parts) % 2 == 0:
-                xsd_filename = parts[-1] 
-                if not xsd_filename.endswith(".xsd"):
-                    xsd_filename = None
-        xsd_filename = "http://xml.kishou.go.jp/jmaxml1/"
+        #if schema_location_attr:
+        #    parts = schema_location_attr.split()
+        #    if len(parts) % 2 == 0:
+        #        xsd_filename = parts[-1] 
+        #        if not xsd_filename.endswith(".xsd"):
+        #            xsd_filename = None
+        #xsd_filename = "http://xml.kishou.go.jp/jmaxml1/"
+        xsd_filename="jmx.xsd"
         schema = None
         if xsd_filename:
             schema = self._get_xsd_schema(xsd_filename)
@@ -279,24 +283,28 @@ class JMADataFetcher(QObject):
         # XSDスキーマ検証
         if schema:
             if not schema.validate(report_tree):
-                print(f"XMLスキーマ検証エラー: {entry_data['id']}")
+                #print(f"XMLスキーマ検証エラー: {entry_data['id']}")
                 for error in schema.error_log:
+                    pass
                     print(f"  - {error.message} (Line: {error.line}, Column: {error.column})")
             else:
-                print(f"XMLスキーマ検証成功: {entry_data['id']}")
+                pass
+                #print(f"XMLスキーマ検証成功: {entry_data['id']}")
         else:
             pass #print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。", end="\n\n")
 
         # 取得したXMLコンテンツをzstdで圧縮して保存
         # ここを修正: ファイル名をデータタイプコードではなく、元のIDの末尾部分を使用
-        filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
-        output_filename = os.path.join(self.data_dir, f"{filename_base}.zst")
+        if not test:
+            filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
+            output_filename = os.path.join(self.data_dir, f"{filename_base}.zst")
         
-        with open(output_filename, 'wb') as f:
-            f.write(zstd.compress(report_xml_content))
-
-        print(f"圧縮データを保存しました: {output_filename}")
-        self.downloaded_ids.add(entry_data['id'])
+            if playtelop:
+                with open(output_filename, 'wb') as f:
+                    f.write(zstd.compress(report_xml_content))
+    
+                print(f"圧縮データを保存しました: {output_filename}")
+                self.downloaded_ids.add(entry_data['id'])
 
         # データタイプに基づいて適切なパーサーに処理を振り分け
         parsed_data = {}
@@ -310,7 +318,7 @@ class JMADataFetcher(QObject):
                 'jmx_seis': "http://xml.kishou.go.jp/jmaxml1/body/seismology1/",
                 'jmx_volc': "http://xml.kishou.go.jp/jmaxml1/body/volcanology1/",
                 'jmx_mete': "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/",
-                'jmx_add': "http://xml.kishou.go.jp/jmaxml1/body/additional1/",
+                'jmx_add': "http://xml.kishou.go.jp/jmaxml1/addition1/",
                 'jmx_eb': "http://xml.kishou.go.jp/jmaxml1/elementBasis1/",
                 'xsi': "http://www.w3.org/2001/XMLSchema" # xsi名前空間も必要
             }
@@ -318,7 +326,7 @@ class JMADataFetcher(QObject):
             # 解析済みデータをメインアプリケーションに通知
             #self.dataFetched.emit(output_filename, data_type_code, parsed_data)
             telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
-            print(f"テロップ情報: {telop_dict}")
+            #print(f"テロップ情報: {telop_dict}")
             if playtelop:
                 #telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
                 
