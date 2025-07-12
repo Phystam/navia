@@ -10,11 +10,11 @@ Item{
   anchors.topMargin: parent.height*0.05
   width:parent.width*0.85
   height:parent.height*0.11
-  Rectangle {
+  /* Rectangle {
       anchors.fill: parent
       color: "transparent"
       border.color: "blue"
-  }
+  } */
   property var soundList: []
   property var textList: []
   property var logoList: []
@@ -189,11 +189,11 @@ Item{
     style: Text.Outline
     styleColor: "black"
     fontSizeMode:Text.Fit
-    Rectangle {
+    /* Rectangle {
       anchors.fill: parent
       color: "transparent"
       border.color: "red"
-    }
+    } */
   }
   Text {
     verticalAlignment: Text.AlignVCenter
@@ -212,11 +212,11 @@ Item{
     style: Text.Outline
     styleColor: "black"
     fontSizeMode:Text.Fit
-    Rectangle {
+    /* Rectangle {
       anchors.fill: parent
       color: "transparent"
       border.color: "red"
-    }
+    } */
   }
   Text {
     verticalAlignment: Text.AlignVCenter

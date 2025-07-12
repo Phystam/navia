@@ -4,3 +4,4 @@ jmadata/
 jma_parsers/__pycache__/*.pyc
 sounds/*
 jmaxml_20250710_Samples/*
+jmaxml_20250710_Manual/*

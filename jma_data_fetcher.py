@@ -7,6 +7,8 @@ from lxml import etree
 from lxml.etree import XMLSchema, XMLParser, parse, Resolver
 
 # パーサーをインポート
+from jma_parsers.VPZJ50 import VPZJ50
+from jma_parsers.VPOA50 import VPOA50
 from jma_parsers.VGSK50 import VGSK50
 from jma_parsers.VPWW54 import VPWW54
 from jma_parsers.VXSE53 import VXSE53
@@ -73,6 +75,23 @@ class JMADataFetcher(QObject):
         # パーサーのインスタンスを辞書に登録
         self.parsers = {
             "VGSK50": VGSK50(self), # 季節観測
+            "VGSK55": VGSK50(self), # 季節観測
+            "VGSK60": VGSK50(self), # 季節観測
+            "VPZJ50": VPZJ50(self), # 全般気象情報 一般報
+            "VPZJ51": VPZJ50(self), # 全般気象解説情報 一般報
+            "VPCJ50": VPZJ50(self), # 地方気象情報 一般報
+            "VPCJ51": VPZJ50(self), # 地方気象解説情報 一般報
+            "VPFJ50": VPZJ50(self), # 府県気象情報 一般報
+            "VPFJ51": VPZJ50(self), # 府県気象解説情報 一般報
+            "VPTI50": VPZJ50(self), # 全般台風情報報（総合情報、上陸等情報），発達する熱帯低気圧に関する情報 一般報
+            "VPTI51": VPZJ50(self), # 全般台風情報 （位置、発生情報），発達する熱帯低気圧に関する情報 一般報
+            "VPTI52": VPZJ50(self), # 全般台風情報 （位置詳細）一般報
+            "VPFG50": VPZJ50(self), # 府県天気概況
+            "VMCJ50": VPZJ50(self), # 全般潮位情報 一般報
+            "VMCJ51": VPZJ50(self), # 地方潮位情報 一般報
+            "VMCJ52": VPZJ50(self), # 府県潮位情報 一般報
+            "VPOA50": VPOA50(self), # 記録的短時間大雨情報
+            
             "VPWW54": VPWW54(self), # 気象警報
             "VXSE53": VXSE53(self), # 地震情報
             "VFVO52": VFVO52(self), # 噴火に関する火山観測報

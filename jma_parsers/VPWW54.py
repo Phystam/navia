@@ -81,7 +81,7 @@ class VPWW54(BaseJMAParser):
         lenitem=len(itemelements)
         for i in range(lenitem):
             codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
-            print(codeelements)
+            #(codeelements)
             areaelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]//jmx_ib:Area/jmx_ib:Name/text()',namespaces)
             if not codeelements in codeCombinationList and len(codeelements)!=0:
                 codeCombinationList.append(codeelements)
@@ -92,7 +92,7 @@ class VPWW54(BaseJMAParser):
                     if codeelements == codelist:
                         areaList[j].append(areaelements[0]) #テキストで追加する
                 pass
-        print(f"{codeCombinationList}:{areaList}")
+        #print(f"{codeCombinationList}:{areaList}")
         
         #logo, textに整形する
         logos=[]

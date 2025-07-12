@@ -107,7 +107,7 @@ class VXSE53(BaseJMAParser):
                 areas.append(area)
             areaList.append(areas)
 
-        print(f"{shindoList}:{areaList}")
+        #print(f"{shindoList}:{areaList}")
         
         # areasが6箇所以上より長いとき、分割する。
         ndiv=5
