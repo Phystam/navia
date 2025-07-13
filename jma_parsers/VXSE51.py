@@ -1,7 +1,7 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 
-class VXSE53(BaseJMAParser):
+class VXSE51(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.data_type = "VXSE53" # このパーサーが扱うデータタイプ
@@ -53,28 +53,19 @@ class VXSE53(BaseJMAParser):
                        "震度２": "2",
                        "震度１": "1"
                        }
-        publishing_office = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
-        title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
-        max_intensity = self._get_text(xml_tree, '//jmx_seis:MaxInt/text()', namespaces)
+        publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        title = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
+        max_intensity = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
         # 最大震度に応じたサウンドを設定
         sound = f"./sounds/Grade{max_intensity}.wav"  # デフォルトのサウンドファイル
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
         sound_list.append(sound)
         headline = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        hypocenter_name = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
-        magnitude_value = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces)
-        
-        coordinates = self._get_coordinates(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
-        comment = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Comments/jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
-        message=f"震源は{hypocenter_name} 深さ{-int(coordinates[0]['altitude']/1000)}km マグニチュード{magnitude_value} 最大震度 {max_intensity}"
-        logo_list.append(["", ""])
-        text_list.append([headline, message])
-        sound_list.append("")
         
         # headlineを句点で分割
-        comment=comment.replace("\n","")
-        tlist=comment.split("。")
+        headline=headline.replace("\n","")
+        tlist=headline.split("。")
         # 最後。で終わるので、最後尾の要素を削除する
         tlist=tlist[:-1]
         # 要素数が奇数の場合、空文字を追加して偶数にする
@@ -91,7 +82,7 @@ class VXSE53(BaseJMAParser):
                 text_list.append(tlist[i-1:i+1])
 
         #気象警報のコードと地域のペアを取得する
-        type="震源・震度に関する情報（細分区域）"
+        type="震度速報"
         #type="気象警報・注意報（市町村等）"
         shindoList=[]
         areaList=[]
