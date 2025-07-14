@@ -2,16 +2,16 @@
 from .jma_base_parser import BaseJMAParser
 import datetime
 
-class VFVO52(BaseJMAParser):
+class VFVO56(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.data_type = "VFVO52" # このパーサーが扱うデータタイプ
+        self.data_type = "VFVO56" # このパーサーが扱うデータタイプ
 
     def parse(self, xml_tree, namespaces, data_type_code):
         """
-        噴火に関する火山観測報 (VFVO52) のXMLを解析します。
+        噴火速報 (VFVO56) のXMLを解析します。
         """
-        print(f"噴火に関する火山観測報 ({self.data_type}) を解析中...")
+        print(f"噴火速報 ({self.data_type}) を解析中...")
         parsed_data = {}
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)

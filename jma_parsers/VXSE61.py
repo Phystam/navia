@@ -1,13 +1,14 @@
+# jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 
-class VPZJ50(BaseJMAParser):
+class VXSE61(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.data_type = "VPZJ50" # このパーサーが扱うデータタイプ
+        self.data_type = "VXSE61" # このパーサーが扱うデータタイプ
 
     def parse(self, xml_tree, namespaces, data_type_code):
         """
-        一般報 (VPZJ50) のXMLを解析します。
+        地震情報 (VXSE61) のXMLを解析します。
         """
         print(f"地震情報 ({self.data_type}) を解析中...")
         parsed_data = {}
@@ -18,53 +19,52 @@ class VPZJ50(BaseJMAParser):
         parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
         parsed_data['headline_text'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        # Body/Earthquake/Hypocenter/Area/Name (震央地名)
+        parsed_data['forecast_comment'] = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Comments/jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
 
         # 必要に応じて、さらに詳細な震度情報などを抽出することも可能
 
         self.parsedData.emit(self.data_type, parsed_data)
         return parsed_data
     
-    def content(self, xml_tree, namespaces, data_type):
+    def content(self, xml_tree, namespaces, telop_dict):
         """
         XMLツリーと名前空間を受け取り、地震情報の内容を解析して辞書として返します。
         telop_dict: テロップ情報の辞書, logoとtextのペアをリストとして持つ。
         """
+        sound_list = []
         logo_list = []
         text_list = []
-        sound_list = []
+        shindo_codelist = {"震度７": "7",
+                       "震度６強": "6+",
+                       "震度６弱": "6-",
+                       "震度５強": "5+",
+                       "震度５弱": "5-",
+                       "震度４": "4",
+                       "震度３": "3",
+                       "震度２": "2",
+                       "震度１": "1"
+                       }
         publishing_office = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
-        if data_type=="VPFG50": #天気概況
-            targetarea=self._get_text(xml_tree, '//jmx_mete:TargetArea/jmx_mete:Name/text()', namespaces)
-        else:
-            targetarea=""
-            
-        headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        if "最大級の警戒" in headline or "安全の確保" in headline:
-            sound="sounds/EEWalert.wav"
-            level=5
-        elif "厳重に警戒" in headline:
-            sound="sounds/Grade5-.wav"
-            level=4
-        elif "警戒" in headline:
-            sound="sounds/GeneralWarning.wav"
-            level=3
-        elif "注意" in headline:
-            sound="sounds/GeneralInfo.wav"
-            level=2
-        else:
-            sound="sounds/Forecast.wav"
-        if "解除" in headline:
-            sound="sounds/Forecast.wav"
-            level=0
-        
+        # 最大震度に応じたサウンドを設定
+        sound = f"./sounds/GeneralInfo.wav"  # デフォルトのサウンドファイル
         logo_list.append(["", ""])
-        text_list.append([f"<b>{publishing_office}発表 {targetarea}{title}</b>",""])  
+        text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
         sound_list.append(sound)
-                # headlineを句点で分割
-        headline=headline.replace("\n","")
-        tlist=headline.split("。")
+        headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        hypocenter_name = self._get_text(xml_tree, '//jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
+        magnitude_value = self._get_text(xml_tree, '//jmx_eb:Magnitude/text()', namespaces)
+        
+        coordinates = self._get_coordinates(xml_tree, '//jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
+        comment = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
+        message=f"震源は{hypocenter_name} 深さ{-int(coordinates[0]['altitude']/1000)}km マグニチュード{magnitude_value}"
+        logo_list.append(["", ""])
+        text_list.append([headline, message])
+        sound_list.append("")
+        
+        # headlineを句点で分割
+        comment=comment.replace("\n","")
+        tlist=comment.split("。")
         # 最後。で終わるので、最後尾の要素を削除する
         tlist=tlist[:-1]
         # 要素数が奇数の場合、空文字を追加して偶数にする
@@ -79,11 +79,10 @@ class VPZJ50(BaseJMAParser):
                 sound_list.append("")
                 logo_list.append(["", ""])
                 text_list.append(tlist[i-1:i+1])
-        
-        
+
         telop_dict = {
+            'sound_list': sound_list,
             'logo_list': logo_list,
-            'text_list': text_list,
-            'sound_list': sound_list
+            'text_list': text_list
         }
         return telop_dict

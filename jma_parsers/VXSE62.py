@@ -1,14 +1,14 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 
-class VXSE51(BaseJMAParser):
+class VXSE62(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.data_type = "VXSE51" # このパーサーが扱うデータタイプ
+        self.data_type = "VXSE62" # このパーサーが扱うデータタイプ
 
     def parse(self, xml_tree, namespaces, data_type_code):
         """
-        地震情報 (VXSE51) のXMLを解析します。
+        地震情報 (VXSE62) のXMLを解析します。
         """
         print(f"地震情報 ({self.data_type}) を解析中...")
         parsed_data = {}
@@ -53,15 +53,23 @@ class VXSE51(BaseJMAParser):
                        "震度２": "2",
                        "震度１": "1"
                        }
-        publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
-        title = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
-        max_intensity = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
+        
+        kaikyu_codelist = {"長周期地震動階級４": "4",
+                       "長周期地震動階級３": "3",
+                       "長周期地震動階級２": "2",
+                       "長周期地震動階級１": "1"
+                       }
+        publishing_office = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
+        title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
+        max_intensity = self._get_text(xml_tree, '//jmx_seis:MaxInt/text()', namespaces)
         # 最大震度に応じたサウンドを設定
         sound = f"./sounds/Grade{max_intensity}.wav"  # デフォルトのサウンドファイル
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
         sound_list.append(sound)
         headline = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        comment = self._get_text(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Comments/jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
+        
         
         # headlineを句点で分割
         headline=headline.replace("\n","")
@@ -82,53 +90,53 @@ class VXSE51(BaseJMAParser):
                 text_list.append(tlist[i-1:i+1])
 
         #気象警報のコードと地域のペアを取得する
-        type="震度速報"
+        type="長周期地震動に関する観測情報（細分区域）"
         #type="気象警報・注意報（市町村等）"
-        shindoList=[]
+        kaikyuList=[]
         areaList=[]
         itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item',namespaces)
         lenitem=len(itemelements)
         for i in range(lenitem):
-            shindo = shindo_codelist[ self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Name/text()',namespaces) ]
+            kaikyu = kaikyu_codelist[ self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Name/text()',namespaces) ]
             areaselements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Areas/jmx_ib:Area',namespaces)
-            shindoList.append(shindo)
+            kaikyuList.append(kaikyu)
             areas=[]
             for j in range(len(areaselements)):
                 area = self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Areas/jmx_ib:Area[{j+1}]/jmx_ib:Name/text()',namespaces)
                 areas.append(area)
             areaList.append(areas)
 
-        #print(f"{shindoList}:{areaList}")
+        #print(f"{kaikyuList}:{areaList}")
         
         # areasが6箇所以上より長いとき、分割する。
         ndiv=5
-        shindoList_div=[]
+        kaikyuList_div=[]
         areaList_div=[]
         
         row_counter=0
-        for i in range(len(shindoList)):
+        for i in range(len(kaikyuList)):
             counter=0    
             for j in range(0, len(areaList[i]), ndiv):
                 if row_counter%2==0 or counter==0:
-                    shindoList_div.append(shindoList[i])
+                    kaikyuList_div.append(kaikyuList[i])
                 else:
-                    shindoList_div.append("")
+                    kaikyuList_div.append("")
                 areaList_div.append(areaList[i][j:j+ndiv])
                 counter+=1
                 row_counter+=1
             if counter>1 and row_counter%2==1:
                 areaList_div.append([])
-                shindoList_div.append("")
+                kaikyuList_div.append("")
                 row_counter+=1
                 
         #logo, textに整形する
         logos=[]
         texts=[]
-        for i in range(len(shindoList_div)):
+        for i in range(len(kaikyuList_div)):
             logo=""
             areatext=""
-            if(shindoList_div[i]!=""):
-                logos.append(f"materials/grade{shindoList_div[i]}.svg")
+            if(kaikyuList_div[i]!=""):
+                logos.append(f"materials/kaikyu{kaikyuList_div[i]}.svg")
             else:
                 logos.append("")
             for area in areaList_div[i]:

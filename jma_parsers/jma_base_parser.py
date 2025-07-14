@@ -1,11 +1,12 @@
 # jma_parsers/jma_base_parser.py
 from PySide6.QtCore import QObject, Signal
 import re
+from datetime import datetime
 
 class BaseJMAParser(QObject):
     # 解析されたデータを通知するシグナル (データタイプと解析済みデータ)
     parsedData = Signal(str, dict)
-
+    
     def __init__(self, parent=None):
         super().__init__(parent)
     
@@ -39,6 +40,11 @@ class BaseJMAParser(QObject):
         """XPathで要素の属性を取得するヘルパー関数"""
         result = element.xpath(xpath, namespaces=namespaces)
         return result[0] if result else default
+    
+    def _get_datetime(self, element, xpath, namespaces, default=datetime(2000,1,1,0,0,0)):
+        """XPathで要素の属性を取得するヘルパー関数"""
+        result = element.xpath(xpath, namespaces=namespaces)
+        return datetime.fromisoformat(result[0]) if result else default
     
     def _get_coordinates(self, element, xpath, namespaces):
         """座標情報を取得するヘルパー関数"""

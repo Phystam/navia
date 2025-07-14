@@ -75,9 +75,10 @@ class MainApp(QObject):
     @Slot()
     def onTest(self):
         #entry_data=R"jmaxml_20250710_Samples/15_12_02_161130_VPWW54.xml"
-        entry_data=R"jmaxml_20250710_Samples/32-35_07_05_100915_VXSE51.xml"
+        entry_data=R"jmaxml_20250710_Samples/17_04_02_250630_VXWW50.xml"
         with open(entry_data,"rb") as f:
-            dataname=R"VXSE51"
+            dataname=entry_data[-10:-4]
+            print(dataname)
             data=f.read()
             self.jma_fetcher.processReport(dataname,data,test=True, playtelop=True)
             

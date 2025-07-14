@@ -11,10 +11,15 @@ from jma_parsers.VPZJ50 import VPZJ50
 from jma_parsers.VPOA50 import VPOA50
 from jma_parsers.VGSK50 import VGSK50
 from jma_parsers.VPWW54 import VPWW54
+from jma_parsers.VXWW50 import VXWW50
 from jma_parsers.VXSE51 import VXSE51
+from jma_parsers.VXSE52 import VXSE52
 from jma_parsers.VXSE53 import VXSE53
+from jma_parsers.VXSE61 import VXSE61
+from jma_parsers.VXSE62 import VXSE62
 from jma_parsers.VFVO52 import VFVO52
 from jma_parsers.VFVO53 import VFVO53
+from jma_parsers.VFVO56 import VFVO56
 #from jma_parsers.jma_volcano_parser import VolcanoParser # 仮のパーサー
 
 # カスタムResolverクラス (変更なし、ただしxsd_dirのパスが適切であることを確認)
@@ -31,7 +36,7 @@ class LocalXSDResolver(Resolver):
             "http://xml.kishou.go.jp/jmaxml1/body/volcanology1/": os.path.join("jmaxml1", "body", "volcanology1", "jma_volc.xsd"),
             "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/": os.path.join("jmaxml1", "body", "meteorology1", "jma_mete.xsd"),
             "http://xml.kishou.go.jp/jmaxml1/elementBasis1/": os.path.join("jmaxml1", "elementBasis1", "jma_eb.xsd"),
-            "http://xml.kishou.go.jp/jmaxml1/body/additional1/": os.path.join("jmaxml1", "body", "additional1", "jma_add.xsd"),
+            "http://xml.kishou.go.jp/jmaxml1/body/addition1/": os.path.join("jmaxml1", "body", "addition1", "jma_add.xsd"),
             # 他のスキーマもここに追加
         }
         #print(f"LocalXSDResolver initialized with xsd_base_dir: {self.xsd_base_dir}")
@@ -92,14 +97,18 @@ class JMADataFetcher(QObject):
             "VMCJ51": VPZJ50(self), # 地方潮位情報 一般報
             "VMCJ52": VPZJ50(self), # 府県潮位情報 一般報
             "VPOA50": VPOA50(self), # 記録的短時間大雨情報
-            
+            "VXWW50": VXWW50(self), # 土砂災害警戒情報
             "VPWW54": VPWW54(self), # 気象警報
             "VXSE51": VXSE51(self), # 震度速報
+            "VXSE52": VXSE52(self), # 震源に関する情報
             "VXSE53": VXSE53(self), # 震源・震度情報
+            "VXSE61": VXSE61(self), # 顕著な地震の震源要素更新のお知らせ
+            "VXSE62": VXSE62(self), # 長周期地震動に関する観測情報
             "VFVO52": VFVO52(self), # 噴火に関する火山観測報
             "VFVO53": VFVO53(self), # 降灰予報 (定時) (仮)
             "VFVO54": VFVO53(self), # 降灰予報 (速報) 
             "VFVO55": VFVO53(self), # 降灰予報 (詳細)
+            "VFVO56": VFVO56(self)  # 噴火速報
             #"VFVO53": VolcanoParser(self),    # 火山情報 (仮)
             # 他のデータタイプもここに追加
         }
@@ -123,13 +132,14 @@ class JMADataFetcher(QObject):
         for filename in os.listdir(self.data_dir):
             if filename.endswith(".zst"):
                 extracted_id_part = filename[:-4]
-                with open(os.path.join(self.data_dir, filename), 'rb') as f:
-                    try:
-                        filedata=zstd.decompress(f.read())  # Zstandard圧縮を解凍
-                    except:
-                        print(f"Zstandard解凍エラー")
-                        continue
-                    self.processReport({'id': extracted_id_part}, filedata,test=False, playtelop=not first) 
+                #わざわざファイルを解凍する必要はない
+                #with open(os.path.join(self.data_dir, filename), 'rb') as f:
+                #    try:
+                #        filedata=zstd.decompress(f.read())  # Zstandard圧縮を解凍
+                #    except:
+                #        print(f"Zstandard解凍エラー")
+                #        continue
+                #    self.processReport({'id': extracted_id_part}, filedata,test=False, playtelop=not first) 
                 full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"
                 self.downloaded_ids.add(full_id)
         print(f"ロード完了。ダウンロード済みID数: {len(self.downloaded_ids)}")
