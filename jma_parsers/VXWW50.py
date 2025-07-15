@@ -56,23 +56,8 @@ class VXWW50(BaseJMAParser):
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
         sound_list.append(sound)
-        # headlineを句点または改行で分割
-        tlist=re.split("[。\\n]",headline)
-        # 空の行を削除
-        tlist = [ line for line in tlist if line != "" ] 
         
-        # 要素数が奇数の場合、空文字を追加して偶数にする
-        if len(tlist) %2 != 0:
-            tlist.append("")
-        for i in range(len(tlist)):
-            # 消された句点を復元
-            if not "＜" in tlist[i]:
-                tlist[i] = f"{tlist[i]}。"
-            # 奇数番目のとき、2行分のリストを追加
-            if i % 2 == 1:
-                sound_list.append("")
-                logo_list.append(["", ""])
-                text_list.append(tlist[i-1:i+1])
+        self.format_and_append_text(headline,logo_list,text_list,sound_list)
                 
         codeCombinationList=[]
         areaList=[]
