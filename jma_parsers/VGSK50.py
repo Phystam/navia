@@ -53,9 +53,10 @@ class VGSK50(BaseJMAParser):
         logo_list.append(["", ""])
         text_list.append([headline, ""])
         sound_list.append("")
+        notify_level=5
         telop_dict = {
             'logo_list': logo_list,
             'text_list': text_list,
             'sound_list': sound_list
         }
-        return telop_dict
+        return telop_dict, {publishing_office: notify_level}

@@ -61,10 +61,10 @@ class VPOA50(BaseJMAParser):
                 logo_list.append(["", ""])
                 text_list.append(tlist[i-1:i+1])
         
-        
+        notify_level=4
         telop_dict = {
             'logo_list': logo_list,
             'text_list': text_list,
             'sound_list': sound_list
         }
-        return telop_dict
+        return telop_dict, {publishing_office: notify_level}

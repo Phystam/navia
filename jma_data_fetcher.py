@@ -6,6 +6,7 @@ from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkRe
 from lxml import etree
 from lxml.etree import XMLSchema, XMLParser, parse, Resolver
 
+from settings_manager import SettingsManager
 # パーサーをインポート
 from jma_parsers.VPZJ50 import VPZJ50
 from jma_parsers.VPOA50 import VPOA50
@@ -78,7 +79,8 @@ class JMADataFetcher(QObject):
         os.makedirs(self.xsd_dir, exist_ok=True) # XSDディレクトリも存在確認
 
         self.xsd_schemas = {} # ロードしたXSDスキーマをキャッシュする辞書
-
+        #設定インスタンスを登録
+        self.setting_manager = SettingsManager(self)
         # パーサーのインスタンスを辞書に登録
         self.parsers = {
             "VGSK50": VGSK50(self), # 季節観測
@@ -358,8 +360,18 @@ class JMADataFetcher(QObject):
             #parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
             # 解析済みデータをメインアプリケーションに通知
             #self.dataFetched.emit(output_filename, data_type_code, parsed_data)
-            telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
-            #print(f"テロップ情報: {telop_dict}")
+            # テロップ表示解析後、通知レベルによって表示するか確認
+            telop_dict, warning_level = parser_instance.content(report_tree, namespaces, data_type_code)
+            notify_levels_region=self.setting_manager._settings["meteorology"]["notify_observatories_telop_level"]
+            for region in notify_levels_region:
+                for area in notify_levels_region[region]:
+                    try:
+                        playtelop = warning_level[area] >= notify_levels_region[region][area]
+                        print("")
+                    except:
+                        pass
+                
+            print(f"テロップ情報: {telop_dict}")
             if playtelop:
                 #telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
                 

@@ -42,14 +42,22 @@ class VFVO50(BaseJMAParser):
         # sound
         sound=""
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        notify_level=1
         if "警戒レベル５" in headline:
             sound="sounds/Grade7.wav"
+            notify_level=5
         elif "警戒レベル４" in headline:
             sound="sounds/Grade5+.wav"
+            notify_level=4
         elif "警戒レベル３" in headline:
             sound="sounds/Grade3.wav"
+            notify_level=3
+        elif "警戒レベル２" in headline:
+            sound="sounds/GeneralInfo.wav"
+            notify_level=2
         else:
             sound="sounds/GeneralInfo.wav"
+            notify_level=1
         publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         logo_list.append(["", ""])
@@ -80,4 +88,4 @@ class VFVO50(BaseJMAParser):
             'logo_list': logo_list,
             'text_list': text_list
         }
-        return telop_dict
+        return telop_dict, {publishing_office: notify_level}

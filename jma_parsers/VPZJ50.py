@@ -39,25 +39,25 @@ class VPZJ50(BaseJMAParser):
             targetarea=self._get_text(xml_tree, '//jmx_mete:TargetArea/jmx_mete:Name/text()', namespaces)
         else:
             targetarea=""
-            
+        notify_level=0
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
         if "最大級の警戒" in headline or "安全の確保" in headline:
             sound="sounds/EEWalert.wav"
-            level=5
+            notify_level=5
         elif "厳重に警戒" in headline:
             sound="sounds/Grade5-.wav"
-            level=4
+            notify_level=4
         elif "警戒" in headline:
             sound="sounds/GeneralWarning.wav"
-            level=3
+            notify_level=3
         elif "注意" in headline:
             sound="sounds/GeneralInfo.wav"
-            level=2
+            notify_level=2
         else:
             sound="sounds/Forecast.wav"
         if "解除" in headline:
             sound="sounds/Forecast.wav"
-            level=0
+            notify_level=0
         
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {targetarea}{title}</b>",""])  
@@ -86,4 +86,4 @@ class VPZJ50(BaseJMAParser):
             'text_list': text_list,
             'sound_list': sound_list
         }
-        return telop_dict
+        return telop_dict, {publishing_office: notify_level}

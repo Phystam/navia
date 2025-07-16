@@ -104,7 +104,7 @@ Item{
     }
     for(var i=0;i<_textList.length;i++){
       telop.textList.push(_textList[i])
-      console.log("telop.textList.push: " + _textList[i]) 
+      //console.log("telop.textList.push: " + _textList[i]) 
     }
     if (is_first) {
       //初期化時に何も表示されていない場合は、最初のテキストを表示する
@@ -123,7 +123,7 @@ Item{
     if (logoList[0][0]=="" && logoList[0][1]==""){
       text1=textList[0][0]
       text2=textList[0][1]
-      console.log("telop.textList: " + text1 + ", " + text2)
+      //console.log("telop.textList: " + text1 + ", " + text2)
       txt1.horizontalAlignment=Text.AlignHCenter
       txt1.anchors.left=telop.left
       txt1.anchors.right=telop.right
@@ -141,7 +141,7 @@ Item{
       var logo1array=logo1.split(",")
       var logo2array=logo2.split(",")
       
-      console.log(logo1array)
+      //console.log(logo1array)
       //右から順に詰めていくので、左から順番通りにするためには逆順で入れる必要がある
       for(var i=logo1array.length-1;i>=0;i--){
         if(logo1array[i]!="no"){
@@ -168,11 +168,11 @@ Item{
       txt2.horizontalAlignment=Text.AlignLeft
       txt2.anchors.left=telop.horizontalCenter
       txt2.anchors.leftMargin=-telop.width*0.1
-      console.log("telop.textList: " + text1 + ", " + text2)
+      //console.log("telop.textList: " + text1 + ", " + text2)
     }
     textList.shift() // テキストを表示したらリストから削除
     logoList.shift() 
-    console.log("textList.length: " + textList.length)
+    //console.log("textList.length: " + textList.length)
   }
 
   Text {

@@ -152,10 +152,10 @@ class VXSE62(BaseJMAParser):
                 logo_list.append(logos[i-1:i+1])
                 text_list.append(texts[i-1:i+1])
                 sound_list.append("")
-
+        notify_level=3
         telop_dict = {
             'sound_list': sound_list,
             'logo_list': logo_list,
             'text_list': text_list
         }
-        return telop_dict
+        return telop_dict, {publishing_office: notify_level}

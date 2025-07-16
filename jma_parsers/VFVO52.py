@@ -64,9 +64,10 @@ class VFVO52(BaseJMAParser):
         logo_list.append(["", ""])
         text_list.append([headlinetext,f"火口上噴煙高度 {height} 噴煙の流向 {direction}"])
         sound_list.append("")
+        notify_level=3
         telop_dict = {
             'sound_list': sound_list,
             'logo_list': logo_list,
             'text_list': text_list
         }
-        return telop_dict
+        return telop_dict, {publishing_office: notify_level}

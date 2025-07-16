@@ -38,9 +38,10 @@ class VFVO53(BaseJMAParser):
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
         sound_list.append("sounds/GeneralInfo.wav")  # デフォルトのサウンドファイル
         headline = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        notify_level=1
         telop_dict = {
             'sound_list': sound_list,
             'logo_list': logo_list,
             'text_list': text_list
         }
-        return telop_dict
+        return telop_dict, {publishing_office: notify_level}
