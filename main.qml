@@ -35,12 +35,12 @@ Window {
     }
 
     // ウィンドウを移動可能にするためのMouseArea (開発用)
-    MouseArea {
-        anchors.fill: parent
-        // Qt.WindowTransparentForInput が設定されていると、MouseAreaは機能しないため、
-        // 開発中は一時的に WindowTransparentForInput をコメントアウトしてください。
-        onPressed: { mouse.accepted = true; rootWindow.startSystemMove(); }
-    }
+    //MouseArea {
+    //    anchors.fill: parent
+    //    // Qt.WindowTransparentForInput が設定されていると、MouseAreaは機能しないため、
+    //    // 開発中は一時的に WindowTransparentForInput をコメントアウトしてください。
+    //    onPressed: { mouse.accepted = true; rootWindow.startSystemMove(); }
+    //}
 
     Component.onCompleted: {
         // 初期化処理
@@ -48,7 +48,7 @@ Window {
         // 必要に応じて他の初期化処理を追加
         mainApp.telopDataReceived.connect(onTelopReceived);
     }
-    
+    // TODO: テロップデータを複数同時に受診した時、テキストが交錯しないように2番手以降は遅延を入れる
     function onTelopReceived(data) {
         telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"]); // ロゴとテキストを設定
     }

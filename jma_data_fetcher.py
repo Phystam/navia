@@ -92,7 +92,7 @@ class JMADataFetcher(QObject):
             "VPTI50": VPZJ50(self), # 全般台風情報報（総合情報、上陸等情報），発達する熱帯低気圧に関する情報 一般報
             "VPTI51": VPZJ50(self), # 全般台風情報 （位置、発生情報），発達する熱帯低気圧に関する情報 一般報
             "VPTI52": VPZJ50(self), # 全般台風情報 （位置詳細）一般報
-            "VPFG50": VPZJ50(self), # 府県天気概況
+            #"VPFG50": VPZJ50(self), # 府県天気概況
             "VMCJ50": VPZJ50(self), # 全般潮位情報 一般報
             "VMCJ51": VPZJ50(self), # 地方潮位情報 一般報
             "VMCJ52": VPZJ50(self), # 府県潮位情報 一般報
@@ -105,7 +105,7 @@ class JMADataFetcher(QObject):
             "VXSE61": VXSE61(self), # 顕著な地震の震源要素更新のお知らせ
             "VXSE62": VXSE62(self), # 長周期地震動に関する観測情報
             "VFVO52": VFVO52(self), # 噴火に関する火山観測報
-            "VFVO53": VFVO53(self), # 降灰予報 (定時) (仮)
+            #"VFVO53": VFVO53(self), # 降灰予報 (定時) (仮)
             "VFVO54": VFVO53(self), # 降灰予報 (速報) 
             "VFVO55": VFVO53(self), # 降灰予報 (詳細)
             "VFVO56": VFVO56(self)  # 噴火速報

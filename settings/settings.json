@@ -1,0 +1,53 @@
+{
+    "general": {
+        "theme": "dark",
+        "data_retention_days": 30
+    },
+    "meteorology": {
+        "notify_observatories_warning": { 
+            "気象庁": true,
+            "札幌管区気象台": true,
+            "函館地方気象台": false,
+            "旭川地方気象台": false,
+            "室蘭地方気象台": false,
+            "釧路地方気象台": false,
+            "網走地方気象台": false,
+            "稚内地方気象台": false,
+            "大阪管区気象台": false,
+            "東京管区気象台": true
+        },
+        "notify_observatories_alert": {
+            "気象庁": true,
+            "大阪管区気象台": true,
+            "東京管区気象台": true
+        },
+        "display_region_level": "細分区域",
+        "display_info_types": [
+            "天気予報",
+            "注意報",
+            "警報"
+        ]
+    },
+    "seismology": {
+        "notify_regions": {
+            "全国": true,
+            "関東地方": false,
+            "近畿地方": true
+        },
+        "min_magnitude": 2.5,
+        "display_info_types": [
+            "震源・震度情報",
+            "津波情報"
+        ]
+    },
+    "volcanology": {
+        "notify_volcanoes": {
+            "桜島": true,
+            "阿蘇山": true
+        },
+        "display_info_types": [
+            "噴火速報",
+            "降灰予報"
+        ]
+    }
+}

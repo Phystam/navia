@@ -1,27 +1,33 @@
 # main.py (Updated with Data Fetcher)
 import sys
-from PySide6.QtCore import QObject, Slot, Signal # アプリ部分を移動させても忘れずにimport
+from PySide6.QtCore import QObject, QUrl, Slot, Signal # アプリ部分を移動させても忘れずにimport
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtQml import QQmlApplicationEngine, QQmlComponent
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 
 # clock.py から ClockApp をインポート
 from clock import ClockApp
 # jma_data_fetcher.py から JMADataFetcher をインポート
 from jma_data_fetcher import JMADataFetcher
-
+from settings_manager import SettingsManager
 # メインアプリケーションクラス
 class MainApp(QObject):
     
     telopDataReceived= Signal(dict)  # テロップ情報を受け取るためのシグナル
+    onSettingsApplied = Signal(dict)
     
-    def __init__(self, parent=None):
+    def __init__(self, engine_instance, parent=None):
         super().__init__(parent)
+        self.engine = engine_instance
         self.createTrayIcon() # タスクトレイアイコンを作成
 
         # JMADataFetcher のインスタンスを作成
         # JMADataFetcherは内部でQTimerを持っており、定期的にデータ取得を行います
         self.jma_fetcher = JMADataFetcher(self)
+        # 設定用インスタンス
+        self.settings_manager = SettingsManager(self)
+        self.settings_manager._load_settings()
+        self.settings_window_qml_object = None
         # JMADataFetcherからのシグナルをメインアプリのメソッドに接続
         self.jma_fetcher.dataFetched.connect(self.onDataFetched)
         self.jma_fetcher.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
@@ -38,6 +44,19 @@ class MainApp(QObject):
         # メニューを作成
         trayMenu = QMenu()
 
+        # 設定メニューを追加
+        settingsAction = QAction("設定", self)
+        settingsAction.triggered.connect(self.showSettings)
+        trayMenu.addAction(settingsAction)
+
+        # 区切り線
+        trayMenu.addSeparator()
+
+        # 情報表示メニュー（仮）
+        infoMenu = trayMenu.addMenu("情報")
+        infoMenu.addAction(QAction("気象情報", self))
+        infoMenu.addAction(QAction("地震情報", self))
+        infoMenu.addAction(QAction("火山情報", self))
         # 終了アクションを作成し、メニューに追加
         quitAction = QAction("終了", self)
         quitAction.triggered.connect(QApplication.quit) # アプリケーション終了に接続
@@ -71,6 +90,37 @@ class MainApp(QObject):
         """
         print(f"メインアプリ: エラー発生: {message}")
         # ここでユーザーにエラーを通知する（例: メッセージボックス表示）などの処理を追加できます。
+        
+    @Slot()
+    def showSettings(self):
+        print("設定メニューがクリックされました。")
+        if not self.engine:
+            print("QMLエンジンが初期化されていません。")
+            return
+
+        if not self.settings_window_qml_object:
+            # settings.qmlをロードし、QMLオブジェクトとして保持
+            # Loaderを使う代わりに、直接Windowをロードして表示する
+            component = QQmlComponent(self.engine, QUrl.fromLocalFile("qml_components/settings.qml"))
+            if component.status() == QQmlComponent.Ready:
+                self.settings_window_qml_object = component.create()
+                if self.settings_window_qml_object:
+                    # QMLのsettingsManagerプロパティにPythonのインスタンスをセット
+                    self.settings_window_qml_object.setProperty("settingsManager", self.settings_manager)
+                    # QMLのsettingsAppliedシグナルをPythonのスロットに接続
+                    self.settings_window_qml_object.settingsApplied.connect(self.onSettingsApplied)
+                    self.settings_window_qml_object.show()
+                    print("設定ウィンドウを表示しました。")
+                else:
+                    print("設定ウィンドウの作成に失敗しました。")
+            else:
+                print(f"設定QMLファイルのロードに失敗しました: {component.errorString()}")
+        else:
+            # 既にウィンドウが存在する場合は表示するだけ
+            self.settings_window_qml_object.show()
+            self.settings_manager.reloadSettings() # 設定を再読み込みして最新の状態を反映
+            print("既存の設定ウィンドウを表示しました。")
+        # ここに設定画面を表示するロジックを追加
 
     @Slot()
     def onTest(self):
@@ -95,14 +145,14 @@ if __name__ == "__main__":
     # PythonオブジェクトをQMLに公開
     # ClockAppはclock.pyからインポート
     clock_app = ClockApp()
+    main_app_instance = MainApp(engine)
     engine.rootContext().setContextProperty("clockApp", clock_app)
-
+    engine.rootContext().setContextProperty("mainApp", main_app_instance)
+    engine.rootContext().setContextProperty("settingsManager", main_app_instance.settings_manager)
     # MainAppのインスタンスを作成し、QMLに公開（タスクトレイアイコン用）
     # このインスタンス内でJMADataFetcherも初期化されます
-    main_app_instance = MainApp()
-    engine.rootContext().setContextProperty("mainApp", main_app_instance)
-
-    engine.rootContext().setContextProperty("clockApp", clock_app)
+    
+    
     # QMLファイルをロード
     # QMLファイルはPythonスクリプトと同じディレクトリにあると仮定
     engine.load("main.qml")

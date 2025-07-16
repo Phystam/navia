@@ -18,6 +18,10 @@ Item{
   property var soundList: []
   property var textList: []
   property var logoList: []
+
+  property var soundList_eew: []
+  property var textList_eew: []
+  property var logoList_eew: []
   ListModel {
     id: logoListModel1
   }
