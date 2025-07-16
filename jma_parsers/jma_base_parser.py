@@ -109,3 +109,34 @@ class BaseJMAParser(QObject):
             return sign * decimal_degrees
         except ValueError:
             return None # 変換失敗
+        
+    def format_and_append_text(self, txt:str, logo_list:list, text_list:list, sound_list:list):
+        """テキストをテロップ用に区切り、適切にリスト化する。
+
+        Args:
+            txt (_type_): _description_
+
+        Returns:
+            list: _description_
+        """
+        yaku =["＞", "》", "】"]
+        # txtを句点または改行で分割
+        tlist=re.split("[。\\n]",txt)
+        # 空の行を削除
+        tlist = [ line for line in tlist if line != "" ] 
+        
+        # 要素数が奇数の場合、空文字を追加して偶数にする
+        if len(tlist) %2 != 0:
+            tlist.append("")
+        for i in range(len(tlist)):
+            # 消された句点を復元
+            # 約物括弧付きの行は。をつけない
+            if set(yaku).isdisjoint(set(tlist[i])):
+                tlist[i] = f"{tlist[i]}。"
+            if tlist[i]=="。":
+                tlist[i]=""
+            # 奇数番目のとき、2行分のリストを追加
+            if i % 2 == 1:
+                sound_list.append("")
+                logo_list.append(["", ""])
+                text_list.append(tlist[i-1:i+1])
