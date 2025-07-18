@@ -92,7 +92,7 @@ class JMADataFetcher(QObject):
             "VPCJ51": VPZJ50(self), # 地方気象解説情報 一般報
             "VPFJ50": VPZJ50(self), # 府県気象情報 一般報
             "VPFJ51": VPZJ50(self), # 府県気象解説情報 一般報
-            "VPTI50": VPZJ50(self), # 全般台風情報報（総合情報、上陸等情報），発達する熱帯低気圧に関する情報 一般報
+            "VPTI50": VPZJ50(self), # 全般台風情報（総合情報、上陸等情報），発達する熱帯低気圧に関する情報 一般報
             "VPTI51": VPZJ50(self), # 全般台風情報 （位置、発生情報），発達する熱帯低気圧に関する情報 一般報
             "VPTI52": VPZJ50(self), # 全般台風情報 （位置詳細）一般報
             #"VPFG50": VPZJ50(self), # 府県天気概況
@@ -370,7 +370,14 @@ class JMADataFetcher(QObject):
                         print("")
                     except:
                         pass
-                
+            
+            # ラジオ用
+            weather_info=["VGSK50","VGSK55","VGSK60",
+                          "VPZJ50","VPZJ51","VPCJ50","VPCJ51",
+                          "VPTI50","VPTI51"]
+            if data_type_code in weather_info:
+                text_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+                pass
             print(f"テロップ情報: {telop_dict}")
             if playtelop:
                 #telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)

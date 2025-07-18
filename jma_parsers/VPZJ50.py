@@ -4,6 +4,7 @@ class VPZJ50(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.data_type = "VPZJ50" # このパーサーが扱うデータタイプ
+        self.area=["",]
 
     def parse(self, xml_tree, namespaces, data_type_code):
         """
@@ -12,7 +13,10 @@ class VPZJ50(BaseJMAParser):
         print(f"地震情報 ({self.data_type}) を解析中...")
         parsed_data = {}
         # Control/Title
-        parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
+        parsed_data['title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
+        parsed_data['datetime'] = self._get_text(xml_tree, '//jmx_ib:ReportDateTime/text()', namespaces)
+        parsed_data['area'] = "全般"
+        
         parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)

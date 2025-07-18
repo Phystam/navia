@@ -10,6 +10,7 @@ from clock import ClockApp
 # jma_data_fetcher.py から JMADataFetcher をインポート
 from jma_data_fetcher import JMADataFetcher
 from settings_manager import SettingsManager
+from navia_broadcast import Broadcaster
 # メインアプリケーションクラス
 class MainApp(QObject):
     
@@ -28,6 +29,9 @@ class MainApp(QObject):
         self.settings_manager = SettingsManager(self)
         self.settings_manager._load_settings()
         self.settings_window_qml_object = None
+        
+        # ラジオ用インスタンス
+        self.broadcaster = Broadcaster(self)
         # JMADataFetcherからのシグナルをメインアプリのメソッドに接続
         self.jma_fetcher.dataFetched.connect(self.onDataFetched)
         self.jma_fetcher.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
