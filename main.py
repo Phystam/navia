@@ -68,7 +68,7 @@ class MainApp(QObject):
         self.trayIcon.setContextMenu(trayMenu)
 
         # タスクトレイアイコンを表示
-        self.trayIcon.show()
+        self.trayIcon.show() 
 
     @Slot(str)
     def onDataFetched(self, file_path):
@@ -161,3 +161,4 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     sys.exit(app.exec())
+    
