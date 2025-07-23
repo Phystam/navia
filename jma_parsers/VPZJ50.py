@@ -17,16 +17,17 @@ class VPZJ50(BaseJMAParser):
         parsed_data['datetime'] = self._get_text(xml_tree, '//jmx_ib:ReportDateTime/text()', namespaces)
         parsed_data['area'] = "全般"
         
-        parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
-        parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
+        parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
-        parsed_data['headline_text'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        # Body/Earthquake/Hypocenter/Area/Name (震央地名)
-
+        parsed_data['headline_text'] = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        # Body/Comment/Text
+        parsed_data['body_text'] = self._get_text(xml_tree,'//jmx_mete:Comment/jmx_mete:Text[@type="本文"]/text()', namespaces)
+        # body_textは改行などで整形されている。
         # 必要に応じて、さらに詳細な震度情報などを抽出することも可能
 
-        self.parsedData.emit(self.data_type, parsed_data)
+        #self.parsedData.emit(self.data_type, parsed_data)
         return parsed_data
     
     def content(self, xml_tree, namespaces, data_type):
