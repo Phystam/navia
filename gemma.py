@@ -93,7 +93,7 @@ def main():
 
     input = [{"role": "user",
             "content": 
-'''以下の複数のxmlファイルをすべて総合して要約し、天気予報のラジオ(あるいはテレビ)風に日本語で気象情報を伝える原稿を作ってください。
+'''\\no_think 以下の複数のxmlファイルをすべて総合して要約し、天気予報のラジオ(あるいはテレビ)風に日本語で気象情報を伝える原稿を作ってください。
 アナウンサーは男性(man)、女性(woman)がいて、女性は質問や解説、男性は主に解説をする役割です。
 この原稿は直接音声合成ソフトに通して読み上げます。そのため、jsonでパースできるテキスト形式にしてください。
 具体的には、
@@ -148,12 +148,10 @@ def main():
     #with open("output.wav","wb") as f:
     #f.write(combined_audio.)
     # PySide6で音声再生
-    app = QApplication([])
-    player = QMediaPlayer()
-    url = QUrl.fromLocalFile("output_combined.wav")
-    player.setSource(url)
-    player.play()
-    app.exec()
+    #player = QMediaPlayer()
+    #url = QUrl.fromLocalFile("output_combined.wav")
+    #player.setSource(url)
+    #player.play()
      
 
 if __name__ == "__main__":
