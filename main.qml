@@ -4,17 +4,44 @@ import QtQuick.Window
 import QtQuick.Controls
 
 Window {
+    onScreenChanged: {
+        rootWindow.width = rootWindow.screen.width;
+        rootWindow.height = rootWindow.screen.height;
+    }
+    onWidthChanged: {
+        telopLoader.source = "";
+        telopLoader.source = "telop.qml";
+    }
+
     id: rootWindow
     width: Screen.width // 画面の幅に合わせる
     height: Screen.height // 画面の高さに合わせる
     visible: true
     visibility: Window.AutomaticVisibility
-    title: "気象情報システム"
+    title: "NAVIA"
 
     // 全画面オーバーレイにするための設定
     flags: Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
     color: "transparent" // 背景を透明にする
 
+    onVisibilityChanged: {
+        // 画面復帰時にWindowサイズとcolorを再設定
+        rootWindow.color = "transparent";
+        rootWindow.width = Screen.width;
+        rootWindow.height = Screen.height;
+        telopLoader.source = "";
+        telopLoader.source = "telop.qml";
+    }
+
+    onActiveChanged: {
+        if (active) {
+            // 必要なら再描画や再初期化処理
+            rootWindow.width = Screen.width;
+            rootWindow.height = Screen.height;
+            telopLoader.source = "";
+            telopLoader.source = "telop.qml";
+        }
+    }
     // clock.qml コンポーネントをロードして表示
     // clock.qml は main.qml と同じディレクトリにあると仮定
     Loader {

@@ -18,7 +18,7 @@ class VFVO53(BaseJMAParser):
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
-
+        
         # 必要に応じて、さらに詳細な震度情報などを抽出することも可能
 
         self.parsedData.emit(self.data_type, parsed_data)

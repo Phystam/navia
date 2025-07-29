@@ -378,7 +378,8 @@ class JMADataFetcher(QObject):
                           "VPZJ50","VPZJ51","VPCJ50","VPCJ51",
                           "VPTI50","VPTI51"]
             if data_type_code in weather_info:
-                text_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+                parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+                
                 pass
             print(f"テロップ情報: {telop_dict}")
             if playtelop:

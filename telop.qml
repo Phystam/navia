@@ -29,11 +29,11 @@ Item{
     id: logoListModel2
   }
   //テキスト用: プロパティバインディングのため配列ではない
-  property string text1 : "<b>テキスト1</b>"
-  property string text2 : "<テキスト2>"
+  property string text1 : ""
+  property string text2 : ""
   //緊急地震速報テキスト用。他のテロップと被った時にしか使わない
-  property string text3 : "<テキスト3>"
-  property string text4 : "<テキスト4>"
+  property string text3 : ""
+  property string text4 : ""
   property int index: 0
 
   Timer {
