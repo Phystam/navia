@@ -12,6 +12,7 @@ from jma_parsers.VPZJ50 import VPZJ50
 from jma_parsers.VPOA50 import VPOA50
 from jma_parsers.VGSK50 import VGSK50
 from jma_parsers.VPWW54 import VPWW54
+from jma_parsers.VPHW51 import VPHW51
 from jma_parsers.VXWW50 import VXWW50
 from jma_parsers.VXSE51 import VXSE51
 from jma_parsers.VXSE52 import VXSE52
@@ -103,6 +104,7 @@ class JMADataFetcher(QObject):
             "VPOA50": VPOA50(self), # 記録的短時間大雨情報
             "VXWW50": VXWW50(self), # 土砂災害警戒情報
             "VPWW54": VPWW54(self), # 気象警報
+            "VPHW51": VPHW51(self), # 竜巻注意情報
             "VXSE51": VXSE51(self), # 震度速報
             "VXSE52": VXSE52(self), # 震源に関する情報
             "VXSE53": VXSE53(self), # 震源・震度情報
