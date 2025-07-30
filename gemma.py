@@ -2,10 +2,12 @@ import json
 import ollama
 import zstd
 import re
+import io
 import sys
 #from PySide6.QtMultimedia import QMediaPlayer, QMediaContent
 #from PySide6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel
 from voicevox_core.blocking import Onnxruntime, OpenJtalk, Synthesizer, VoiceModelFile
+import pydub
 API_SERVER_URL = "http://ne:11434"
 
 def main():
@@ -17,7 +19,7 @@ def main():
         Synth.load_voice_model(model)
     
     model="qwen3:14b"
-    files=["jmadata/20250717125051_0_VPCJ50_230000.xml.zst",
+    files=["jmadata/20250729044149_0_VPTI51_010000.xml.zst",
            #"jmadata/20250717075726_0_VPZJ50_010000.xml.zst",
            #"jmadata/20250717072031_0_VPCJ50_340000.xml.zst",
            #"jmadata/20250717071541_0_VPCJ50_130000.xml.zst",
@@ -42,7 +44,7 @@ def main():
 の形式で出力してください。
 まず、「m月d日、H時の気象情報です。」などのように、発表日時とタイトルを読み上げます。時間や場所は実際のXMLのデータに合わせて修正してください。
 その後、ヘッドラインや本文に書かれている情報をもとに、わかりやすく解説を始めてください。
-最後は「以上、◯◯県(◯◯地方)の気象情報でした。」で締めくくってください。'''
+最後は「以上、◯◯県(◯◯地方)の気象情報でした。」で締めくくってください。\\no_think'''
             }]
 
     input.append({"role": "user",
@@ -63,10 +65,18 @@ def main():
     #メッセージ読み上げ
     style_id=0
     
-    txt= jsonfile["script"][0]["text"]
-    wav=Synth.tts(txt,style_id)
-    with open("output.wav","wb") as f:
-        f.write(wav)
+    aseg = None
+    for t in jsonfile["script"]:
+        txt= t["text"]
+        wav=Synth.tts(txt,style_id)
+        awav = pydub.AudioSegment.from_wav(io.BytesIO(wav))
+        if aseg is None:
+            aseg = awav
+        else:
+            aseg += awav
+    aseg.export("output_combined.wav",format="wav")
+
+
     
      
 
