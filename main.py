@@ -162,7 +162,8 @@ class MainApp(QObject):
     @Slot()
     def onTest(self):
         #entry_data=R"jmaxml_20250710_Samples/15_12_02_161130_VPWW54.xml"
-        entry_data=R"jmaxml_20250710_Samples/19_10_04_250630_VPHW51.xml"
+        #entry_data=R"jmaxml_20250710_Samples/32-39_12_07_250206_VTSE41.xml"
+        entry_data=R"jmaxml_20250710_Samples/38_02_01_250710_VTSE51.xml"
         with open(entry_data,"rb") as f:
             dataname=entry_data[-10:-4]
             print(dataname)

@@ -20,6 +20,7 @@ from jma_parsers.VXSE53 import VXSE53
 from jma_parsers.VXSE61 import VXSE61
 from jma_parsers.VXSE62 import VXSE62
 from jma_parsers.VTSE41 import VTSE41
+from jma_parsers.VTSE51 import VTSE51
 from jma_parsers.VFVO50 import VFVO50
 from jma_parsers.VFVO52 import VFVO52
 from jma_parsers.VFVO53 import VFVO53
@@ -111,6 +112,8 @@ class JMADataFetcher(QObject):
             "VXSE61": VXSE61(self), # 顕著な地震の震源要素更新のお知らせ
             "VXSE62": VXSE62(self), # 長周期地震動に関する観測情報
             "VTSE41": VTSE41(self),
+            "VTSE51": VTSE51(self),
+            "VTSE52": VTSE51(self),
             "VFVO50": VFVO50(self), # 噴火に関する火山観測報
             "VFVO52": VFVO52(self), # 噴火に関する火山観測報
             #"VFVO53": VFVO53(self), # 降灰予報 (定時) (仮)

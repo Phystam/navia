@@ -37,6 +37,7 @@ class VTSE41(BaseJMAParser):
         
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
         notify_level=5
+        sound="sounds/Grade7.wav"
         if "最大級の警戒" in headline or "安全の確保" in headline:
             sound="sounds/EEWalert.wav"
             notify_level=5
@@ -56,33 +57,19 @@ class VTSE41(BaseJMAParser):
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
         sound_list.append(sound)
-        # headlineを句点で分割
-        tlist=headline.split("。")
-        # 最後。で終わるので、最後尾の要素を削除する
-        tlist=tlist[:-1]
-        # 要素数が奇数の場合、空文字を追加して偶数にする
-        if len(tlist) %2 != 0:
-            tlist.append("")
-        for i in range(len(tlist)):
-            # 消された句点を復元
-            if tlist[i] !="":
-                tlist[i] = f"{tlist[i]}。"
-            # 奇数番目のとき、2行分のリストを追加
-            if i % 2 == 1:
-                sound_list.append("")
-                logo_list.append(["", ""])
-                text_list.append(tlist[i-1:i+1])
+        
+        self.format_and_append_text(headline,logo_list,text_list,sound_list)
                 
         codeCombinationList=[]
         areaList=[]
         #気象警報のコードと地域のペアを取得する
         #type="気象警報・注意報（市町村等）"
-        itemelements = self._get_elements(xml_tree, f'//jmx_seis:Tsunami/jmx_seis:/Forecast/jmx_seis:Item',namespaces)
+        itemelements = self._get_elements(xml_tree, f'//jmx_seis:Item',namespaces)
         lenitem=len(itemelements)
         for i in range(lenitem):
             codeelements = self._get_elements(xml_tree, f'//jmx_seis:Item[{i+1}]/jmx_seis:Category/jmx_seis:Kind/jmx_seis:Code/text()',namespaces)
-            #(codeelements)
-            areaelements = self._get_elements(xml_tree, f'//jmx_seis:Item[{i+1}]/jmx_ib:Area/jmx_ib:Name/text()',namespaces)
+            heightelements = self._get_elements(xml_tree, f'//jmx_seis:Item[{i+1}]/jmx_seis:Category/jmx_seis:Kind/jmx_seis:Code/text()',namespaces)
+            areaelements = self._get_elements(xml_tree, f'//jmx_seis:Item[{i+1}]/jmx_seis:Area/jmx_seis:Name/text()',namespaces)
             if not codeelements in codeCombinationList and len(codeelements)!=0:
                 codeCombinationList.append(codeelements)
                 areaList.append(areaelements) #最初はリストの状態で追加する
@@ -93,17 +80,37 @@ class VTSE41(BaseJMAParser):
                         areaList[j].append(areaelements[0]) #テキストで追加する
                 pass
         #print(f"{codeCombinationList}:{areaList}")
+        # areasが6箇所以上より長いとき、分割する。
+        ndiv=5
+        codeList_div=[]
+        areaList_div=[]
         
+        row_counter=0
+        for i in range(len(codelist)):
+            counter=0    
+            for j in range(0, len(areaList[i]), ndiv):
+                if row_counter%2==0 or counter==0:
+                    codeList_div.append(codelist[i])
+                else:
+                    codeList_div.append("")
+                areaList_div.append(areaList[i][j:j+ndiv])
+                counter+=1
+                row_counter+=1
+            if counter>1 and row_counter%2==1:
+                areaList_div.append([])
+                codeList_div.append("")
+                row_counter+=1
         #logo, textに整形する
         logos=[]
         texts=[]
-        for i in range(len(codeCombinationList)):
+        for i in range(len(codeList_div)):
             logo=""
             areatext=""
-            for code in codeCombinationList[i]:
-                logo+=f"materials/code{code}.svg,"
-            logos.append(logo[:-1]) #最後の,を除いておく
-            for area in areaList[i]:
+            if codeList_div[i]!="":
+                logos.append(f"materials/code{codeList_div[i]}.svg")
+            else:
+                logos.append("")
+            for area in areaList_div[i]:
                 areatext+=f"{area} "
             texts.append(areatext[:-1]) #最後の を除いておく
         #print(f"{logos} : {texts}")

@@ -1,10 +1,10 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 
-class VTSE51(BaseJMAParser):
+class VTSE52(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.data_type = "VTSE51" # このパーサーが扱うデータタイプ
+        self.data_type = "VTSE52" # このパーサーが扱うデータタイプ
 
     def parse(self, xml_tree, namespaces, data_type_code):
         """
