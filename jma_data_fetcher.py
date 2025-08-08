@@ -12,12 +12,15 @@ from jma_parsers.VPZJ50 import VPZJ50
 from jma_parsers.VPOA50 import VPOA50
 from jma_parsers.VGSK50 import VGSK50
 from jma_parsers.VPWW54 import VPWW54
+from jma_parsers.VPHW51 import VPHW51
 from jma_parsers.VXWW50 import VXWW50
 from jma_parsers.VXSE51 import VXSE51
 from jma_parsers.VXSE52 import VXSE52
 from jma_parsers.VXSE53 import VXSE53
 from jma_parsers.VXSE61 import VXSE61
 from jma_parsers.VXSE62 import VXSE62
+from jma_parsers.VTSE41 import VTSE41
+from jma_parsers.VTSE51 import VTSE51
 from jma_parsers.VFVO50 import VFVO50
 from jma_parsers.VFVO52 import VFVO52
 from jma_parsers.VFVO53 import VFVO53
@@ -102,11 +105,15 @@ class JMADataFetcher(QObject):
             "VPOA50": VPOA50(self), # 記録的短時間大雨情報
             "VXWW50": VXWW50(self), # 土砂災害警戒情報
             "VPWW54": VPWW54(self), # 気象警報
+            "VPHW51": VPHW51(self), # 竜巻注意情報
             "VXSE51": VXSE51(self), # 震度速報
             "VXSE52": VXSE52(self), # 震源に関する情報
             "VXSE53": VXSE53(self), # 震源・震度情報
             "VXSE61": VXSE61(self), # 顕著な地震の震源要素更新のお知らせ
             "VXSE62": VXSE62(self), # 長周期地震動に関する観測情報
+            "VTSE41": VTSE41(self),
+            "VTSE51": VTSE51(self),
+            "VTSE52": VTSE51(self),
             "VFVO50": VFVO50(self), # 噴火に関する火山観測報
             "VFVO52": VFVO52(self), # 噴火に関する火山観測報
             #"VFVO53": VFVO53(self), # 降灰予報 (定時) (仮)
@@ -376,7 +383,8 @@ class JMADataFetcher(QObject):
                           "VPZJ50","VPZJ51","VPCJ50","VPCJ51",
                           "VPTI50","VPTI51"]
             if data_type_code in weather_info:
-                text_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+                parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+                
                 pass
             print(f"テロップ情報: {telop_dict}")
             if playtelop:

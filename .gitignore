@@ -7,4 +7,5 @@ jmaxml_20250710_Samples/*
 jmaxml_20250710_Manual/*
 jmaxml_20240216_format_v1_3_hyo1_1.pdf
 voicevox_core/*
-output.wav
+*.wav
+output_combined.*

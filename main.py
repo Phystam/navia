@@ -11,6 +11,7 @@ from clock import ClockApp
 from jma_data_fetcher import JMADataFetcher
 from settings_manager import SettingsManager
 from navia_broadcast import Broadcaster
+from seis_timeline import SeisTimeline
 # メインアプリケーションクラス
 class MainApp(QObject):
     
@@ -30,6 +31,9 @@ class MainApp(QObject):
         self.settings_manager._load_settings()
         self.settings_window_qml_object = None
         
+        self.seis_timeline = SeisTimeline(self)
+        self.seis_timeline._load_data()
+        self.seismology_window_qml_object = None
         # ラジオ用インスタンス
         self.broadcaster = Broadcaster(self)
         # JMADataFetcherからのシグナルをメインアプリのメソッドに接続
@@ -125,11 +129,41 @@ class MainApp(QObject):
             self.settings_manager.reloadSettings() # 設定を再読み込みして最新の状態を反映
             print("既存の設定ウィンドウを表示しました。")
         # ここに設定画面を表示するロジックを追加
+        
+    @Slot()
+    def showSeismology(self):
+        print("地震情報メニューがクリックされました。")
+        if not self.engine:
+            print("QMLエンジンが初期化されていません。")
+            return
+
+        if not self.seismology_window_qml_object:
+            # settings.qmlをロードし、QMLオブジェクトとして保持
+            # Loaderを使う代わりに、直接Windowをロードして表示する
+            component = QQmlComponent(self.engine, QUrl.fromLocalFile("seis_timeline.qml"))
+            if component.status() == QQmlComponent.Ready:
+                self.seismology_window_qml_object = component.create()
+                if self.seismology_window_qml_object:
+                    # QMLのsettingsManagerプロパティにPythonのインスタンスをセット
+                    self.seismology_window_qml_object.setProperty("seisTimeline", self.settings_manager)
+                    self.seismology_window_qml_object.show()
+                    print("設定ウィンドウを表示しました。")
+                else:
+                    print("設定ウィンドウの作成に失敗しました。")
+            else:
+                print(f"設定QMLファイルのロードに失敗しました: {component.errorString()}")
+        else:
+            # 既にウィンドウが存在する場合は表示するだけ
+            self.settings_window_qml_object.show()
+            self.settings_manager.reloadSettings() # 設定を再読み込みして最新の状態を反映
+            print("既存の設定ウィンドウを表示しました。")
+        # ここに設定画面を表示するロジックを追加
 
     @Slot()
     def onTest(self):
         #entry_data=R"jmaxml_20250710_Samples/15_12_02_161130_VPWW54.xml"
-        entry_data=R"jmaxml_20250710_Samples/45_02_01_200522_VFVO50.xml"
+        #entry_data=R"jmaxml_20250710_Samples/32-39_12_07_250206_VTSE41.xml"
+        entry_data=R"jmaxml_20250710_Samples/38_02_01_250710_VTSE51.xml"
         with open(entry_data,"rb") as f:
             dataname=entry_data[-10:-4]
             print(dataname)
