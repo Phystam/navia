@@ -379,11 +379,11 @@ class JMADataFetcher(QObject):
                         pass
             
             # ラジオ用
-            weather_info=["VGSK50","VGSK55","VGSK60",
-                          "VPZJ50","VPZJ51","VPCJ50","VPCJ51",
-                          "VPTI50","VPTI51"]
-            if data_type_code in weather_info:
-                parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+            #weather_info=["VGSK50","VGSK55","VGSK60",
+            #              "VPZJ50","VPZJ51","VPCJ50","VPCJ51",
+            #              "VPTI50","VPTI51"]
+            #if data_type_code in weather_info:
+            #    parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
                 
                 pass
             print(f"テロップ情報: {telop_dict}")
