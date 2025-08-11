@@ -1,25 +1,24 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 
-class VTSE41(BaseJMAParser):
+class VXKO(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.data_type = "VTSE51" # このパーサーが扱うデータタイプ
+        self.data_type = "VXKO" # このパーサーが扱うデータタイプ
 
     def parse(self, xml_tree, namespaces, data_type_code):
         """
-        津波警報 (VTSE41) のXMLを解析します。
+        河川予報 (VXKOii) のXMLを解析します。
         """
-        print(f"津波警報 ({self.data_type}) を解析中...")
-        parsed_data['category']="seismology"
-        parsed_data["data_type"]=self.data_type
+        print(f"気象警報 ({self.data_type}) を解析中...")
         parsed_data = {}
+        parsed_data['category']="meteorology"
+        parsed_data["data_type"]=self.data_type
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
-
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):
@@ -30,13 +29,12 @@ class VTSE41(BaseJMAParser):
         logo_list = []
         text_list = []
         sound_list = []
-        publishing_office = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
+        publishing_office = self._get_text(xml_tree, '//jmx:EditorialOffice/text()', namespaces)
         title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
 
         
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        notify_level=5
-        sound="sounds/Grade7.wav"
+        notify_level=1
         if "最大級の警戒" in headline or "安全の確保" in headline:
             sound="sounds/EEWalert.wav"
             notify_level=5
@@ -48,7 +46,7 @@ class VTSE41(BaseJMAParser):
             notify_level=3
         elif "注意" in headline:
             sound="sounds/GeneralInfo.wav"
-            notify_level=3
+            notify_level=2
         if "解除" in headline:
             sound="sounds/Forecast.wav"
             notify_level=0
@@ -56,19 +54,20 @@ class VTSE41(BaseJMAParser):
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])
         sound_list.append(sound)
-        
+
         self.format_and_append_text(headline,logo_list,text_list,sound_list)
-                
+
         codeCombinationList=[]
         areaList=[]
         #気象警報のコードと地域のペアを取得する
+        type="指定河川洪水予報（予報区域）"
         #type="気象警報・注意報（市町村等）"
-        itemelements = self._get_elements(xml_tree, f'//jmx_seis:Item',namespaces)
+        itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item',namespaces)
         lenitem=len(itemelements)
         for i in range(lenitem):
-            codeelements = self._get_elements(xml_tree, f'//jmx_seis:Item[{i+1}]/jmx_seis:Category/jmx_seis:Kind/jmx_seis:Code/text()',namespaces)
-            heightelements = self._get_elements(xml_tree, f'//jmx_seis:Item[{i+1}]/jmx_seis:Category/jmx_seis:Kind/jmx_seis:Code/text()',namespaces)
-            areaelements = self._get_elements(xml_tree, f'//jmx_seis:Item[{i+1}]/jmx_seis:Area/jmx_seis:Name/text()',namespaces)
+            codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
+            #(codeelements)
+            areaelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{i+1}]//jmx_ib:Area/jmx_ib:Name/text()',namespaces)
             if not codeelements in codeCombinationList and len(codeelements)!=0:
                 codeCombinationList.append(codeelements)
                 areaList.append(areaelements) #最初はリストの状態で追加する
@@ -79,37 +78,17 @@ class VTSE41(BaseJMAParser):
                         areaList[j].append(areaelements[0]) #テキストで追加する
                 pass
         #print(f"{codeCombinationList}:{areaList}")
-        # areasが6箇所以上より長いとき、分割する。
-        ndiv=5
-        codeList_div=[]
-        areaList_div=[]
         
-        row_counter=0
-        for i in range(len(codelist)):
-            counter=0    
-            for j in range(0, len(areaList[i]), ndiv):
-                if row_counter%2==0 or counter==0:
-                    codeList_div.append(codelist[i])
-                else:
-                    codeList_div.append("")
-                areaList_div.append(areaList[i][j:j+ndiv])
-                counter+=1
-                row_counter+=1
-            if counter>1 and row_counter%2==1:
-                areaList_div.append([])
-                codeList_div.append("")
-                row_counter+=1
         #logo, textに整形する
         logos=[]
         texts=[]
-        for i in range(len(codeList_div)):
+        for i in range(len(codeCombinationList)):
             logo=""
             areatext=""
-            if codeList_div[i]!="":
-                logos.append(f"materials/code{codeList_div[i]}.svg")
-            else:
-                logos.append("")
-            for area in areaList_div[i]:
+            for code in codeCombinationList[i]:
+                logo+=f"materials/hanran{code}.svg,"
+            logos.append(logo[:-1]) #最後の,を除いておく
+            for area in areaList[i]:
                 areatext+=f"{area} "
             texts.append(areatext[:-1]) #最後の を除いておく
         #print(f"{logos} : {texts}")

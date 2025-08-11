@@ -12,6 +12,8 @@ class VPZJ50(BaseJMAParser):
         """
         print(f"地震情報 ({self.data_type}) を解析中...")
         parsed_data = {}
+        parsed_data['category']="meteorology"
+        parsed_data["data_type"]=data_type_code
         # Control/Title
         parsed_data['title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         parsed_data['datetime'] = self._get_text(xml_tree, '//jmx_ib:ReportDateTime/text()', namespaces)
@@ -25,9 +27,6 @@ class VPZJ50(BaseJMAParser):
         # Body/Comment/Text
         parsed_data['body_text'] = self._get_text(xml_tree,'//jmx_mete:Comment/jmx_mete:Text[@type="本文"]/text()', namespaces)
         # body_textは改行などで整形されている。
-        # 必要に応じて、さらに詳細な震度情報などを抽出することも可能
-
-        #self.parsedData.emit(self.data_type, parsed_data)
         return parsed_data
     
     def content(self, xml_tree, namespaces, data_type):

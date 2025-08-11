@@ -11,7 +11,8 @@ from clock import ClockApp
 from jma_data_fetcher import JMADataFetcher
 from settings_manager import SettingsManager
 from navia_broadcast import Broadcaster
-from seis_timeline import SeisTimeline
+from timeline import TimelineManager
+from axis_manager import AxisManager
 # メインアプリケーションクラス
 class MainApp(QObject):
     
@@ -26,19 +27,22 @@ class MainApp(QObject):
         # JMADataFetcher のインスタンスを作成
         # JMADataFetcherは内部でQTimerを持っており、定期的にデータ取得を行います
         self.jma_fetcher = JMADataFetcher(self)
+
+        self.axsis_manager = AxisManager(self)
         # 設定用インスタンス
         self.settings_manager = SettingsManager(self)
         self.settings_manager._load_settings()
         self.settings_window_qml_object = None
         
-        self.seis_timeline = SeisTimeline(self)
-        self.seis_timeline._load_data()
+        self.timeline_manager = TimelineManager(self)
+        self.jma_fetcher.dataParsed.connect(self.onDataParsed)
         self.seismology_window_qml_object = None
         # ラジオ用インスタンス
         self.broadcaster = Broadcaster(self)
         # JMADataFetcherからのシグナルをメインアプリのメソッドに接続
         self.jma_fetcher.dataFetched.connect(self.onDataFetched)
         self.jma_fetcher.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
+        self.axsis_manager.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
         self.jma_fetcher.errorOccurred.connect(self.onErrorOccurred)
         
 
@@ -86,6 +90,10 @@ class MainApp(QObject):
         print(f"メインアプリ: 新しいデータが取得され、保存されました: {file_path}")
         # ここで取得したデータ（file_path）をQMLに表示したり、読み上げたりする処理を追加できます。
         # 例: QMLに通知するシグナルを発行するなど
+
+    @Slot(str)
+    def onDataParsed(self, parsed_data):
+        self.timeline_manager.add_entry(parsed_data)
 
     @Slot(dict)
     def onTelopDataReceived(self, telop_dict):
@@ -163,7 +171,7 @@ class MainApp(QObject):
     def onTest(self):
         #entry_data=R"jmaxml_20250710_Samples/15_12_02_161130_VPWW54.xml"
         #entry_data=R"jmaxml_20250710_Samples/32-39_12_07_250206_VTSE41.xml"
-        entry_data=R"jmaxml_20250710_Samples/38_02_01_250710_VTSE51.xml"
+        entry_data=R"jmaxml_20250710_Samples/15_13_01_161226_VPWW54.xml"
         with open(entry_data,"rb") as f:
             dataname=entry_data[-10:-4]
             print(dataname)

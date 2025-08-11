@@ -9,8 +9,10 @@ class VPOA50(BaseJMAParser):
         """
         記録的短時間大雨情報 (VPOA50) のXMLを解析します。
         """
-        print(f"地震情報 ({self.data_type}) を解析中...")
+        print(f"記録的短時間大雨情報 ({self.data_type}) を解析中...")
         parsed_data = {}
+        parsed_data['category']="meteorology"
+        parsed_data["data_type"]=self.data_type
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
@@ -18,11 +20,6 @@ class VPOA50(BaseJMAParser):
         parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
         parsed_data['headline_text'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        # Body/Earthquake/Hypocenter/Area/Name (震央地名)
-
-        # 必要に応じて、さらに詳細な震度情報などを抽出することも可能
-
-        self.parsedData.emit(self.data_type, parsed_data)
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):

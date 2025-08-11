@@ -4,10 +4,10 @@ import re
 from PySide6.QtCore import QObject, QTimer, Signal, Slot, QDateTime, QUrl, QByteArray
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from lxml import etree
-from lxml.etree import XMLSchema, XMLParser, parse, Resolver
 
 from settings_manager import SettingsManager
 # パーサーをインポート
+from jma_parsers.jma_base_parser import BaseJMAParser
 from jma_parsers.VPZJ50 import VPZJ50
 from jma_parsers.VPOA50 import VPOA50
 from jma_parsers.VGSK50 import VGSK50
@@ -25,23 +25,31 @@ from jma_parsers.VFVO50 import VFVO50
 from jma_parsers.VFVO52 import VFVO52
 from jma_parsers.VFVO53 import VFVO53
 from jma_parsers.VFVO56 import VFVO56
+from jma_parsers.VXKO import VXKO
 #from jma_parsers.jma_volcano_parser import VolcanoParser # 仮のパーサー
 
 # カスタムResolverクラス (変更なし、ただしxsd_dirのパスが適切であることを確認)
-class LocalXSDResolver(Resolver):
+class LocalXSDResolver(etree.Resolver):
     def __init__(self, xsd_base_dir):
         super().__init__()
         self.xsd_base_dir = xsd_base_dir
         # JMAの共通名前空間URIとローカルXSDパスの明示的なマッピング
         self.uri_to_local_map = {
-            "http://xml.kishou.go.jp/jmaxml1/": os.path.join("jmaxml1", "jmx.xsd"),
-            "http://xml.kishou.go.jp/jmaxml1/informationBasis1/": os.path.join("jmaxml1", "informationBasis1", "jma_ib.xsd"),
-            "http://xml.kishou.go.jp/jmaxml1/body/seismology1/": os.path.join("jmaxml1", "body", "seismology1", "jma_seis.xsd"),
-            "http://xml.kishou.go.jp/jmaxml1/body/seismology1/": os.path.join("jmaxml1", "body", "seismology1", "jma_seis.xsd"), # バージョン付きURIの場合
-            "http://xml.kishou.go.jp/jmaxml1/body/volcanology1/": os.path.join("jmaxml1", "body", "volcanology1", "jma_volc.xsd"),
-            "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/": os.path.join("jmaxml1", "body", "meteorology1", "jma_mete.xsd"),
-            "http://xml.kishou.go.jp/jmaxml1/elementBasis1/": os.path.join("jmaxml1", "elementBasis1", "jma_eb.xsd"),
-            "http://xml.kishou.go.jp/jmaxml1/body/addition1/": os.path.join("jmaxml1", "body", "addition1", "jma_add.xsd"),
+            #"http://xml.kishou.go.jp/jmaxml1/": os.path.join("jmaxml1", "jmx.xsd"),
+            #"http://xml.kishou.go.jp/jmaxml1/informationBasis1/": os.path.join("jmaxml1", "informationBasis1", "jma_ib.xsd"),
+            #"http://xml.kishou.go.jp/jmaxml1/body/seismology1/": os.path.join("jmaxml1", "body", "seismology1", "jma_seis.xsd"),
+            #"http://xml.kishou.go.jp/jmaxml1/body/seismology1/": os.path.join("jmaxml1", "body", "seismology1", "jma_seis.xsd"), # バージョン付きURIの場合
+            #"http://xml.kishou.go.jp/jmaxml1/body/volcanology1/": os.path.join("jmaxml1", "body", "volcanology1", "jma_volc.xsd"),
+            #"http://xml.kishou.go.jp/jmaxml1/body/meteorology1/": os.path.join("jmaxml1", "body", "meteorology1", "jma_mete.xsd"),
+            #"http://xml.kishou.go.jp/jmaxml1/elementBasis1/": os.path.join("jmaxml1", "elementBasis1", "jma_eb.xsd"),
+            #"http://xml.kishou.go.jp/jmaxml1/body/addition1/": os.path.join("jmaxml1", "body", "addition1", "jma_add.xsd"),
+            "http://xml.kishou.go.jp/jmaxml1/": os.path.join(self.xsd_base_dir, "jmx.xsd"),
+            "http://xml.kishou.go.jp/jmaxml1/informationBasis1/": os.path.join(self.xsd_base_dir, "jmx_ib.xsd"),
+            "http://xml.kishou.go.jp/jmaxml1/body/seismology1/": os.path.join(self.xsd_base_dir, "jmx_seis.xsd"),
+            "http://xml.kishou.go.jp/jmaxml1/body/volcanology1/": os.path.join(self.xsd_base_dir, "jmx_volc.xsd"),
+            "http://xml.kishou.go.jp/jmaxml1/body/meteorology1/": os.path.join(self.xsd_base_dir, "jmx_mete.xsd"),
+            "http://xml.kishou.go.jp/jmaxml1/elementBasis1/": os.path.join(self.xsd_base_dir, "jmx_eb.xsd"),
+            "http://xml.kishou.go.jp/jmaxml1/body/addition1/": os.path.join(self.xsd_base_dir, "jmx_add.xsd")
             # 他のスキーマもここに追加
         }
         #print(f"LocalXSDResolver initialized with xsd_base_dir: {self.xsd_base_dir}")
@@ -66,6 +74,7 @@ class JMADataFetcher(QObject):
     dataFetched = Signal(str, str, dict) # file_path, data_type, parsed_data
     errorOccurred = Signal(str)
     telopDataReceived = Signal(dict) # テロップ情報を受け取るためのシグナル
+    dataParsed = Signal(dict) # タイムラインデータ用
     def __init__(self, parent=None):
         super().__init__(parent)
         self.feed_urls = [
@@ -106,6 +115,7 @@ class JMADataFetcher(QObject):
             "VXWW50": VXWW50(self), # 土砂災害警戒情報
             "VPWW54": VPWW54(self), # 気象警報
             "VPHW51": VPHW51(self), # 竜巻注意情報
+            "VXKO": VXKO(self), # 河川予報
             "VXSE51": VXSE51(self), # 震度速報
             "VXSE52": VXSE52(self), # 震源に関する情報
             "VXSE53": VXSE53(self), # 震源・震度情報
@@ -255,12 +265,14 @@ class JMADataFetcher(QObject):
                 dtd_validation=False
                 #schema_validation=False
             )
+            #parser.resolvers.add(LocalXSDResolver("d:/navia/xsdschema"))
+            #schema_doc = etree.parse("d:/navia/xsdschema/jmx.xsd", parser)
             parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
-
-            schema_doc = etree.parse(xsd_path, parser=parser, base_url=f"file://{os.path.abspath(self.xsd_dir)}/")
+            schema_doc = etree.parse(xsd_path, parser)
+            print("ok3")
             schema = etree.XMLSchema(schema_doc)
             self.xsd_schemas[xsd_filename] = schema
-            #print(f"XSDスキーマをロードしました: {xsd_filename}")
+            print(f"XSDスキーマをロードしました: {xsd_filename}")
             return schema
         except etree.XMLSchemaParseError as e:
             self.errorOccurred.emit(f"XSDスキーマのパースエラー {xsd_filename}: {e}")
@@ -303,18 +315,6 @@ class JMADataFetcher(QObject):
             filename_with_timestamp = id_parts[-1]
             data_type_code = filename_with_timestamp.split('_')[2]
 
-        # ルート要素からxmlns属性を取得し、XSDファイル名を特定
-        #print(f"ルート要素: {report_tree.text}, 属性: {report_tree.attrib}")
-        #schema_location_attr = report_tree.get('xmlns')
-        #print(f"取得したXMLのルート要素: {report_tree}, xmlns属性: {report_tree.attrib}")
-        #xsd_filename = None
-        #if schema_location_attr:
-        #    parts = schema_location_attr.split()
-        #    if len(parts) % 2 == 0:
-        #        xsd_filename = parts[-1] 
-        #        if not xsd_filename.endswith(".xsd"):
-        #            xsd_filename = None
-        #xsd_filename = "http://xml.kishou.go.jp/jmaxml1/"
         xsd_filename="jmx.xsd"
         schema = None
         if xsd_filename:
@@ -325,7 +325,7 @@ class JMADataFetcher(QObject):
         # XSDスキーマ検証
         if schema:
             if not schema.validate(report_tree):
-                #print(f"XMLスキーマ検証エラー: {entry_data['id']}")
+                print(f"XMLスキーマ検証エラー: {entry_data['id']}")
                 for error in schema.error_log:
                     pass
                     print(f"  - {error.message} (Line: {error.line}, Column: {error.column})")
@@ -351,8 +351,10 @@ class JMADataFetcher(QObject):
         # データタイプに基づいて適切なパーサーに処理を振り分け
         parsed_data = {}
         telop_dict = {}
+        if "VXKO" in data_type_code:
+            data_type_code="VXKO"
         if data_type_code in self.parsers:
-            parser_instance = self.parsers[data_type_code]
+            parser_instance: BaseJMAParser = self.parsers[data_type_code]
             # JMA XMLの共通名前空間をパーサーに渡す
             namespaces = {
                 'jmx': "http://xml.kishou.go.jp/jmaxml1/",
@@ -368,6 +370,7 @@ class JMADataFetcher(QObject):
             # 解析済みデータをメインアプリケーションに通知
             #self.dataFetched.emit(output_filename, data_type_code, parsed_data)
             # テロップ表示解析後、通知レベルによって表示するか確認
+
             telop_dict, warning_level = parser_instance.content(report_tree, namespaces, data_type_code)
             notify_levels_region=self.setting_manager._settings["meteorology"]["notify_observatories_telop_level"]
             for region in notify_levels_region:
@@ -377,15 +380,15 @@ class JMADataFetcher(QObject):
                         print("")
                     except:
                         pass
-            
+                pass
+            parseddata = parser_instance.parse(report_tree,namespaces,data_type_code)
+            self.dataParsed.emit(parseddata)
             # ラジオ用
             #weather_info=["VGSK50","VGSK55","VGSK60",
             #              "VPZJ50","VPZJ51","VPCJ50","VPCJ51",
             #              "VPTI50","VPTI51"]
             #if data_type_code in weather_info:
             #    parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
-                
-                pass
             print(f"テロップ情報: {telop_dict}")
             if playtelop:
                 #telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
@@ -395,6 +398,11 @@ class JMADataFetcher(QObject):
             pass
             #print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
             #parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
+
+    @Slot(dict)
+    def appendTimeline(self,parsed_data):
+        
+        pass
 
         
 

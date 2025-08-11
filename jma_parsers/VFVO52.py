@@ -13,6 +13,8 @@ class VFVO52(BaseJMAParser):
         """
         print(f"噴火に関する火山観測報 ({self.data_type}) を解析中...")
         parsed_data = {}
+        parsed_data['category']="volcanology"
+        parsed_data["data_type"]=self.data_type
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
@@ -20,10 +22,6 @@ class VFVO52(BaseJMAParser):
         parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
         parsed_data['headline_text'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-
-        # 必要に応じて、さらに詳細な震度情報などを抽出することも可能
-
-        self.parsedData.emit(self.data_type, parsed_data)
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):

@@ -1,10 +1,10 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 
-class VTSE41(BaseJMAParser):
+class VPFT50(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.data_type = "VTSE51" # このパーサーが扱うデータタイプ
+        self.data_type = "VPFT50" # このパーサーが扱うデータタイプ
 
     def parse(self, xml_tree, namespaces, data_type_code):
         """
@@ -35,7 +35,7 @@ class VTSE41(BaseJMAParser):
 
         
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        notify_level=5
+        notify_level=3
         sound="sounds/Grade7.wav"
         if "最大級の警戒" in headline or "安全の確保" in headline:
             sound="sounds/EEWalert.wav"

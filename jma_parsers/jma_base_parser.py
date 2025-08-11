@@ -5,7 +5,6 @@ from datetime import datetime
 
 class BaseJMAParser(QObject):
     # 解析されたデータを通知するシグナル (データタイプと解析済みデータ)
-    parsedData = Signal(str, dict)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -119,7 +118,7 @@ class BaseJMAParser(QObject):
         Returns:
             list: _description_
         """
-        yaku =["＞", "》", "】"]
+        yaku =["＞", "》", "】","］","〉"]
         # txtを句点または改行で分割
         tlist=re.split("[。\\n]",txt)
         # 空の行を削除
@@ -140,3 +139,26 @@ class BaseJMAParser(QObject):
                 sound_list.append("")
                 logo_list.append(["", ""])
                 text_list.append(tlist[i-1:i+1])
+
+    def get_warning_level(self,codeelement):
+        
+        caution_code=["10","12","13","14","15","16","17","18",
+                      "20","21,","22","23","24","25","26","27"]
+        warning_code=["02","03","04","05","06","07"]
+        special_code=["32","35","36","37","38","08"]
+        emergency_code=["33"]
+        if "00" in codeelement:
+            return 0
+        
+        for item in emergency_code:
+            if item in codeelement:
+                return 5
+        for item in special_code:
+            if item in codeelement:
+                return 4
+        for item in warning_code:
+            if item in codeelement:
+                return 3
+        for item in caution_code:
+            if item in codeelement:
+                return 2
