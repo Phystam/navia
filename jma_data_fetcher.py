@@ -73,7 +73,8 @@ class JMADataFetcher(QObject):
     # 引数として保存されたファイルのパスと、解析済みデータを渡します
     dataFetched = Signal(str, str, dict) # file_path, data_type, parsed_data
     errorOccurred = Signal(str)
-    telopDataReceived = Signal(dict) # テロップ情報を受け取るためのシグナル
+    telopDataReceived = Signal(dict,bool) # テロップ情報を受け取るためのシグナル
+    tsunamiDataReceived = Signal(dict) # 津波用
     dataParsed = Signal(dict) # タイムラインデータ用
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -269,10 +270,8 @@ class JMADataFetcher(QObject):
             #schema_doc = etree.parse("d:/navia/xsdschema/jmx.xsd", parser)
             parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
             schema_doc = etree.parse(xsd_path, parser)
-            print("ok3")
             schema = etree.XMLSchema(schema_doc)
             self.xsd_schemas[xsd_filename] = schema
-            print(f"XSDスキーマをロードしました: {xsd_filename}")
             return schema
         except etree.XMLSchemaParseError as e:
             self.errorOccurred.emit(f"XSDスキーマのパースエラー {xsd_filename}: {e}")
@@ -284,7 +283,7 @@ class JMADataFetcher(QObject):
     def fetchAndProcessReport(self, entry_data):
         report_url = entry_data['id']
         request = QNetworkRequest(QUrl(report_url))
-        reply = self.network_manager.get(request)
+        reply = self.network_manager.get(request)   
         reply.finished.connect(lambda: self.handleReportReply(reply, entry_data))
 
     @Slot(QNetworkReply, dict)
@@ -393,7 +392,7 @@ class JMADataFetcher(QObject):
             if playtelop:
                 #telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
                 
-                self.telopDataReceived.emit(telop_dict)
+                self.telopDataReceived.emit(telop_dict,False)
         else:
             pass
             #print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")

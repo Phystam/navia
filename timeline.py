@@ -1,4 +1,4 @@
-# timeline.py
+## timeline.py
 from datetime import datetime
 from PySide6.QtCore import QObject, Signal, Slot
 import zstd, json
@@ -6,8 +6,9 @@ import pandas as pd
 from datetime import datetime
 
 class TimelineManager(QObject):
+    meteStatusChanged = Signal()
     def __init__(self,parent=None):
-        #super().__init__(self)
+        super().__init__(parent)
         """タイムラインデータを管理するクラス"""
         self.mete_timeline = []  # タイムラインデータを格納するリスト
         self.seis_timeline = []  # タイムラインデータを格納するリスト
@@ -86,7 +87,7 @@ class TimelineManager(QObject):
                "warning_level":0,
                "updated": datetime(2000,1,1)}
             self.mete_status[self.hierarchy[4]][c]=l
-        print(self.mete_status[self.hierarchy[3]]['100011'])
+        #print(self.mete_status[self.hierarchy[3]]['100011'])
 
     def add_entry(self, data):
         """
@@ -111,11 +112,15 @@ class TimelineManager(QObject):
                 for item in data[hier]:
                     areacodes = item.keys()
                     for areacode in areacodes:
-                        print(areacode)
-                        print(item[areacode])
-                        self.mete_status[hier][areacode]["warning_level"]=warning_level
-                        self.mete_status[hier][areacode]["status"]=item[areacode]
-            print(self.mete_status["pref"])
+                        #print(areacode)
+                        #print(item[areacode])
+                        try:
+                            self.mete_status[hier][areacode]["warning_level"]=warning_level
+                            self.mete_status[hier][areacode]["status"]=item[areacode]
+                        except:
+                            print(f"key error at area code {areacode}" )
+            #print(self.mete_status["pref"])
+            self.meteStatusChanged.emit()
         
     def _format_content(self, data):
         """コンテンツの整形（ヘッドライン＋本文の統合）"""
@@ -135,13 +140,71 @@ class TimelineManager(QObject):
         return [entry for entry in self.timeline 
                 if entry['timestamp'].date() == target_date.date()]
 
-# サンプルデータ構造（テスト用）
-sample_entry = {
-    'title': '地震情報',
-    'datetime': '2025-07-25T10:00:00',
-    'publishing_office': '気象庁',
-    'area': '関東地方',
-    'headline_text': '最大級の警戒',
-    'body_text': '東京湾を震源とする地震が発生しました。',
-    'data_type': 'VPZJ50'
-}
+    @Slot(str, str, result=int)
+    def getMeteWarningLevel(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            status_list = self.mete_status[hierarchy][code]["status"]
+            special_rain=["33"]
+            emergency=["32","35","36","37","38","08","do","ta_ob"]
+            warning = ["02","03","04","05","06","07","19","ta"]
+            caution = ["10","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27"]
+            for item in special_rain:
+                if item in status_list:
+                    return 5
+            for item in emergency:
+                if item in status_list:
+                    return 4
+            for item in warning:
+                if item in status_list:
+                    return 3
+            for item in caution:
+                if item in status_list:
+                    return 2
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return 0
+        
+    @Slot(str, str, result=list)
+    def getMeteWarningName(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        warning_code = {
+            "00": "発表なし",
+            "02": "暴風雪警報",
+            "03": "大雨警報",
+            "04": "洪水警報",
+            "05": "暴風警報",
+            "06": "大雪警報",
+            "07": "波浪警報",
+            "08": "高潮警報",
+            "10": "大雨注意報",
+            "12": "大雪注意報",
+            "13": "風雪注意報",
+            "14": "雷注意報",
+            "15": "強風注意報",
+            "16": "波浪注意報",
+            "17": "融雪注意報",
+            "18": "洪水注意報",
+            "19": "高潮注意報",
+            "20": "濃霧注意報",
+            "21": "乾燥注意報",
+            "22": "なだれ注意報",
+            "23": "低温注意報",
+            "24": "霜注意報",
+            "25": "着氷注意報",
+            "26": "着雪注意報",
+            "27": "その他の注意報",
+            "32": "暴風雪特別警報",
+            "33": "大雨特別警報",
+            "35": "暴風特別警報",
+            "36": "大雪特別警報",
+            "37": "波浪特別警報",
+            "38": "高潮特別警報"
+        }
+        try:
+            warning_textlist = [warning_code[wcode] for wcode in self.mete_status[hierarchy][code]["status"]]
+            return warning_textlist
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return 0

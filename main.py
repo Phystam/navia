@@ -16,7 +16,7 @@ from axis_manager import AxisManager
 # メインアプリケーションクラス
 class MainApp(QObject):
     
-    telopDataReceived= Signal(dict)  # テロップ情報を受け取るためのシグナル
+    telopDataReceived= Signal(dict,bool)  # テロップ情報を受け取るためのシグナル
     onSettingsApplied = Signal(dict)
     
     def __init__(self, engine_instance, parent=None):
@@ -65,17 +65,20 @@ class MainApp(QObject):
         trayMenu.addSeparator()
 
         # 情報表示メニュー（仮）
-        infoMenu = trayMenu.addMenu("情報")
-        infoMenu.addAction(QAction("気象情報", self))
-        infoMenu.addAction(QAction("地震情報", self))
-        infoMenu.addAction(QAction("火山情報", self))
+        #infoMenu = trayMenu.addMenu("情報")
+        infoAction = QAction("NAVIA情報",self)
+        infoAction.triggered.connect(self.showNAVIA)
+        trayMenu.addAction(infoAction)
+        #infoMenu.addAction(QAction("地震情報", self))
+        #infoMenu.addAction(QAction("火山情報", self))
         # 終了アクションを作成し、メニューに追加
-        quitAction = QAction("終了", self)
-        quitAction.triggered.connect(QApplication.quit) # アプリケーション終了に接続
-        trayMenu.addAction(quitAction)
         testAction = QAction("試験", self)
         testAction.triggered.connect(self.onTest)
         trayMenu.addAction(testAction)
+        quitAction = QAction("終了", self)
+        quitAction.triggered.connect(QApplication.quit) # アプリケーション終了に接続
+        trayMenu.addAction(quitAction)
+        
         # タスクトレイアイコンにメニューを設定
         self.trayIcon.setContextMenu(trayMenu)
 
@@ -95,9 +98,9 @@ class MainApp(QObject):
     def onDataParsed(self, parsed_data):
         self.timeline_manager.add_entry(parsed_data)
 
-    @Slot(dict)
-    def onTelopDataReceived(self, telop_dict):
-        self.telopDataReceived.emit(telop_dict)
+    @Slot(dict,bool)
+    def onTelopDataReceived(self, telop_dict,emergency=False):
+        self.telopDataReceived.emit(telop_dict,emergency)
 
     @Slot(str)
     def onErrorOccurred(self, message):
@@ -139,33 +142,23 @@ class MainApp(QObject):
         # ここに設定画面を表示するロジックを追加
         
     @Slot()
-    def showSeismology(self):
-        print("地震情報メニューがクリックされました。")
+    def showNAVIA(self):
+        print("NAVIAウィンドウがクリックされました。")
         if not self.engine:
             print("QMLエンジンが初期化されていません。")
             return
 
-        if not self.seismology_window_qml_object:
-            # settings.qmlをロードし、QMLオブジェクトとして保持
-            # Loaderを使う代わりに、直接Windowをロードして表示する
-            component = QQmlComponent(self.engine, QUrl.fromLocalFile("seis_timeline.qml"))
-            if component.status() == QQmlComponent.Ready:
-                self.seismology_window_qml_object = component.create()
-                if self.seismology_window_qml_object:
-                    # QMLのsettingsManagerプロパティにPythonのインスタンスをセット
-                    self.seismology_window_qml_object.setProperty("seisTimeline", self.settings_manager)
-                    self.seismology_window_qml_object.show()
-                    print("設定ウィンドウを表示しました。")
-                else:
-                    print("設定ウィンドウの作成に失敗しました。")
+        # NAVIA_window.qmlをロードして表示
+        component = QQmlComponent(self.engine, QUrl.fromLocalFile("qml_components/NAVIA_window.qml"))
+        if component.status() == QQmlComponent.Ready:
+            navia_window = component.create()
+            if navia_window:
+                navia_window.show()
+                print("NAVIAウィンドウを表示しました。")
             else:
-                print(f"設定QMLファイルのロードに失敗しました: {component.errorString()}")
+                print("NAVIAウィンドウの作成に失敗しました。")
         else:
-            # 既にウィンドウが存在する場合は表示するだけ
-            self.settings_window_qml_object.show()
-            self.settings_manager.reloadSettings() # 設定を再読み込みして最新の状態を反映
-            print("既存の設定ウィンドウを表示しました。")
-        # ここに設定画面を表示するロジックを追加
+            print(f"NAVIA_window.qmlファイルのロードに失敗しました: {component.errorString()}")
 
     @Slot()
     def onTest(self):
@@ -195,6 +188,7 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("clockApp", clock_app)
     engine.rootContext().setContextProperty("mainApp", main_app_instance)
     engine.rootContext().setContextProperty("settingsManager", main_app_instance.settings_manager)
+    engine.rootContext().setContextProperty("timelineManager", main_app_instance.timeline_manager)
     # MainAppのインスタンスを作成し、QMLに公開（タスクトレイアイコン用）
     # このインスタンス内でJMADataFetcherも初期化されます
     
@@ -207,4 +201,3 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     sys.exit(app.exec())
-    

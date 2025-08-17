@@ -8,7 +8,7 @@ Window {
     id: settingsWindow
     width: 800
     height: 600
-    visible: false // 初期状態では非表示
+    visible: true // 初期状態では非表示
     title: "設定"
     modality: Qt.ApplicationModal // 他のウィンドウ操作をブロック
     flags: Qt.Window | Qt.WindowStaysOnTopHint // 通常のウィンドウとして表示し、常に最前面に

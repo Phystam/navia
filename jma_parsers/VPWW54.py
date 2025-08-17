@@ -47,8 +47,8 @@ class VPWW54(BaseJMAParser):
                 codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
                 
                 areacode = self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]//jmx_ib:Area/jmx_ib:Code/text()',namespaces)
-                print(areacode)
-                print(codeelements)
+                #print(areacode)
+                #print(codeelements)
                 codeList.append({areacode: codeelements})
             parsed_data[areakeys[i]]=codeList
         return parsed_data

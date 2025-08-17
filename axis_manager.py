@@ -15,7 +15,7 @@ class AxisManager(QObject):
     jsonReceived = Signal(str)
     eewReceived = Signal(list,str,str,str)
     eewreportReceived = Signal(list,list,str,bool)
-    telopDataReceived = Signal(dict)
+    telopDataReceived = Signal(dict,bool)
     jsondir=R"axisjsondata"
     def __init__(self,parent=None):
         super().__init__(parent=None)
@@ -39,7 +39,7 @@ class AxisManager(QObject):
         self.ws.pong.connect(self.onPong)
         self.ws.open(self.req)
         self.timer_id=self.startTimer(30000)
-        self.jsondir=R"./jmajsondata"
+        self.jsondir=R"./axisjsondata"
         
     def showSettings(self):
         pass
@@ -164,7 +164,7 @@ class AxisManager(QObject):
                 'logo_list': logo_list,
                 'text_list': text_list
             }
-            self.telopDataReceived.emit(telop_dict)
+            self.telopDataReceived.emit(telop_dict,True)
         else:
             pass
             #text=""

@@ -42,6 +42,11 @@ Window {
             telopLoader.source = "telop.qml";
         }
     }
+    // 津波と緊急地震速報用のオブジェクト
+    property Component tsunami_component: null
+    property QtObject tsunami_object    : null
+    property Component eew_component    : null
+    property QtObject eew_object        : null
     // clock.qml コンポーネントをロードして表示
     // clock.qml は main.qml と同じディレクトリにあると仮定
     Loader {
@@ -74,11 +79,13 @@ Window {
         telopLoader.item.init();
         // 必要に応じて他の初期化処理を追加
         mainApp.telopDataReceived.connect(onTelopReceived);
+        mainApp.tsunamiReceived.connect(onTsunamiReceived);
     }
-    // TODO: テロップデータを複数同時に受診した時、テキストが交錯しないように2番手以降は遅延を入れる
-    function onTelopReceived(data) {
-        telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"]); // ロゴとテキストを設定
+    function onTelopReceived(data,emergency) {
+        telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"],emergency); // ロゴとテキストを設定
     }
-
+    function onTsunamiReceived(data) {
+        telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"],emergency); // ロゴとテキストを設定
+    }
 
 }

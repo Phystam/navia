@@ -19,9 +19,9 @@ Item{
   property var textList: []
   property var logoList: []
 
-  property var soundList_eew: []
-  property var textList_eew: []
-  property var logoList_eew: []
+  property var soundList_emergency: []
+  property var textList_emergency: []
+  property var logoList_emergency: []
   ListModel {
     id: logoListModel1
   }
@@ -54,19 +54,17 @@ Item{
   //緊急地震速報用のタイマー
   Timer {
     id: telopTimer2
-    interval: 4000 // 4秒ごとにテキストを表示
+    interval: 30000 // 4秒ごとにテキストを表示
     repeat: true
     running:false
     triggeredOnStart: true
     onTriggered: {
-      repeat=true
-      running=true
-      //if (content_object !== null) {
-      //  var end = content_object.nextText();
-      //} else {
-        repeat=false
+      if (parent.textList_emergency.length > 0) {
+        nextText_emergency()
+      } else {
+        init_emergency()
         running=false
-      //}
+      }
     }
   }
   //音声発出用
@@ -78,23 +76,41 @@ Item{
   function init(){
     text1=""
     text2=""
-    text3=""
-    text4=""
     logoListModel1.clear()
     logoListModel2.clear()
     telopTimer1.stop()
+  }
+  function init_emergency(){
+    text3=""
+    text4=""
+    logoListModel3.clear()
+    logoListModel4.clear()
+    telopTimer2.stop()
   }
 
   function playSound(filename) {
     sound.source=filename
     sound.play()
   }
-  function push(_soundList, _logoList, _textList) {
+  function push(_soundList, _logoList, _textList, emergency) {
     // 現在入っているリストが空であるか確認
     var is_first=false;
     if (telop.textList.length == 0) {
       // 既存のリストをクリア
       is_first=true;
+    }
+    //表示中にEEWが入ったときはこっち。
+    if (emergency){
+      for(var i=0;i<_soundList.length;i++){
+      telop.soundList_emergency.push(_soundList[i])
+      }
+      for(var i=0;i<_logoList.length;i++){
+        telop.logoList_emergency.push(_logoList[i])
+      }
+      for(var i=0;i<_textList.length;i++){
+        telop.textList_emergency.push(_textList[i])
+        //console.log("telop.textList.push: " + _textList[i]) 
+      }
     }
     for(var i=0;i<_soundList.length;i++){
       telop.soundList.push(_soundList[i])
@@ -109,6 +125,10 @@ Item{
     if (is_first) {
       //初期化時に何も表示されていない場合は、最初のテキストを表示する
       telopTimer1.start()
+    }
+    //緊急地震速報用
+    if (emergency) {
+      telopTimer2.start()
     }
   }
 
@@ -172,6 +192,69 @@ Item{
     }
     textList.shift() // テキストを表示したらリストから削除
     logoList.shift() 
+    //console.log("textList.length: " + textList.length)
+  }
+
+  function nextText_emergency(){
+    logoListModel3.clear()
+    logoListModel4.clear()
+    if(soundList[index]!=""){
+      playSound(soundList[index])
+    }
+    soundList.shift() // 音声も同様に削除
+    // ロゴがない場合 → 上部全体を使ってテロップを表示する
+    if (logoList[0][0]=="" && logoList[0][1]==""){
+      text3=textList_emergency[0][0]
+      text4=textList_emergency[0][1]
+      //console.log("telop.textList: " + text1 + ", " + text2)
+      txt3.horizontalAlignment=Text.AlignHCenter
+      txt3.anchors.left=telop.left
+      txt3.anchors.right=telop.right
+      txt4.horizontalAlignment=Text.AlignHCenter
+      txt4.anchors.left=telop.left
+      txt4.anchors.right=telop.right
+      txt4.x=0
+      txt3.anchors.leftMargin=0
+      txt4.anchors.leftMargin=0
+    }
+    // ロゴがある場合 → ロゴ(さらにリストになっている)を表示しながらテロップを表示する
+    else {
+      var logo3=logoList_emergency[0][0]
+      var logo4=logoList_emergency[0][1]
+      var logo3array=logo3.split(",")
+      var logo4array=logo4.split(",")
+      
+      //console.log(logo1array)
+      //右から順に詰めていくので、左から順番通りにするためには逆順で入れる必要がある
+      for(var i=logo3array.length-1;i>=0;i--){
+        if(logo3array[i]!="no"){
+          logoListModel3.append({"value":logo3array[i]})
+        }else {
+          logoListModel3.append({"value":""})
+        }
+      }
+      for(var i=logo4array.length-1;i>=0;i--){
+        if(logo4array[i]!="no"){
+          logoListModel4.append({"value":logo4array[i]})
+        } else {
+          logoListModel4.append({"value":""})
+        }
+      }
+      text3=textList_emergency[0][0]
+      text4=textList_emergency[0][1]
+      //txt1.width=telop.width*0.6
+      txt3.horizontalAlignment=Text.AlignLeft
+      txt3.anchors.left=telop.horizontalCenter
+      txt3.anchors.leftMargin=-telop.width*0.1
+      txt3.anchors.right=telop.right
+      //txt2.width=telop.width*0.6
+      txt4.horizontalAlignment=Text.AlignLeft
+      txt4.anchors.left=telop.horizontalCenter
+      txt4.anchors.leftMargin=-telop.width*0.1
+      //console.log("telop.textList: " + text1 + ", " + text2)
+    }
+    textList_emergency.shift() // テキストを表示したらリストから削除
+    logoList_emergency.shift() 
     //console.log("textList.length: " + textList.length)
   }
 
