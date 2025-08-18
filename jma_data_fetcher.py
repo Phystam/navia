@@ -304,12 +304,13 @@ class JMADataFetcher(QObject):
         parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
         report_tree = etree.fromstring(report_xml_content, parser)
         # IDからデータタイプコードを抽出
+        data_id=""
         if test:
             data_type_code=entry_data
+            data_id=entry_data
         else:
-            id_parts = entry_data['id'].split('/')
-            filename_with_timestamp = id_parts[-1]
-            data_type_code = filename_with_timestamp.split('_')[2]
+            data_id = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
+            data_type_code = data_id.split('_')[2]
 
         xsd_filename="jmx.xsd"
         schema = None
@@ -325,11 +326,9 @@ class JMADataFetcher(QObject):
 
         # 取得したXMLコンテンツをzstdで圧縮して保存
         # ここを修正: ファイル名をデータタイプコードではなく、元のIDの末尾部分を使用
-        filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
-        data_id=filename_base
         if not test:
-            output_filename = os.path.join(self.data_dir, f"{filename_base}.zst")
-        
+            output_filename = os.path.join(self.data_dir, f"{data_id}.zst")
+            
             if playtelop:
                 with open(output_filename, 'wb') as f:
                     f.write(zstd.compress(report_xml_content))

@@ -21,6 +21,7 @@ class VPWW54(BaseJMAParser):
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces)
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        parsed_data['headline_text']=headline
         notify_level=1
         if "最大級の警戒" in headline or "安全の確保" in headline:
             notify_level=5

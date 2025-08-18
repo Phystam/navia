@@ -58,7 +58,7 @@ Window {
             }else{
                 infoTitle.text = pref + " " + name; // Use getMeteWarningName for region name
             }
-            infoHeadline.text = firstCode.headline; // Assuming the Python returns a headline
+            headlineText.text = timelineManager.getHeadlineText(hierarchy,code); // Assuming the Python returns a headline
             infoImage.source = "materials/code" + firstCode.code + ".svg"; // Load SVG based on code
         } else {
             infoTitle.text = "No warnings";
@@ -462,7 +462,7 @@ Window {
                     height: 400
                     
                     TextArea {
-                        id: weatherInfoArea
+                        id: headlineText
                         width: parent.width
                         height: 400
                         text: "気象情報がここに表示されます。\n\n"

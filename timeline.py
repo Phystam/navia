@@ -97,11 +97,11 @@ class TimelineManager(QObject):
             data: パース結果の辞書（jma_base_parserの出力形式）
         """
         if data["category"]=="meteorology":
-            self.mete_timeline.append({id: data})
+            self.mete_timeline[id]=data
         if data["category"]=="seismology":
-            self.seis_timeline.append({id: data})
+            self.seis_timeline[id]=data
         if data["category"]=="volcanology":
-            self.volc_timeline.append({id: data})
+            self.volc_timeline[id]=data
         #vpww54
         if data["data_type"]=="VPWW54":
             dt=data["report_datetime"]
@@ -246,6 +246,26 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
+    @Slot(str,str,result=str)
+    def getID(self, hierarchy, code):
+        """情報IDを取得"""
+        try:
+            return self.mete_status[hierarchy][code]["id"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=str)
+    def getHeadlineText(self, hierarchy, code):
+        """情報IDを取得"""
+        try:
+            id=self.getID(hierarchy,code)
+            return self.mete_timeline[id]["headline_text"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return "現在、発表されている情報はありません。"
         
     @Slot(str,str,result=str)
     def getPrefName(self, hierarchy, code):
