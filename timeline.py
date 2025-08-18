@@ -274,7 +274,7 @@ class TimelineManager(QObject):
         """情報IDを取得"""
         try:
             id=self.getID(hierarchy,code)
-            return self.mete_timeline[id]["title_text"]
+            return self.mete_timeline[id]["head_title"]
             
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")

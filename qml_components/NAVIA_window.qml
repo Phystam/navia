@@ -57,7 +57,8 @@ Window {
             }else{
                 infoTitle.text = pref + " " + name; // Use getMeteWarningName for region name
             }
-            headlineText.text = timelineManager.getHeadlineText(hierarchy,code); // Assuming the Python returns a headline
+            headlineText.text = timelineManager.getHeadlineText(hierarchy,code);
+            infoHeadTitle.text = timelineManager.getTitle(hierarchy,code);
             infoImage.source = "materials/code" + firstCode.code + ".svg"; // Load SVG based on code
         } else {
             infoTitle.text = "No warnings";
@@ -450,11 +451,22 @@ Window {
                 
                 Text {
                     id: infoTitle
-                    text: "気象情報"
+                    text: "地域名"
                     font.pixelSize: 18
                     font.bold: true
                 }
-                
+                Text {
+                    id: infoHeadTitle
+                    text: "気象警報・注意報"
+                    font.pixelSize: 18
+                    font.bold: true
+                }
+                Text {
+                    id: infoDate
+                    text: "text"
+                    font.pixelSize: 12
+                    font.bold: true
+                }
                 // 気象情報を表示する領域
                 ScrollView {
                     width: parent.width
