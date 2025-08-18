@@ -1,5 +1,5 @@
 # main.py (Updated with Data Fetcher)
-import sys
+import sys,os
 from PySide6.QtCore import QObject, QUrl, Slot, Signal # アプリ部分を移動させても忘れずにimport
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtQml import QQmlApplicationEngine, QQmlComponent
@@ -24,9 +24,10 @@ class MainApp(QObject):
         self.engine = engine_instance
         self.createTrayIcon() # タスクトレイアイコンを作成
 
+        self.timeline_manager = TimelineManager(self)  # 一度だけ作成
         # JMADataFetcher のインスタンスを作成
         # JMADataFetcherは内部でQTimerを持っており、定期的にデータ取得を行います
-        self.jma_fetcher = JMADataFetcher(self)
+        self.jma_fetcher = JMADataFetcher(self.timeline_manager, self)
 
         self.axsis_manager = AxisManager(self)
         # 設定用インスタンス
@@ -34,9 +35,8 @@ class MainApp(QObject):
         self.settings_manager._load_settings()
         self.settings_window_qml_object = None
         
-        self.timeline_manager = TimelineManager(self)
-        self.jma_fetcher.dataParsed.connect(self.onDataParsed)
-        self.seismology_window_qml_object = None
+        
+        #self.jma_fetcher.dataParsed.connect(self.onDataParsed)
         # ラジオ用インスタンス
         self.broadcaster = Broadcaster(self)
         # JMADataFetcherからのシグナルをメインアプリのメソッドに接続
@@ -47,6 +47,7 @@ class MainApp(QObject):
         
         self.navia_window: QObject = None
         self.navia_component: QQmlComponent = None
+
 
     # タスクトレイアイコンを作成するメソッド
     def createTrayIcon(self):
@@ -95,10 +96,14 @@ class MainApp(QObject):
         print(f"メインアプリ: 新しいデータが取得され、保存されました: {file_path}")
         # ここで取得したデータ（file_path）をQMLに表示したり、読み上げたりする処理を追加できます。
         # 例: QMLに通知するシグナルを発行するなど
-
-    @Slot(str,dict)
-    def onDataParsed(self, data_id,parsed_data):
-        self.timeline_manager.add_entry(data_id,parsed_data)
+    @Slot(result=str)
+    def getCurrentDir(self):
+        return os.getcwd()
+    
+    #@Slot(str,dict)
+    #def onDataParsed(self, data_id,parsed_data):
+    #    print("パースしたデータを追加します。")
+    #    self.timeline_manager.add_entry(data_id,parsed_data)
 
     @Slot(dict,bool)
     def onTelopDataReceived(self, telop_dict,emergency=False):
@@ -183,7 +188,7 @@ class MainApp(QObject):
             dataname=entry_data[-10:-4]
             print(dataname)
             data=f.read()
-            self.jma_fetcher.processReport(dataname,data,test=True, playtelop=True)
+            self.jma_fetcher.processReport(dataname,data,test=True, playtelop=True,save=False,parse=True)
             
 if __name__ == "__main__":
     # QApplicationを使用するように変更

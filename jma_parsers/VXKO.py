@@ -6,7 +6,7 @@ class VXKO(BaseJMAParser):
         super().__init__(parent)
         self.data_type = "VXKO" # このパーサーが扱うデータタイプ
 
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         河川予報 (VXKOii) のXMLを解析します。
         """

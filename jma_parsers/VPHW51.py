@@ -6,7 +6,7 @@ class VPHW51(BaseJMAParser):
         super().__init__(parent)
         self.data_type = "VPHW51" # このパーサーが扱うデータタイプ
 
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         竜巻注意情報 (VPHW51) のXMLを解析します。
         """

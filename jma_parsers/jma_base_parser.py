@@ -9,7 +9,7 @@ class BaseJMAParser(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
     
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test):
         """
         XMLツリーと名前空間を受け取り、データを解析して辞書として返します。
         このメソッドは子クラスでオーバーライドされるべきです。

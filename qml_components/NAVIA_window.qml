@@ -2,19 +2,18 @@ import QtQuick
 import QtQuick.Controls
 import QtLocation
 import QtPositioning
-import QtCore
 Window {
     id: naviaWindow
     width: 1200
     height: 800
     visible: true // 初期状態では非表示
     title: "NAVIA情報"
-    property string currentDir: "d:/Programs/navia"
+    property string currentDir: mainApp.getCurrentDir()
     // 地図コンポーネント (GeoJSONポリゴンのみ表示)
     Component.onCompleted: {
         // 必要に応じて他の初期化処理を追加
         timelineManager.meteStatusChanged.connect(onStatusChanged);
-        console.log(currentDir)
+        console.log(naviaWindow.currentDir)
     }
 
     function getColorByWarningLevel(level) {
@@ -30,20 +29,20 @@ Window {
     }
 
     function onStatusChanged() {
-        //console.log("statuschanged: received")
-        // 表示されているMapItemViewのみを強制的に再描画する
-        //if (pref_miv.visible && pref.model.length > 0) {
-        //    pref_miv.model = []; pref_miv.model = pref.model[0].data;
-        //}
-        //if (class10_miv.visible && class10.model.length > 0) {
-        //    class10_miv.model = []; class10_miv.model = class10.model[0].data;
-        //}
-        //if (class15_miv.visible && class15.model.length > 0) {
-        //    class15_miv.model = []; class15_miv.model = class15.model[0].data;
-        //}
-        //if (class20_miv.visible && class20.model.length > 0) {
-        //    class20_miv.model = []; class20_miv.model = class20.model[0].data;
-        //}
+        console.log("statuschanged: received")
+        //表示されているMapItemViewのみを強制的に再描画する
+        if (pref.model.length > 0) {
+            pref_miv.model = []; pref_miv.model = pref.model[0].data;
+        }
+        if (class10.model.length > 0) {
+            class10_miv.model = []; class10_miv.model = class10.model[0].data;
+        }
+        if (class15.model.length > 0) {
+            class15_miv.model = []; class15_miv.model = class15.model[0].data;
+        }
+        if (class20.model.length > 0) {
+            class20_miv.model = []; class20_miv.model = class20.model[0].data;
+        }
     }
 
 

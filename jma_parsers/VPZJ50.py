@@ -6,7 +6,7 @@ class VPZJ50(BaseJMAParser):
         self.data_type = "VPZJ50" # このパーサーが扱うデータタイプ
         self.area=["",]
 
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         一般報 (VPZJ50) のXMLを解析します。
         """

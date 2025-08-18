@@ -5,7 +5,7 @@ class VGSK50(BaseJMAParser):
         super().__init__(parent)
         self.data_type = "VGSK50" # このパーサーが扱うデータタイプ
 
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         生物気象観測 (VGSK50) のXMLを解析します。
         """

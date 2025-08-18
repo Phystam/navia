@@ -6,7 +6,7 @@ class VFVO50(BaseJMAParser):
         super().__init__(parent)
         self.data_type = "VFVO50" # このパーサーが扱うデータタイプ
 
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         噴火警報 (VFVO50) のXMLを解析します。
         """

@@ -1,11 +1,11 @@
 import zstd
-import os
-import re
+import re, os, datetime
 from PySide6.QtCore import QObject, QTimer, Signal, Slot, QDateTime, QUrl, QByteArray
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from lxml import etree
 
 from settings_manager import SettingsManager
+from timeline import TimelineManager
 # パーサーをインポート
 from jma_parsers.jma_base_parser import BaseJMAParser
 from jma_parsers.VPZJ50 import VPZJ50
@@ -75,8 +75,8 @@ class JMADataFetcher(QObject):
     errorOccurred = Signal(str)
     telopDataReceived = Signal(dict,bool) # テロップ情報を受け取るためのシグナル
     tsunamiDataReceived = Signal(dict) # 津波用
-    dataParsed = Signal(str,dict) # タイムラインデータ用
-    def __init__(self, parent=None):
+    #dataParsed = Signal(str,dict) # タイムラインデータ用
+    def __init__(self, _timeline_manager, parent=None):
         super().__init__(parent)
         self.feed_urls = [
             "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
@@ -94,6 +94,7 @@ class JMADataFetcher(QObject):
         self.xsd_schemas = {} # ロードしたXSDスキーマをキャッシュする辞書
         #設定インスタンスを登録
         self.setting_manager = SettingsManager(self)
+        self.timeline_manager = _timeline_manager #TimelineManager(self)  # 削除
         # パーサーのインスタンスを辞書に登録
         self.parsers = {
             "VGSK50": VGSK50(self), # 季節観測
@@ -134,7 +135,7 @@ class JMADataFetcher(QObject):
             #"VFVO53": VolcanoParser(self),    # 火山情報 (仮)
             # 他のデータタイプもここに追加
         }
-
+        #初回読み込み
         self._load_existing_ids(first=True)
 
         # 定期的に更新をチェックするためのタイマーを設定
@@ -154,16 +155,30 @@ class JMADataFetcher(QObject):
         for filename in os.listdir(self.data_dir):
             if filename.endswith(".zst"):
                 extracted_id_part = filename[:-4]
-                #わざわざファイルを解凍する必要はない
-                #with open(os.path.join(self.data_dir, filename), 'rb') as f:
-                #    try:
-                #        filedata=zstd.decompress(f.read())  # Zstandard圧縮を解凍
-                #    except:
-                #        print(f"Zstandard解凍エラー")
-                #        continue
-                #    self.processReport({'id': extracted_id_part}, filedata,test=False, playtelop=not first) 
                 full_id = f"https://www.data.jma.go.jp/developer/xml/data/{extracted_id_part}"
                 self.downloaded_ids.add(full_id)
+                
+                #1日前までのデータは解凍して読み込む。テロップは必要ない
+                id_date = filename[:14]
+                # datetimeオブジェクトに変換
+                try:
+                    id_datetime = datetime.datetime.strptime(id_date, "%Y%m%d%H%M%S")
+                    now=datetime.datetime.now()
+                    yesterday = now - datetime.timedelta(days=1)
+                    if id_datetime > yesterday:
+                        with open(os.path.join(self.data_dir, filename), 'rb') as f:
+                            try:
+                                filedata=zstd.decompress(f.read())  # Zstandard圧縮を解凍
+                            except:
+                                continue
+                            self.processReport({'id': extracted_id_part}, filedata,test=False, playtelop=False, save = False) 
+                            
+                except ValueError:
+                    # 日付形式が正しくない場合はスキップ
+                    continue
+                #わざわざファイルを解凍する必要はない
+                
+
         print(f"ロード完了。ダウンロード済みID数: {len(self.downloaded_ids)}")
 
     def _set_initial_fetch_timer(self,i):
@@ -291,7 +306,7 @@ class JMADataFetcher(QObject):
                 return
 
             report_xml_content = reply.readAll().data()
-            self.processReport(entry_data, report_xml_content, test=False, playtelop=True)
+            self.processReport(entry_data, report_xml_content, test=False, playtelop=True,save=True,parse=True)
         except etree.XMLSyntaxError as e:
             self.errorOccurred.emit(f"レポートXML構文エラー {entry_data['id']}: {e}")
         except Exception as e:
@@ -299,7 +314,7 @@ class JMADataFetcher(QObject):
         finally:
             reply.deleteLater()
 
-    def processReport(self, entry_data, report_xml_content, test=False, playtelop=False):
+    def processReport(self, entry_data, report_xml_content, test=False, playtelop=False, save=False, parse=True):
         parser = etree.XMLParser()
         parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
         report_tree = etree.fromstring(report_xml_content, parser)
@@ -313,11 +328,7 @@ class JMADataFetcher(QObject):
             data_type_code = data_id.split('_')[2]
 
         xsd_filename="jmx.xsd"
-        schema = None
-        if xsd_filename:
-            schema = self._get_xsd_schema(xsd_filename)
-        else:
-            pass #print("xsi:schemaLocation属性からXSDファイル名を特定できませんでした。スキーマ検証なしでパースします。")
+        schema = self._get_xsd_schema(xsd_filename)
 
         # XSDスキーマ検証
         if schema:
@@ -326,19 +337,18 @@ class JMADataFetcher(QObject):
 
         # 取得したXMLコンテンツをzstdで圧縮して保存
         # ここを修正: ファイル名をデータタイプコードではなく、元のIDの末尾部分を使用
-        if not test:
+        if (not test) and save:
             output_filename = os.path.join(self.data_dir, f"{data_id}.zst")
-            
-            if playtelop:
-                with open(output_filename, 'wb') as f:
-                    f.write(zstd.compress(report_xml_content))
-    
+            with open(output_filename, 'wb') as f:
+                f.write(zstd.compress(report_xml_content))
                 print(f"圧縮データを保存しました: {output_filename}")
-                self.downloaded_ids.add(entry_data['id'])
+        if not test:    
+            self.downloaded_ids.add(entry_data['id'])
 
         # データタイプに基づいて適切なパーサーに処理を振り分け
         parsed_data = {}
         telop_dict = {}
+        playtelop_warning=False
         if "VXKO" in data_type_code:
             data_type_code="VXKO"
         if data_type_code in self.parsers:
@@ -361,37 +371,39 @@ class JMADataFetcher(QObject):
 
             telop_dict, warning_level = parser_instance.content(report_tree, namespaces, data_type_code)
             notify_levels_region=self.setting_manager._settings["meteorology"]["notify_observatories_telop_level"]
+            
             for region in notify_levels_region:
                 for area in notify_levels_region[region]:
                     try:
-                        playtelop = warning_level[area] >= notify_levels_region[region][area]
+                        playtelop_warning = warning_level[area] >= notify_levels_region[region][area]
                         print("")
                     except:
                         pass
                 pass
-            parseddata = parser_instance.parse(report_tree,namespaces,data_type_code)
-            self.dataParsed.emit(data_id,parseddata)
+            if parse or test:
+                parseddata = parser_instance.parse(report_tree,namespaces,data_type_code,test=test)
+                #Signal経由ではなく、直接タイムラインマネージャーに渡すようにした。
+                self.timeline_manager.add_entry(data_id,parseddata)
+                #self.dataParsed.emit(data_id,parseddata)
             # ラジオ用
             #weather_info=["VGSK50","VGSK55","VGSK60",
             #              "VPZJ50","VPZJ51","VPCJ50","VPCJ51",
             #              "VPTI50","VPTI51"]
             #if data_type_code in weather_info:
             #    parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
+        
+        if (playtelop and playtelop_warning) or test:
             print(f"テロップ情報: {telop_dict}")
-            if playtelop:
-                #telop_dict = parser_instance.content(report_tree, namespaces, data_type_code)
-                
-                self.telopDataReceived.emit(telop_dict,False)
-        else:
-            pass
+            self.telopDataReceived.emit(telop_dict,False)
             #print(f"データタイプ '{data_type_code}' に対応するパーサーが見つかりません。")
             #parsed_data = {"error": f"未対応のデータタイプ: {data_type_code}"}
 
     @Slot(dict)
     def appendTimeline(self,parsed_data):
-        
+        # 既存のappendTimelineメソッドを削除または置き換え
+        # TimelineManagerはMainAppで作成されているため、直接呼び出す必要はない
         pass
 
-        
 
-        
+
+

@@ -6,7 +6,7 @@ class VXWW50(BaseJMAParser):
         super().__init__(parent)
         self.data_type = "VXWW50" # このパーサーが扱うデータタイプ
 
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         気象警報 (VXWW50) のXMLを解析します。
         """

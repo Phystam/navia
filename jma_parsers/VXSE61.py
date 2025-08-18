@@ -6,7 +6,7 @@ class VXSE61(BaseJMAParser):
         super().__init__(parent)
         self.data_type = "VXSE61" # このパーサーが扱うデータタイプ
 
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         地震情報 (VXSE61) のXMLを解析します。
         """

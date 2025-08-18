@@ -6,7 +6,7 @@ class VFVO53(BaseJMAParser):
         super().__init__(parent)
         self.data_type = "VFVO53" # このパーサーが扱うデータタイプ
 
-    def parse(self, xml_tree, namespaces, data_type_code):
+    def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         降灰予報 (定時) (VFVO53) のXMLを解析します。
         """
