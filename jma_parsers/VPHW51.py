@@ -12,13 +12,48 @@ class VPHW51(BaseJMAParser):
         """
         print(f"竜巻注意情報 ({self.data_type}) を解析中...")
         parsed_data = {}
-        parsed_data['category']="meteorology"
-        parsed_data["data_type"]=self.data_type
         # Control/Title
-        parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
-        parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        parsed_data["category"]="meteorology"
+        parsed_data["data_type"]=self.data_type
+        parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Title/text()', namespaces)
+        parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
-        parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
+        parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
+        parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces)
+        parsed_data['valid_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ValidDateTime/text()', namespaces)
+        headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        notify_level=1
+        if "最大級の警戒" in headline or "安全の確保" in headline:
+            notify_level=5
+        elif "厳重に警戒" in headline:
+            notify_level=4
+        elif "警戒" in headline:
+            notify_level=3
+        elif "注意" in headline:
+            notify_level=2
+        if "解除" in headline:
+            notify_level=0
+        parsed_data['warning_level']=notify_level
+        #class20s
+        types=["竜巻注意情報（発表細分）",
+               "竜巻注意情報（一次細分区域等）",
+               "竜巻注意情報（市町村等をまとめた地域等）",
+               "竜巻注意情報（市町村等）"]
+        areakeys=["pref","class10","class15","class20"]
+        for i,type in enumerate(types):
+            codeList=[]
+            itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item',namespaces)
+            lenitem=len(itemelements)
+            for j in range(lenitem):
+                # codeelements は["1"]になる
+                codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
+                
+                areacode = self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]//jmx_ib:Area/jmx_ib:Code/text()',namespaces)
+                #print(areacode)
+                #print(codeelements)
+                codeList.append({areacode: codeelements})
+            parsed_data[areakeys[i]]=codeList
+        return parsed_data
 
         return parsed_data
     

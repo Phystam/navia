@@ -75,7 +75,7 @@ class JMADataFetcher(QObject):
     errorOccurred = Signal(str)
     telopDataReceived = Signal(dict,bool) # テロップ情報を受け取るためのシグナル
     tsunamiDataReceived = Signal(dict) # 津波用
-    dataParsed = Signal(dict) # タイムラインデータ用
+    dataParsed = Signal(str,dict) # タイムラインデータ用
     def __init__(self, parent=None):
         super().__init__(parent)
         self.feed_urls = [
@@ -264,10 +264,7 @@ class JMADataFetcher(QObject):
                 resolve_entities=True,
                 attribute_defaults=True,
                 dtd_validation=False
-                #schema_validation=False
             )
-            #parser.resolvers.add(LocalXSDResolver("d:/navia/xsdschema"))
-            #schema_doc = etree.parse("d:/navia/xsdschema/jmx.xsd", parser)
             parser.resolvers.add(LocalXSDResolver(self.xsd_dir))
             schema_doc = etree.parse(xsd_path, parser)
             schema = etree.XMLSchema(schema_doc)
@@ -325,19 +322,12 @@ class JMADataFetcher(QObject):
         if schema:
             if not schema.validate(report_tree):
                 print(f"XMLスキーマ検証エラー: {entry_data['id']}")
-                for error in schema.error_log:
-                    pass
-                    print(f"  - {error.message} (Line: {error.line}, Column: {error.column})")
-            else:
-                pass
-                #print(f"XMLスキーマ検証成功: {entry_data['id']}")
-        else:
-            pass #print("XSDスキーマがロードされていないため、スキーマ検証をスキップします。", end="\n\n")
 
         # 取得したXMLコンテンツをzstdで圧縮して保存
         # ここを修正: ファイル名をデータタイプコードではなく、元のIDの末尾部分を使用
+        filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
+        data_id=filename_base
         if not test:
-            filename_base = entry_data['id'].replace('https://www.data.jma.go.jp/developer/xml/data/', '')
             output_filename = os.path.join(self.data_dir, f"{filename_base}.zst")
         
             if playtelop:
@@ -381,7 +371,7 @@ class JMADataFetcher(QObject):
                         pass
                 pass
             parseddata = parser_instance.parse(report_tree,namespaces,data_type_code)
-            self.dataParsed.emit(parseddata)
+            self.dataParsed.emit(data_id,parseddata)
             # ラジオ用
             #weather_info=["VGSK50","VGSK55","VGSK60",
             #              "VPZJ50","VPZJ51","VPCJ50","VPCJ51",

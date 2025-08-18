@@ -3,7 +3,7 @@ import sys
 from PySide6.QtCore import QObject, QUrl, Slot, Signal # アプリ部分を移動させても忘れずにimport
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtQml import QQmlApplicationEngine, QQmlComponent
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QMainWindow
 
 # clock.py から ClockApp をインポート
 from clock import ClockApp
@@ -45,6 +45,8 @@ class MainApp(QObject):
         self.axsis_manager.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
         self.jma_fetcher.errorOccurred.connect(self.onErrorOccurred)
         
+        self.navia_window: QObject = None
+        self.navia_component: QQmlComponent = None
 
     # タスクトレイアイコンを作成するメソッド
     def createTrayIcon(self):
@@ -94,9 +96,9 @@ class MainApp(QObject):
         # ここで取得したデータ（file_path）をQMLに表示したり、読み上げたりする処理を追加できます。
         # 例: QMLに通知するシグナルを発行するなど
 
-    @Slot(str)
-    def onDataParsed(self, parsed_data):
-        self.timeline_manager.add_entry(parsed_data)
+    @Slot(str,dict)
+    def onDataParsed(self, data_id,parsed_data):
+        self.timeline_manager.add_entry(data_id,parsed_data)
 
     @Slot(dict,bool)
     def onTelopDataReceived(self, telop_dict,emergency=False):
@@ -147,18 +149,30 @@ class MainApp(QObject):
         if not self.engine:
             print("QMLエンジンが初期化されていません。")
             return
-
+        # 既にウィンドウが開いている場合
+        if self.navia_window:
+            self.navia_window.show()
+            print("既存のNAVIAウィンドウにフォーカスを移しました。")
+            return
+            
         # NAVIA_window.qmlをロードして表示
-        component = QQmlComponent(self.engine, QUrl.fromLocalFile("qml_components/NAVIA_window.qml"))
-        if component.status() == QQmlComponent.Ready:
-            navia_window = component.create()
-            if navia_window:
-                navia_window.show()
+        self.navia_component = QQmlComponent(self.engine, QUrl.fromLocalFile("qml_components/NAVIA_window.qml"))
+        if self.navia_component.isReady:
+            self.navia_window = self.navia_component.create()
+            if self.navia_window:
+                self.navia_window.destroyed.connect(self.onNaviaWindowClosed)
                 print("NAVIAウィンドウを表示しました。")
             else:
                 print("NAVIAウィンドウの作成に失敗しました。")
         else:
-            print(f"NAVIA_window.qmlファイルのロードに失敗しました: {component.errorString()}")
+            print(f"NAVIA_window.qmlファイルのロードに失敗しました: {self.navia_component.errorString()}")
+
+    @Slot()
+    def onNaviaWindowClosed(self):
+        """NAVIAウィンドウが閉じられたときの処理"""
+        print("NAVIAウィンドウが閉じられました。")
+        # ウィンドウオブジェクトをクリア
+        self.navia_window = None
 
     @Slot()
     def onTest(self):

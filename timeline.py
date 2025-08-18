@@ -10,9 +10,9 @@ class TimelineManager(QObject):
     def __init__(self,parent=None):
         super().__init__(parent)
         """タイムラインデータを管理するクラス"""
-        self.mete_timeline = []  # タイムラインデータを格納するリスト
-        self.seis_timeline = []  # タイムラインデータを格納するリスト
-        self.volc_timeline = []  # タイムラインデータを格納するリスト
+        self.mete_timeline = {}  # タイムラインデータを格納するリスト
+        self.seis_timeline = {}  # タイムラインデータを格納するリスト
+        self.volc_timeline = {}  # タイムラインデータを格納するリスト
 
         self.mete_status = {}  # タイムラインデータを格納するリスト
         self.seis_status = {}  # タイムラインデータを格納するリスト
@@ -89,7 +89,7 @@ class TimelineManager(QObject):
             self.mete_status[self.hierarchy[4]][c]=l
         #print(self.mete_status[self.hierarchy[3]]['100011'])
 
-    def add_entry(self, data):
+    def add_entry(self, id, data):
         """
         パースされたデータをタイムラインに追加
         
@@ -97,11 +97,11 @@ class TimelineManager(QObject):
             data: パース結果の辞書（jma_base_parserの出力形式）
         """
         if data["category"]=="meteorology":
-            self.mete_timeline.append(data)
+            self.mete_timeline.append({id: data})
         if data["category"]=="seismology":
-            self.seis_timeline.append(data)
+            self.seis_timeline.append({id: data})
         if data["category"]=="volcanology":
-            self.volc_timeline.append(data)
+            self.volc_timeline.append({id: data})
         #vpww54
         if data["data_type"]=="VPWW54":
             dt=data["report_datetime"]
@@ -117,6 +117,7 @@ class TimelineManager(QObject):
                         try:
                             self.mete_status[hier][areacode]["warning_level"]=warning_level
                             self.mete_status[hier][areacode]["status"]=item[areacode]
+                            self.mete_status[hier][areacode]["id"]=id
                         except:
                             print(f"key error at area code {areacode}" )
             #print(self.mete_status["pref"])
@@ -166,6 +167,17 @@ class TimelineManager(QObject):
             return 0
         
     @Slot(str, str, result=list)
+    def getMeteWarningCode(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            warning_textlist = self.mete_status[hierarchy][code]["status"]
+            return warning_textlist
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return []
+
+    @Slot(str, str, result=list)
     def getMeteWarningName(self, hierarchy, code):
         """指定された階層とコードの警報レベルを取得する"""
         warning_code = {
@@ -207,4 +219,62 @@ class TimelineManager(QObject):
             
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
-            return 0
+            return []
+    @Slot(str,str,result=list)
+    def getParentAreaCode(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            if hierarchy=="pref":
+                return ["",""]
+            if hierarchy=="class10":
+                return ["pref",self.mete_status[hierarchy][code]["parent"]]
+            if hierarchy=="class15":
+                return ["class10",self.mete_status[hierarchy][code]["parent"]]
+            if hierarchy=="class20":
+                return ["class15",self.mete_status[hierarchy][code]["parent"]]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+
+    @Slot(str,str,result=str)
+    def getAreaName(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            return self.mete_status[hierarchy][code]["name"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=str)
+    def getPrefName(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        hokkaido=["宗谷地方",
+                  "網走・北見・紋別地方",
+                  "釧路・根室地方",
+                  "十勝地方",
+                  "上川・留萌地方",
+                  "胆振・日高地方",
+                  "渡島・檜山地方",
+                  "石狩・空知・後志地方"]
+        kagoshima=["鹿児島県（奄美地方除く）","奄美地方"]
+        okinawa=["沖縄本島地方","宮古島地方","八重山地方","大東島地方"]
+        try:
+            if hierarchy=="pref":
+                name = self.getAreaName(hierarchy,code)
+                if name in hokkaido:
+                    return "北海道"
+                elif name in kagoshima:
+                    return "鹿児島県"
+                elif name in okinawa:
+                    return "沖縄県"
+                else:
+                    return name
+            else:
+                parent1 = self.getParentAreaCode(hierarchy,code)
+                return self.getPrefName(parent1[0],parent1[1])
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""

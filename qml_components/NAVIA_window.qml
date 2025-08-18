@@ -2,16 +2,19 @@ import QtQuick
 import QtQuick.Controls
 import QtLocation
 import QtPositioning
+import QtCore
 Window {
     id: naviaWindow
     width: 1200
     height: 800
     visible: true // 初期状態では非表示
     title: "NAVIA情報"
+    property string currentDir: "d:/Programs/navia"
     // 地図コンポーネント (GeoJSONポリゴンのみ表示)
     Component.onCompleted: {
         // 必要に応じて他の初期化処理を追加
         timelineManager.meteStatusChanged.connect(onStatusChanged);
+        console.log(currentDir)
     }
 
     function getColorByWarningLevel(level) {
@@ -27,19 +30,40 @@ Window {
     }
 
     function onStatusChanged() {
-        console.log("statuschanged: received")
+        //console.log("statuschanged: received")
         // 表示されているMapItemViewのみを強制的に再描画する
-        if (pref_miv.visible && pref.model.length > 0) {
-            pref_miv.model = []; pref_miv.model = pref.model[0].data;
-        }
-        if (class10_miv.visible && class10.model.length > 0) {
-            class10_miv.model = []; class10_miv.model = class10.model[0].data;
-        }
-        if (class15_miv.visible && class15.model.length > 0) {
-            class15_miv.model = []; class15_miv.model = class15.model[0].data;
-        }
-        if (class20_miv.visible && class20.model.length > 0) {
-            class20_miv.model = []; class20_miv.model = class20.model[0].data;
+        //if (pref_miv.visible && pref.model.length > 0) {
+        //    pref_miv.model = []; pref_miv.model = pref.model[0].data;
+        //}
+        //if (class10_miv.visible && class10.model.length > 0) {
+        //    class10_miv.model = []; class10_miv.model = class10.model[0].data;
+        //}
+        //if (class15_miv.visible && class15.model.length > 0) {
+        //    class15_miv.model = []; class15_miv.model = class15.model[0].data;
+        //}
+        //if (class20_miv.visible && class20.model.length > 0) {
+        //    class20_miv.model = []; class20_miv.model = class20.model[0].data;
+        //}
+    }
+
+
+    function handleRegionClick(hierarchy, code, name) {
+        // Call the Python function to get warning codes
+        var codes = timelineManager.getMeteWarningCode(hierarchy, code);
+        var pref = timelineManager.getPrefName(hierarchy, code);
+        if (codes.length > 0) {
+            var firstCode = codes[0]; // Assume first code for simplicity
+            if( name==pref){
+                infoTitle.text = pref;
+            }else{
+                infoTitle.text = pref + " " + name; // Use getMeteWarningName for region name
+            }
+            infoHeadline.text = firstCode.headline; // Assuming the Python returns a headline
+            infoImage.source = "materials/code" + firstCode.code + ".svg"; // Load SVG based on code
+        } else {
+            infoTitle.text = "No warnings";
+            infoHeadline.text = "";
+            infoImage.source = "materials/code00.svg";
         }
     }
 
@@ -70,27 +94,28 @@ Window {
                 
                 GeoJsonData {
                     id: pref
-                    sourceUrl: "file:///f:/navia/geo/府県予報区等.geojson"
+                    //sourceUrl: "file:///f:/navia/geo/府県予報区等.geojson"
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/府県予報区等.geojson"
                 }
                 GeoJsonData {
                     id: class10
-                    sourceUrl: "file:///f:/navia/geo/一次細分区域等.geojson"
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/一次細分区域等.geojson"
                 }
                 GeoJsonData {
                     id: class15
-                    sourceUrl: "file:///f:/navia/geo/市町村等をまとめた地域等.geojson"
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/市町村等をまとめた地域等.geojson"
                 }
                 GeoJsonData {
                     id: class20
-                    sourceUrl: "file:///f:/navia/geo/市町村等（気象警報等）.geojson"
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/市町村等（気象警報等）.geojson"
                 }
                 GeoJsonData {
                     id: tsunami
-                    sourceUrl: "file:///f:/navia/geo/津波予報区.geojson"
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/津波予報区.geojson"
                 }
                 GeoJsonData {
                     id: world
-                    sourceUrl: "file:///f:/navia/geo/world.geojson"
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/world.geojson"
                 }
                 WheelHandler {
                     id: wheel
@@ -113,22 +138,14 @@ Window {
                         required property int index
                         property int item_index: index
                         property var item_model: mapgroup.parent.model
+                        property string hierarchy: mapgroup.parent.hierarchy
                         property var polys: showMap(item_model, index)
                         Repeater {
                             model: polys
                             delegate: MapPolygon {
                                 id: polygon
                                 path: modelData
-                                color: {
-                                    var feature = item_model[item_index];
-                                    if (feature && feature.properties) {
-                                        var code = feature.properties.code;
-                                        var level = timelineManager.getMeteWarningLevel(mapgroup.parent.hierarchy, code);
-                                        return getColorByWarningLevel(level);
-                                    } else {
-                                        return "#c8c8cb";
-                                    }
-                                }
+                                color: getColorForItem(item_model)
                                 border.width: 1
                                 border.color: "#111111"
                                 antialiasing: true
@@ -142,26 +159,14 @@ Window {
                                         var pointInMap = mouseArea.mapToItem(view, mouse.x, mouse.y);
                                         var coordinate = view.toCoordinate(pointInMap, false);
 
-                                        // クリック位置がポリゴン内にあるかチェック
-                                        console.log(coordinate)
                                         if (isPointInPolygon(coordinate, modelData)) {
-                                            // クリックされたポリゴンのプロパティを取得してコンソールに表示
-                                            var feature = item_model[item_index];
-                                            if (feature && feature.properties && feature.properties.name) {
-                                                console.log("index=" + item_index + ", Clicked polygon name:", feature.properties.name + ", Clicked polygon code:", feature.properties.code);
-                                            } else {
-                                                console.log("No name property found for clicked polygon");
-                                            }
                                             mouse.accepted = true
+                                            var feature = item_model[item_index];
+                                            handleRegionClick(hierarchy, feature.properties.code, feature.properties.name) // Example hierarchy and code
                                         } else {
                                             mouse.accepted = false
                                         }
                                     }
-                                }
-                                function changeColor() {
-                                    var feature = item_model[item_index];
-                                    var code = feature.properties.code;
-                                    console.log(timelineManager.mete_status["pref"][0][code])
                                 }
                                 function isPointInPolygon(point, polygon) {
                                     let x = point.longitude;
@@ -181,7 +186,16 @@ Window {
                                 }
                             }
                         }
-
+                        function getColorForItem(model){
+                            var feature = item_model[item_index];
+                            if (feature && feature.properties) {
+                                var code = feature.properties.code;
+                                var level = timelineManager.getMeteWarningLevel(hierarchy, code);
+                                return getColorByWarningLevel(level);
+                            } else {
+                                return "#c8c8cb";
+                            }
+                        }
                         function showMap(model, j) {
                             var paths = [];
                             var path = [];
@@ -215,9 +229,6 @@ Window {
                     delegate: mapDelegate
                     visible: view.zoomLevel < 6
                     property string hierarchy: "pref"
-                    onVisibleChanged :{
-                        onStatusChanged()
-                    }
                 }
                 MapItemView {
                     id: class10_miv
@@ -225,9 +236,6 @@ Window {
                     delegate: mapDelegate
                     visible: view.zoomLevel >= 6 && view.zoomLevel < 7
                     property string hierarchy: "class10"
-                    onVisibleChanged :{
-                        onStatusChanged()
-                    }
                 }
                 MapItemView {
                     id: class15_miv
@@ -235,9 +243,6 @@ Window {
                     delegate: mapDelegate
                     visible: view.zoomLevel >= 7 && view.zoomLevel < 9
                     property string hierarchy: "class15"
-                    onVisibleChanged :{
-                        onStatusChanged()
-                    }
                 }
                 MapItemView {
                     id: class20_miv
@@ -245,9 +250,6 @@ Window {
                     delegate: mapDelegate
                     visible: view.zoomLevel >= 9
                     property string hierarchy: "class20"
-                    onVisibleChanged :{
-                        onStatusChanged()
-                    }
                 }
 
                 MapItemView{
@@ -267,46 +269,46 @@ Window {
                                 border.width:1
                                 border.color:"#222222"
                                 antialiasing: true
-                                MouseArea {
-                                    id: mouseArea_world
-                                    anchors.fill: parent
-                                    propagateComposedEvents: true
-                                    onClicked: (mouse) => {
-                                        // マウス座標を地図の地理座標に変換
-                                        var pointInMap = mouseArea_world.mapToItem(view, mouse.x, mouse.y);
-                                        var coordinate = view.toCoordinate(pointInMap, false);
-
-                                        // クリック位置がポリゴン内にあるかチェック
-                                        if (isPointInPolygon(coordinate,modelData)) {
-                                            // クリックされたポリゴンのプロパティを取得してコンソールに表示
-                                            var feature = miv_world.model[item_index];
-                                            if (feature && feature.properties && feature.properties.name) {
-                                                console.log("index="+ item_index +", Clicked polygon name:", feature.properties.name);
-                                            } else {
-                                                console.log("No name property found for clicked polygon");
-                                            }
-                                            mouse.accepted = true
-                                        } else {
-                                            mouse.accepted = false
-                                        }
-                                    }
-                                }
-                                function isPointInPolygon(point, polygon) {
-                                    let x = point.longitude;
-                                    let y = point.latitude;
-                                    let inside = false;
-
-                                    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-                                        let xi = polygon[i].longitude, yi = polygon[i].latitude;
-                                        let xj = polygon[j].longitude, yj = polygon[j].latitude;
-                                        
-                                        let intersect = ((yi > y) !== (yj > y)) &&
-                                                        (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-                                        if (intersect) inside = !inside;
-                                    }
-
-                                    return inside;
-                                }
+                                //MouseArea {
+                                //    id: mouseArea_world
+                                //    anchors.fill: parent
+                                //    propagateComposedEvents: true
+                                //    onClicked: (mouse) => {
+                                //        // マウス座標を地図の地理座標に変換
+                                //        var pointInMap = mouseArea_world.mapToItem(view, mouse.x, mouse.y);
+                                //        var coordinate = view.toCoordinate(pointInMap, false);
+//
+                                //        // クリック位置がポリゴン内にあるかチェック
+                                //        if (isPointInPolygon(coordinate,modelData)) {
+                                //            // クリックされたポリゴンのプロパティを取得してコンソールに表示
+                                //            var feature = miv_world.model[item_index];
+                                //            if (feature && feature.properties && feature.properties.name) {
+                                //                console.log("index="+ item_index +", Clicked polygon name:", feature.properties.name);
+                                //            } else {
+                                //                console.log("No name property found for clicked polygon");
+                                //            }
+                                //            mouse.accepted = true
+                                //        } else {
+                                //            mouse.accepted = false
+                                //        }
+                                //    }
+                                //}
+                                //function isPointInPolygon(point, polygon) {
+                                //    let x = point.longitude;
+                                //    let y = point.latitude;
+                                //    let inside = false;
+//
+                                //    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                                //        let xi = polygon[i].longitude, yi = polygon[i].latitude;
+                                //        let xj = polygon[j].longitude, yj = polygon[j].latitude;
+                                //        
+                                //        let intersect = ((yi > y) !== (yj > y)) &&
+                                //                        (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                                //        if (intersect) inside = !inside;
+                                //    }
+//
+                                //    return inside;
+                                //}
                             }
                         }
                         function showMap(model,j){
@@ -448,6 +450,7 @@ Window {
                 spacing: 10
                 
                 Text {
+                    id: infoTitle
                     text: "気象情報"
                     font.pixelSize: 18
                     font.bold: true

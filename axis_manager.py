@@ -133,12 +133,12 @@ class AxisManager(QObject):
         if channel=="quake-one":
             pass
         
-    def EEW(self,json_data):
+    def EEW(self,json_data: dict):
         logo_list = []
         text_list = []
         sound_list = []
         is_final=False
-        title=f"<b>気象庁発表 {json_data["message"]["Title"]} "
+        title=f"<b>気象庁発表 {json_data['message']['Title']} "
         if json_data["message"]["Flag"]["is_final"]:
             is_final=True
             title=title+"最終報"
@@ -147,14 +147,14 @@ class AxisManager(QObject):
         elif json_data["message"]["Flag"]["is_training"]:
             title=title+"訓練報"
         else:
-            title=title+f"第{json_data["message"]["Serial"]}報"
+            title=title+f"第{json_data['message']['Serial']}報"
         title=title+"</b>"
         intensity=json_data["message"]["Intensity"]
         hypocenter_name=json_data["message"]["Hypocenter"]["Name"]
         is_emergency= intensity in ["5弱","5強","6弱","6強","7"]
         
         if not is_emergency:
-            text=f"震源は{hypocenter_name} 深さ {json_data["message"]["Hypocenter"]["Depth"]} マグニチュード{json_data["message"]["Magnitude"]}"
+            text=f"震源は{hypocenter_name} 深さ {json_data['message']['Hypocenter']['Depth']} マグニチュード{json_data['message']['Magnitude']}"
             
             text_list=[title, text]
             logo_list=["",""]
