@@ -39,67 +39,86 @@ class TimelineManager(QObject):
             l= {"name":name,
                 "parent":"",
                 "children": children,
-                "status": ["00"],
-                "do_status": ["1"],
-                "warning_level":0,
-                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "do_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
                 }
             self.mete_status[self.hierarchy[0]][c]=l
         for c in pref_codes:
             name = self.areacode["prefs"][c]["name"]
             children = self.areacode["prefs"][c]["children"]
             par = self.areacode["prefs"][c]["parent"]
-            l={"name":name,
+            l={ "name":name,
                 "parent":par,
                 "children": children,
                 "status": ["00"],
-                "do_status": ["1"],
+                "id": "",
+                "VXWW50_status": ["1"],
+                "VXWW50_id": "",
+                "ta_status": ["1"],
+                "ta_id": "",
                 "warning_level":0,
                 "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "do_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "ta_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "ta_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
                     }
             self.mete_status[self.hierarchy[1]][c]=l
         for c in class10_codes:
             name = self.areacode["class10s"][c]["name"]
             children = self.areacode["class10s"][c]["children"]
             par = self.areacode["class10s"][c]["parent"]
-            l={"name":name,
-               "parent":par,
-               "children": children,
-               "status": ["00"],
-               "do_status": ["1"],
-               "warning_level":0,
-               "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "do_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+            l={ "name":name,
+                "parent":par,
+                "children": children,
+                "status": ["00"],
+                "id": "",
+                "VXWW50_status": ["1"],
+                "VXWW50_id": "",
+                "ta_status": ["1"],
+                "ta_id": "",
+                "warning_level":0,
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "ta_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "ta_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
             }
             self.mete_status[self.hierarchy[2]][c]=l
         for c in class15_codes:
             name = self.areacode["class15s"][c]["name"]
             children = self.areacode["class15s"][c]["children"]
             par = self.areacode["class15s"][c]["parent"]
-            l={"name":name,
-               "parent":par,
-               "children": children,
-               "status": ["00"],
-               "do_status": ["1"],
-               "warning_level":0,
-               "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "do_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+            l={ "name":name,
+                "parent":par,
+                "children": children,
+                "status": ["00"],
+                "id": "",
+                "VXWW50_status": ["1"],
+                "VXWW50_id": "",
+                "ta_status": ["1"],
+                "ta_id": "",
+                "warning_level":0,
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "ta_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "ta_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
             }
             self.mete_status[self.hierarchy[3]][c]=l
         for c in class20_codes:
             name = self.areacode["class20s"][c]["name"]
             par = self.areacode["class20s"][c]["parent"]
-            l={
-               "name":name,
-               "parent":par,
-               "children": [],
-               "status": ["00"],
-               "do_status": ["1"],
-               "warning_level":0,
-               "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "do_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+            l={ "name":name,
+                "parent":par,
+                "children": [],
+                "status": ["00"],
+                "id": "",
+                "VXWW50_status": ["1"],
+                "VXWW50_id": "",
+                "ta_status": ["1"],
+                "ta_id": "",
+                "warning_level":0,
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "ta_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
+                "ta_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
             }
             self.mete_status[self.hierarchy[4]][c]=l
         #print(self.mete_status[self.hierarchy[3]]['100011'])
@@ -111,7 +130,6 @@ class TimelineManager(QObject):
         Args:
             data: パース結果の辞書（jma_base_parserの出力形式）
         """
-        print("adding an entry")
         if data["category"]=="meteorology":
             self.mete_timeline[id]=data
         if data["category"]=="seismology":
@@ -157,19 +175,19 @@ class TimelineManager(QObject):
                 for areacode in areacodes:
                     #print(f"{dt}, {self.mete_status[hier][areacode]['updated']}")
                     try:
-                        if self.mete_status[hier][areacode]["do_updated"] < dt:
-                            self.mete_status[hier][areacode]["do_updated"]=dt
-                            self.mete_status[hier][areacode]["do_status"]=item[areacode]
-                            self.mete_status[hier][areacode]["do_id"]=id
+                        if self.mete_status[hier][areacode]["VXWW50_updated"] < dt:
+                            self.mete_status[hier][areacode]["VXWW50_updated"]=dt
+                            self.mete_status[hier][areacode]["VXWW50_status"]=item[areacode]
+                            self.mete_status[hier][areacode]["VXWW50_id"]=id
                             #親地域に伝播させる
                             #while True:
                             #    parent_hier=self.getParent(hier)
                             #    if parent_hier=="":
                             #        break
                             #    parent_areacode=self.mete_status[hier][areacode]["parent"]
-                            #    self.mete_status[parent_hier][parent_areacode]["do_updated"]=dt
-                            #    self.mete_status[parent_hier][parent_areacode]["do_status"]=item[areacode]
-                            #    self.mete_status[parent_hier][parent_areacode]["do_id"]=id
+                            #    self.mete_status[parent_hier][parent_areacode]["VXWW50_updated"]=dt
+                            #    self.mete_status[parent_hier][parent_areacode]["VXWW50_status"]=item[areacode]
+                            #    self.mete_status[parent_hier][parent_areacode]["VXWW50_id"]=id
                     except:
                         print(f"key error at area code {areacode}" )
     
@@ -216,21 +234,20 @@ class TimelineManager(QObject):
         """指定された階層とコードの警報レベルを取得する"""
         try:
             status_list = self.mete_status[hierarchy][code]["status"]
-            do_status_list = self.mete_status[hierarchy][code]["do_status"]
+            VXWW50_status_list = self.mete_status[hierarchy][code]["VXWW50_status"]
             special_rain=["33"]
             emergency=["32","35","36","37","38","08","ta_ob"]
-            do_emergency=["3"]
+            VXWW50_emergency=["3"]
             warning = ["02","03","04","05","06","07","19","ta"]
             caution = ["10","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27"]
-            print
             for item in special_rain:
                 if item in status_list:
                     return 5
             for item in emergency:
                 if item in status_list:
                     return 4
-            for item in do_emergency:
-                if item in do_status_list:
+            for item in VXWW50_emergency:
+                if item in VXWW50_status_list:
                     return 4
             for item in warning:
                 if item in status_list:
@@ -252,6 +269,7 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return []
+
     @Slot(str,str,result=list)
     def getMeteWarningLogoPath(self, hierarchy, code):
         """指定された階層とコードの警報レベルを取得する"""
@@ -263,6 +281,7 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return []
+        
     @Slot(str, str, result=list)
     def getMeteWarningName(self, hierarchy, code):
         """指定された階層とコードの警報レベルを取得する"""
@@ -337,7 +356,11 @@ class TimelineManager(QObject):
         """指定された階層とコードの警報レベルを取得する"""
         try:
             dt: datetime.datetime =self.mete_status[hierarchy][code]["updated"]
-            return dt.strftime("%Y/%m/%d %H:%M:%S")
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
@@ -415,3 +438,70 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
+    
+    @Slot(str,str,result=str)
+    def getVXWW50ID(self, hierarchy, code):
+        """情報IDを取得"""
+        try:
+            return self.mete_status[hierarchy][code]["VXWW50_id"]
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    
+    @Slot(str,str,result=str)
+    def getVXWW50Updated(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            dt: datetime.datetime =self.mete_status[hierarchy][code]["VXWW50_updated"]
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    @Slot(str,str,result=str)
+    def getVXWW50Title(self,hierarchy, code):
+        """情報IDを取得"""
+        try:
+            id=self.getVXWW50ID(hierarchy,code)
+            return self.mete_timeline[id]["head_title"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=str)
+    def getVXWW50HeadlineText(self,hierarchy, code):
+        """情報IDを取得"""
+        try:
+            id=self.getVXWW50ID(hierarchy,code)
+            return self.mete_timeline[id]["headline_text"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=list)
+    def getVXWW50LogoPath(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            item = self.mete_status[hierarchy][code]['VXWW50_status']
+            warning_textlist = [f"../materials/doshasaigai.svg"] if item==['3'] else []
+            return warning_textlist
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return []
+        
+    @Slot(str,str,result=list)
+    def getVXWW50WarningCode(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            item = self.mete_status[hierarchy][code]['VXWW50_status']
+            return item
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return []

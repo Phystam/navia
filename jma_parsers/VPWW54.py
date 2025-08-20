@@ -5,13 +5,13 @@ class VPWW54(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.data_type = "VPWW54" # このパーサーが扱うデータタイプ
-        self.jst = timezone(timedelta(hours=9))
+        
 
     def parse(self, xml_tree, namespaces, data_type_code, test=False):
         """
         気象警報 (VPWW54) のXMLを解析します。
         """
-        print(f"気象警報 ({self.data_type}) を解析中...")
+        #print(f"気象警報 ({self.data_type}) を解析中...")
         parsed_data = {}
         # Control/Title
         parsed_data["category"]="meteorology"

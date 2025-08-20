@@ -13,10 +13,12 @@ Window {
     Component.onCompleted: {
         // 必要に応じて他の初期化処理を追加
         timelineManager.meteStatusChanged.connect(onStatusChanged);
-        console.log(naviaWindow.currentDir)
     }
     ListModel {
         id: logoListModel_VPWW54
+    }
+    ListModel {
+        id: logoListModel_VXWW50
     }
 
     function getColorByWarningLevel(level) {
@@ -32,7 +34,7 @@ Window {
     }
 
     function onStatusChanged() {
-        console.log("statuschanged: received")
+        //console.log("statuschanged: received")
         //表示されているMapItemViewのみを強制的に再描画する
         if (pref.model.length > 0) {
             //mapComponent.mapgroup.getColorForItem(pref_miv.model)
@@ -54,16 +56,18 @@ Window {
 
 
     function handleRegionClick(hierarchy, code, name) {
-        // Call the Python function to get warning codes
+        // VPWW54 気象警報用
         var codes = timelineManager.getMeteWarningCode(hierarchy, code);
         var pref = timelineManager.getPrefName(hierarchy, code);
+        if( name==pref){
+            infoTitle.text = pref;
+        }else{
+            infoTitle.text = pref + " " + name; // Use getMeteWarningName for region name
+        }
         logoListModel_VPWW54.clear()
+        logoListModel_VXWW50.clear()
         if (codes.length > 0) {
-            if( name==pref){
-                infoTitle.text = pref;
-            }else{
-                infoTitle.text = pref + " " + name; // Use getMeteWarningName for region name
-            }
+
             headlineText.text = timelineManager.getHeadlineText(hierarchy,code);
             infoHeadTitle.text = timelineManager.getTitle(hierarchy,code);
             var dt = timelineManager.getUpdated(hierarchy,code);
@@ -79,7 +83,26 @@ Window {
         } else {
             infoTitle.text = "No warnings";
             infoHeadline.text = "";
-            infoImage.source = "materials/code00.svg";
+        }
+        // VXWW50 土砂災害警戒情報用
+        var codes_VXWW50 = timelineManager.getVXWW50WarningCode(hierarchy, code);
+        if (codes_VXWW50.length > 0) {
+            headlineText_VXWW50.text = timelineManager.getVXWW50HeadlineText(hierarchy,code);
+            infoHeadTitle_VXWW50.text = timelineManager.getVXWW50Title(hierarchy,code);
+            var dt = timelineManager.getUpdated(hierarchy,code);
+            if (dt=="2000/01/01 00:00:00"){
+                infoDateTime_VXWW50.text = ""
+                infoImage_VXWW50.source = "";
+            }else{
+                infoDateTime_VXWW50.text = timelineManager.getVXWW50Updated(hierarchy,code);
+            }
+            var logolist_VXWW50=timelineManager.getVXWW50LogoPath(hierarchy,code);
+            for (var i=0;i<logolist_VXWW50.length;i++){
+                logoListModel_VXWW50.append({"value":logolist_VXWW50[i]}); // Load SVG based on code
+            }   
+        } else {
+            infoTitle_VXWW50.text = "No warnings";
+            infoHeadline_VXWW50.text = "";
         }
     }
 
@@ -438,61 +461,110 @@ Window {
                         font.bold: true
                     }
                 }
-                Text {
-                    id: infoDateTime
-                    text: "2025/01/01 00:00:00"
-                    font.pixelSize: 12
-                    font.bold: false
-                }
-                Text {
-                    id: infoHeadTitle
-                    text: "気象警報・注意報"
-                    font.pixelSize: 16
-                    font.bold: true
-                }
-                Row{
-                    height:22
+                //土砂災害警戒情報用
+                Column{
+                    spacing: 2
+                    visible: {
+                        infoHeadTitle_VXWW50.text != ""
+                    }
                     width: parent.width
-                    id: logoA
-                    spacing:4
-                    Repeater {
-                        model: logoListModel_VPWW54
-                        Image {
-                            height:parent.height
-                            fillMode:Image.PreserveAspectFit
-                            source: model.value
-                            antialiasing: true
+                    Text {
+                        id: infoDateTime_VXWW50
+                        text: ""
+                        font.pixelSize: 12
+                        font.bold: false
+                    }
+                    Text {
+                        id: infoHeadTitle_VXWW50
+                        text: ""
+                        font.pixelSize: 16
+                        font.bold: true
+                    }
+                    Row{
+                        height: {
+                            infoHeadTitle_VXWW50.text == "" ? 0 : 22
+                        }
+                        width: parent.width
+                        id: logo_VXWW50
+                        spacing:4
+                        Repeater {
+                            model: logoListModel_VXWW50
+                            Image {
+                                height:parent.height
+                                fillMode:Image.PreserveAspectFit
+                                source: model.value
+                                antialiasing: true
+                            }
                         }
                     }
-                }
-                //横線
-                Rectangle {
-                    width: parent.width
-                    height: 2
-                    color: "gray"
-                }
-                Text {
-                    id: headlineText
-                    width: parent.width
-                    text: ""
-                    wrapMode: TextEdit.Wrap
-                }
-
-
-                
-                // 更新ボタン
-                Button {
-                    text: "更新"
-                    onClicked: {
-                        // 気象情報を更新するロジックをここに追加
-                        weatherInfoArea.text = "気象情報が更新されました。\n\n"
-                                              + "現在の天気状況：晴れ\n"
-                                              + "気温：26℃\n"
-                                              + "湿度：58%\n"
-                                              + "風速：2m/s\n"
-                                              + "気圧：1014hPa"
+                    //横線
+                    Rectangle {
+                        width: parent.width
+                        height: 2
+                        color: "gray"
+                        visible: { 
+                            infoHeadTitle_VXWW50.text != "" 
+                        }
+                    }
+                    Text {
+                        id: headlineText_VXWW50
+                        width: parent.width
+                        text: ""
+                        wrapMode: TextEdit.Wrap
                     }
                 }
+                //気象警報用
+                Column{
+                    spacing:{
+                        infoHeadTitle.text == "" ? 0 : 2
+                    }
+                    width: parent.width
+                    Text {
+                        id: infoDateTime
+                        text: ""
+                        font.pixelSize: 12
+                        font.bold: false
+                    }
+                    Text {
+                        id: infoHeadTitle
+                        text: ""
+                        font.pixelSize: 16
+                        font.bold: true
+                    }
+                    Row{
+                        height: {
+                            infoHeadTitle.text == "" ? 0 : 22
+                        }
+                        width: parent.width
+                        id: logoA
+                        spacing:4
+                        Repeater {
+                            model: logoListModel_VPWW54
+                            Image {
+                                height:parent.height
+                                fillMode:Image.PreserveAspectFit
+                                source: model.value
+                                antialiasing: true
+                            }
+                        }
+                    }
+                    //横線
+                    Rectangle {
+                        width: parent.width
+                        height: 2
+                        color: "gray"
+                        visible: { 
+                            infoHeadTitle.text != "" 
+                        }
+                    }
+                    Text {
+                        id: headlineText
+                        width: parent.width
+                        text: ""
+                        wrapMode: TextEdit.Wrap
+                    }
+                }
+
             }
         }
     }

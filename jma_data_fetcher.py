@@ -376,7 +376,7 @@ class JMADataFetcher(QObject):
                 for area in notify_levels_region[region]:
                     try:
                         playtelop_warning = warning_level[area] >= notify_levels_region[region][area]
-                        print("")
+                        #print("")
                     except:
                         pass
                 pass
