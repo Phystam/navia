@@ -9,3 +9,4 @@ jmaxml_20240216_format_v1_3_hyo1_1.pdf
 voicevox_core/*
 *.wav
 output_combined.*
+settings/token.json
