@@ -16,8 +16,9 @@ class TimelineManager(QObject):
         self.mete_status = {}  # タイムラインデータを格納するリスト
         self.seis_status = {}  # タイムラインデータを格納するリスト
         self.volc_status = {}  # タイムラインデータを格納するリスト
-        jst = datetime.timezone(datetime.timedelta(hours=9))
+        self.jst = datetime.timezone(datetime.timedelta(hours=9))
         self.areacode={}
+        
         #with open("settings/area.json.zst","rb") as f:
         #    area_txt=zstd.decompress(f.read())
         #    self.areacode=json.loads(area_txt)
@@ -39,7 +40,7 @@ class TimelineManager(QObject):
             l= {"name":name,
                 "parent":"",
                 "children": children,
-                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
                 }
             self.mete_status[self.hierarchy[0]][c]=l
         for c in pref_codes:
@@ -53,13 +54,13 @@ class TimelineManager(QObject):
                 "id": "",
                 "VXWW50_status": ["1"],
                 "VXWW50_id": "",
-                "ta_status": ["1"],
-                "ta_id": "",
+                "VPHW51_status": ["0"],
+                "VPHW51_id": "",
                 "warning_level":0,
-                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "ta_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "ta_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VPHW51_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VPHW51_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
                     }
             self.mete_status[self.hierarchy[1]][c]=l
         for c in class10_codes:
@@ -73,13 +74,13 @@ class TimelineManager(QObject):
                 "id": "",
                 "VXWW50_status": ["1"],
                 "VXWW50_id": "",
-                "ta_status": ["1"],
-                "ta_id": "",
+                "VPHW51_status": ["0"],
+                "VPHW51_id": "",
                 "warning_level":0,
-                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "ta_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "ta_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VPHW51_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VPHW51_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
             }
             self.mete_status[self.hierarchy[2]][c]=l
         for c in class15_codes:
@@ -93,13 +94,13 @@ class TimelineManager(QObject):
                 "id": "",
                 "VXWW50_status": ["1"],
                 "VXWW50_id": "",
-                "ta_status": ["1"],
-                "ta_id": "",
+                "VPHW51_status": ["0"],
+                "VPHW51_id": "",
                 "warning_level":0,
-                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "ta_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "ta_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VPHW51_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VPHW51_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
             }
             self.mete_status[self.hierarchy[3]][c]=l
         for c in class20_codes:
@@ -112,13 +113,13 @@ class TimelineManager(QObject):
                 "id": "",
                 "VXWW50_status": ["1"],
                 "VXWW50_id": "",
-                "ta_status": ["1"],
-                "ta_id": "",
+                "VPHW51_status": ["0"],
+                "VPHW51_id": "",
                 "warning_level":0,
-                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "ta_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst),
-                "ta_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=jst)
+                "updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VXWW50_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VPHW51_updated": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst),
+                "VPHW51_valid": datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
             }
             self.mete_status[self.hierarchy[4]][c]=l
         #print(self.mete_status[self.hierarchy[3]]['100011'])
@@ -145,6 +146,14 @@ class TimelineManager(QObject):
             self.VXWW50(id,data)
             #print(self.mete_status["pref"])
             self.meteStatusChanged.emit()
+        if data["data_type"]=="VPHW51":
+            self.VPHW51(id,data)
+            #print(self.mete_status["pref"])
+            self.meteStatusChanged.emit()
+        if data["data_type"]=="VPOA50":
+            self.VPOA50(id,data)
+            #print(self.mete_status["pref"])
+            self.meteStatusChanged.emit()
             
     def VPWW54(self,id,data):
         dt=data["report_datetime"]
@@ -158,6 +167,7 @@ class TimelineManager(QObject):
                     try:
                         if self.mete_status[hier][areacode]["updated"] < dt:
                             self.mete_status[hier][areacode]["updated"]=dt
+                            self.mete_status[hier][areacode]["status"].clear()
                             self.mete_status[hier][areacode]["status"]=item[areacode]
                             self.mete_status[hier][areacode]["id"]=id
                     except:
@@ -180,16 +190,65 @@ class TimelineManager(QObject):
                             self.mete_status[hier][areacode]["VXWW50_status"]=item[areacode]
                             self.mete_status[hier][areacode]["VXWW50_id"]=id
                             #親地域に伝播させる
-                            #while True:
-                            #    parent_hier=self.getParent(hier)
-                            #    if parent_hier=="":
-                            #        break
-                            #    parent_areacode=self.mete_status[hier][areacode]["parent"]
-                            #    self.mete_status[parent_hier][parent_areacode]["VXWW50_updated"]=dt
-                            #    self.mete_status[parent_hier][parent_areacode]["VXWW50_status"]=item[areacode]
-                            #    self.mete_status[parent_hier][parent_areacode]["VXWW50_id"]=id
+                            parent_hier=hier
+                            parent_areacode=areacode
+                            while True:
+                                parent_areacode=self.mete_status[parent_hier][parent_areacode]["parent"]
+                                parent_hier=self.getParent(parent_hier)
+                                if parent_hier=="":
+                                    break
+                                self.mete_status[parent_hier][parent_areacode]["VXWW50_updated"]=dt
+                                self.mete_status[parent_hier][parent_areacode]["VXWW50_status"]=item[areacode]
+                                self.mete_status[parent_hier][parent_areacode]["VXWW50_id"]=id
+                                #hier=parent_hier
+                                #areacode=parent_areacode
                     except:
                         print(f"key error at area code {areacode}" )
+    
+    def VPHW51(self,id,data):
+        dt=data["report_datetime"]
+        for hier in self.hierarchy:
+            if hier=="region":
+                continue
+            for item in data[hier]:
+                areacodes = item.keys()
+                for areacode in areacodes:
+                    #print(f"{dt}, {self.mete_status[hier][areacode]['updated']}")
+                    try:
+                        if self.mete_status[hier][areacode]["VPHW51_updated"] < dt:
+                            self.mete_status[hier][areacode]["VPHW51_updated"]=dt
+                            self.mete_status[hier][areacode]["VPHW51_valid"]=data["valid_datetime"]
+                            self.mete_status[hier][areacode]["VPHW51_status"]=item[areacode]
+                            self.mete_status[hier][areacode]["VPHW51_id"]=id
+                    except:
+                        print(f"key error at area code {areacode}" )
+                        
+    def VPOA50(self,id,data):
+        dt=data["report_datetime"]
+        for hier in self.hierarchy:
+            if hier=="region":
+                continue
+            for item in data["pref"]:
+                areacodes = item.keys()
+                for areacode in areacodes:
+                    #print(f"{dt}, {self.mete_status[hier][areacode]['updated']}")
+                    try:
+                        self.mete_status[hier][areacode]["VPOA50_updated"]=dt
+                        self.mete_status[hier][areacode]["VPOA50_id"]=id
+                        #子に伝播させる
+                        self.appendForAllChildren(hier,areacode,dt,id)
+                    except:
+                        print(f"key error at area code {areacode}" )
+    
+    def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
+        child_hier=self.getChild(hier)
+        if child_hier=="":
+            return
+        child_areacodes=self.mete_status[hier][areacode]["children"]
+        for child_areacode in child_areacodes:
+            self.mete_status[child_hier][child_areacode][f"{prefix}_updated"]=dt
+            self.mete_status[child_hier][child_areacode][f"{prefix}_id"]=id
+            self.appendForAllChildren(child_hier,child_areacode,dt,id)
     
     def getParent(self,hier):
         if hier=="pref" or hier=="region":
@@ -201,7 +260,7 @@ class TimelineManager(QObject):
         if hier=="class20":
             return "class15"
     
-    def getChildren(self,hier):
+    def getChild(self,hier):
         if hier=="pref":
             return "class10"
         if hier=="class10":
@@ -235,10 +294,12 @@ class TimelineManager(QObject):
         try:
             status_list = self.mete_status[hierarchy][code]["status"]
             VXWW50_status_list = self.mete_status[hierarchy][code]["VXWW50_status"]
+            VPHW51_status_list = self.mete_status[hierarchy][code]["VPHW51_status"]
             special_rain=["33"]
-            emergency=["32","35","36","37","38","08","ta_ob"]
+            emergency=["32","35","36","37","38","08"]
             VXWW50_emergency=["3"]
-            warning = ["02","03","04","05","06","07","19","ta"]
+            warning = ["02","03","04","05","06","07","19"]
+            VPHW51_warning = ["1"]
             caution = ["10","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27"]
             for item in special_rain:
                 if item in status_list:
@@ -252,9 +313,13 @@ class TimelineManager(QObject):
             for item in warning:
                 if item in status_list:
                     return 3
+            for item in VPHW51_warning:
+                if item in VPHW51_status_list:
+                    return 3
             for item in caution:
                 if item in status_list:
                     return 2
+            return 0
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return 0
@@ -505,3 +570,132 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return []
+
+    #VPHW51 竜巻注意情報
+    @Slot(str,str,result=bool)
+    def checkVPHW51(self, hierarchy, code):
+        """valid datetimeと比較"""
+        try:
+            dt=self.mete_status[hierarchy][code]["VPHW51_valid"]
+            now = datetime.datetime.now(tz=self.jst)
+            if dt < now:
+                self.mete_status[hierarchy][code]["VPHW51_id"]=""
+                self.mete_status[hierarchy][code]["VPHW51_status"]="0"
+                self.mete_status[hierarchy][code]["VPHW51_updated"]=dt
+                self.mete_status[hierarchy][code]["VPHW51_valid"]=dt
+                return False
+            return True
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    @Slot(str,str,result=str)
+    def getVPHW51ID(self, hierarchy, code):
+        """情報IDを取得"""
+        try:
+            return self.mete_status[hierarchy][code]["VPHW51_id"]
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    
+    @Slot(str,str,result=str)
+    def getVPHW51Updated(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            dt: datetime.datetime =self.mete_status[hierarchy][code]["VPHW51_updated"]
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    @Slot(str,str,result=str)
+    def getVPHW51Title(self,hierarchy, code):
+        """情報IDを取得"""
+        try:
+            id=self.getVPHW51ID(hierarchy,code)
+            return self.mete_timeline[id]["head_title"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=str)
+    def getVPHW51HeadlineText(self,hierarchy, code):
+        """情報IDを取得"""
+        try:
+            id=self.getVPHW51ID(hierarchy,code)
+            return self.mete_timeline[id]["headline_text"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=list)
+    def getVPHW51LogoPath(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            item = self.mete_status[hierarchy][code]['VPHW51_status']
+            warning_textlist = [f"../materials/tatsumaki.svg"] if item==['1'] else []
+            return warning_textlist
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return []
+        
+    @Slot(str,str,result=list)
+    def getVPHW51WarningCode(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            item = self.mete_status[hierarchy][code]['VPHW51_status']
+            return item
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return []
+        
+    #VPOA50 記録的短時間大雨情報
+    @Slot(str,str,result=str)
+    def getVPOA50ID(self, hierarchy, code):
+        """情報IDを取得"""
+        try:
+            return self.mete_status[hierarchy][code]["VPOA50_id"]
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    
+    @Slot(str,str,result=str)
+    def getVPOA50Updated(self, hierarchy, code):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            dt: datetime.datetime =self.mete_status[hierarchy][code]["VPOA50_updated"]
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    @Slot(str,str,result=str)
+    def getVPOA50Title(self,hierarchy, code):
+        """情報IDを取得"""
+        try:
+            id=self.getVPOA50ID(hierarchy,code)
+            return self.mete_timeline[id]["head_title"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=str)
+    def getVPOA50HeadlineText(self,hierarchy, code):
+        """情報IDを取得"""
+        try:
+            id=self.getVPOA50ID(hierarchy,code)
+            return self.mete_timeline[id]["headline_text"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""

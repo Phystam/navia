@@ -48,6 +48,8 @@ class VXWW50(BaseJMAParser):
                 areaelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]//jmx_ib:Area',namespaces)
                 for k in range(len(areaelements)):
                     areacode = self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]//jmx_ib:Area[{k+1}]/jmx_ib:Code/text()',namespaces)
+                    #末尾2桁を削除し、00を付加する
+                    areacode=f"{areacode[:-2]}00"
                     #print(areacode)
                     #print(codeelements)
                     codeList.append({areacode: codeelements})
