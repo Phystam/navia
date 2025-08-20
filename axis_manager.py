@@ -110,8 +110,11 @@ class AxisManager(QObject):
             #ニュース速報
             texttime=json_data['message']['ReportDateTime']
             time=parse(texttime)
-            with open(Rf"{self.jsondir}\{json_data['channel']}{time.strftime('%Y%m%d-%H%M%S')}.json.zst","wb") as f:
-                f.write(zstd.compress(message.encode(encoding='shift-jis')))
+            try:
+                with open(Rf"{self.jsondir}\{json_data['channel']}{time.strftime('%Y%m%d-%H%M%S')}.json.zst","wb") as f:
+                    f.write(zstd.compress(message.encode(encoding='shift-jis')))
+            except:
+                pass
             texts=json_data["message"]["Text"]
             texts.insert(0,"")
             texts.insert(0,"<i><b>NHK</b></i><b> ニュース速報</b>")
@@ -127,8 +130,11 @@ class AxisManager(QObject):
             self.EEW(json_data)
             texttime=json_data['message']['ReportDateTime']
             time=parse(texttime)
-            with open(Rf"{self.jsondir}\{json_data['channel']}{time.strftime('%Y%m%d-%H%M%S')}.json.zst","wb") as f:
-                f.write(zstd.compress(message.encode(encoding='shift-jis')))
+            try:
+                with open(Rf"{self.jsondir}\{json_data['channel']}{time.strftime('%Y%m%d-%H%M%S')}.json.zst","wb") as f:
+                    f.write(zstd.compress(message.encode(encoding='shift-jis')))
+            except:
+                pass
             
         if channel=="quake-one":
             pass
