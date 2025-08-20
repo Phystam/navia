@@ -1,9 +1,11 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 import re
+from datetime import datetime,timedelta,timezone
 class VXWW50(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.jst = timezone(timedelta(hours=9))
         self.data_type = "VXWW50" # このパーサーが扱うデータタイプ
 
     def parse(self, xml_tree, namespaces, data_type_code, test=False):
@@ -12,14 +14,44 @@ class VXWW50(BaseJMAParser):
         """
         print(f"気象警報 ({self.data_type}) を解析中...")
         parsed_data = {}
-        parsed_data['category']="meteorology"
-        parsed_data["data_type"]=self.data_type
         # Control/Title
-        parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
-        parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        parsed_data["category"]="meteorology"
+        parsed_data["data_type"]=self.data_type
+        parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Title/text()', namespaces)
+        parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
-        parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
-
+        parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
+        parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst)
+        headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        parsed_data['headline_text']=headline
+        notify_level=1
+        if "最大級の警戒" in headline or "安全の確保" in headline:
+            notify_level=5
+        elif "厳重に警戒" in headline:
+            notify_level=4
+        elif "警戒" in headline:
+            notify_level=3
+        elif "注意" in headline:
+            notify_level=2
+        if "解除" in headline:
+            notify_level=0
+        parsed_data['warning_level']=notify_level
+        #class20s
+        types=["土砂災害警戒情報"]
+        areakeys=["class20"]
+        for i,type in enumerate(types):
+            codeList=[]
+            itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item',namespaces)
+            lenitem=len(itemelements)
+            for j in range(lenitem):
+                codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
+                areaelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]//jmx_ib:Area',namespaces)
+                for k in range(len(areaelements)):
+                    areacode = self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]//jmx_ib:Area[{k+1}]/jmx_ib:Code/text()',namespaces)
+                    #print(areacode)
+                    #print(codeelements)
+                    codeList.append({areacode: codeelements})
+            parsed_data[areakeys[i]]=codeList
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):
@@ -89,7 +121,7 @@ class VXWW50(BaseJMAParser):
             for code in codeCombinationList[i]:
                 if code=="3":
                     logo+=f"materials/doshasaigai.svg,"
-                elif code=="0":
+                elif code=="1":
                     logo+=f"materials/code00.svg,"
             logos.append(logo[:-1]) #最後の,を除いておく
             for area in areaList[i]:

@@ -1,13 +1,14 @@
 # jma_parsers/jma_base_parser.py
 from PySide6.QtCore import QObject, Signal
 import re
-from datetime import datetime
+from datetime import datetime,timedelta,timezone
 
 class BaseJMAParser(QObject):
     # 解析されたデータを通知するシグナル (データタイプと解析済みデータ)
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.jst = timezone(timedelta(hours=9))
     
     def parse(self, xml_tree, namespaces, data_type_code, test):
         """

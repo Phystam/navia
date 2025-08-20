@@ -28,6 +28,12 @@ Item{
   ListModel {
     id: logoListModel2
   }
+  ListModel {
+    id: logoListModel3
+  }
+  ListModel {
+    id: logoListModel4
+  }
   //テキスト用: プロパティバインディングのため配列ではない
   property string text1 : ""
   property string text2 : ""

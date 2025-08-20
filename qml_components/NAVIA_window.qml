@@ -15,6 +15,9 @@ Window {
         timelineManager.meteStatusChanged.connect(onStatusChanged);
         console.log(naviaWindow.currentDir)
     }
+    ListModel {
+        id: logoListModel_VPWW54
+    }
 
     function getColorByWarningLevel(level) {
         switch (level) {
@@ -32,16 +35,20 @@ Window {
         console.log("statuschanged: received")
         //表示されているMapItemViewのみを強制的に再描画する
         if (pref.model.length > 0) {
-            pref_miv.model = []; pref_miv.model = pref.model[0].data;
+            //mapComponent.mapgroup.getColorForItem(pref_miv.model)
+            pref_miv.model=[]; pref_miv.model = pref.model[0].data;
         }
         if (class10.model.length > 0) {
-            class10_miv.model = []; class10_miv.model = class10.model[0].data;
+            //mapComponent.mapgroup.getColorForItem(class10_miv.model)
+            class10_miv.model=[]; class10_miv.model = class10.model[0].data;
         }
         if (class15.model.length > 0) {
-            class15_miv.model = []; class15_miv.model = class15.model[0].data;
+            //mapComponent.mapgroup.getColorForItem(class15_miv.model)
+            class15_miv.model=[]; class15_miv.model = class15.model[0].data;
         }
         if (class20.model.length > 0) {
-            class20_miv.model = []; class20_miv.model = class20.model[0].data;
+            //mapComponent.mapgroup.getColorForItem(class20_miv.model)
+            class20_miv.model=[]; class20_miv.model = class20.model[0].data;
         }
     }
 
@@ -50,8 +57,8 @@ Window {
         // Call the Python function to get warning codes
         var codes = timelineManager.getMeteWarningCode(hierarchy, code);
         var pref = timelineManager.getPrefName(hierarchy, code);
+        logoListModel_VPWW54.clear()
         if (codes.length > 0) {
-            var firstCode = codes[0]; // Assume first code for simplicity
             if( name==pref){
                 infoTitle.text = pref;
             }else{
@@ -59,7 +66,16 @@ Window {
             }
             headlineText.text = timelineManager.getHeadlineText(hierarchy,code);
             infoHeadTitle.text = timelineManager.getTitle(hierarchy,code);
-            infoImage.source = "materials/code" + firstCode.code + ".svg"; // Load SVG based on code
+            var dt = timelineManager.getUpdated(hierarchy,code);
+            if (dt=="2000/01/01 00:00:00"){
+                infoDateTime.text = ""
+            }else{
+                infoDateTime.text = timelineManager.getUpdated(hierarchy,code);
+            }
+            var logolist=timelineManager.getMeteWarningLogoPath(hierarchy,code);
+            for (var i=0;i<logolist.length;i++){
+                logoListModel_VPWW54.append({"value":logolist[i]}); // Load SVG based on code
+            }   
         } else {
             infoTitle.text = "No warnings";
             infoHeadline.text = "";
@@ -269,46 +285,6 @@ Window {
                                 border.width:1
                                 border.color:"#222222"
                                 antialiasing: true
-                                //MouseArea {
-                                //    id: mouseArea_world
-                                //    anchors.fill: parent
-                                //    propagateComposedEvents: true
-                                //    onClicked: (mouse) => {
-                                //        // マウス座標を地図の地理座標に変換
-                                //        var pointInMap = mouseArea_world.mapToItem(view, mouse.x, mouse.y);
-                                //        var coordinate = view.toCoordinate(pointInMap, false);
-//
-                                //        // クリック位置がポリゴン内にあるかチェック
-                                //        if (isPointInPolygon(coordinate,modelData)) {
-                                //            // クリックされたポリゴンのプロパティを取得してコンソールに表示
-                                //            var feature = miv_world.model[item_index];
-                                //            if (feature && feature.properties && feature.properties.name) {
-                                //                console.log("index="+ item_index +", Clicked polygon name:", feature.properties.name);
-                                //            } else {
-                                //                console.log("No name property found for clicked polygon");
-                                //            }
-                                //            mouse.accepted = true
-                                //        } else {
-                                //            mouse.accepted = false
-                                //        }
-                                //    }
-                                //}
-                                //function isPointInPolygon(point, polygon) {
-                                //    let x = point.longitude;
-                                //    let y = point.latitude;
-                                //    let inside = false;
-//
-                                //    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-                                //        let xi = polygon[i].longitude, yi = polygon[i].latitude;
-                                //        let xj = polygon[j].longitude, yj = polygon[j].latitude;
-                                //        
-                                //        let intersect = ((yi > y) !== (yj > y)) &&
-                                //                        (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-                                //        if (intersect) inside = !inside;
-                                //    }
-//
-                                //    return inside;
-                                //}
                             }
                         }
                         function showMap(model,j){
@@ -434,7 +410,7 @@ Window {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: 300
+        width: 350
         anchors.margins: 5
         
         // 情報表示用のコンテナ
@@ -446,46 +422,63 @@ Window {
             
             Column {
                 anchors.fill: parent
-                anchors.margins: 10
-                spacing: 10
-                
+                anchors.margins: 5
+                spacing: 5
+                Rectangle{
+                    //anchors.top: parent.top
+                    //anchors.left: parent.left
+                    color: "#bafff9ff"
+                    width: parent.width
+                    height: 24
+                    Text {
+                        id: infoTitle
+                        //anchors.fill:parent
+                        text: "地域名"
+                        font.pixelSize: 18
+                        font.bold: true
+                    }
+                }
                 Text {
-                    id: infoTitle
-                    text: "地域名"
-                    font.pixelSize: 18
-                    font.bold: true
+                    id: infoDateTime
+                    text: "2025/01/01 00:00:00"
+                    font.pixelSize: 12
+                    font.bold: false
                 }
                 Text {
                     id: infoHeadTitle
                     text: "気象警報・注意報"
-                    font.pixelSize: 18
+                    font.pixelSize: 16
                     font.bold: true
                 }
-                Text {
-                    id: infoDate
-                    text: "text"
-                    font.pixelSize: 12
-                    font.bold: true
-                }
-                // 気象情報を表示する領域
-                ScrollView {
+                Row{
+                    height:22
                     width: parent.width
-                    height: 400
-                    
-                    TextArea {
-                        id: headlineText
-                        width: parent.width
-                        height: 400
-                        text: "気象情報がここに表示されます。\n\n"
-                              + "現在の天気状況：晴れ\n"
-                              + "気温：25℃\n"
-                              + "湿度：60%\n"
-                              + "風速：3m/s\n"
-                              + "気圧：1013hPa"
-                        readOnly: true
-                        wrapMode: TextEdit.Wrap
+                    id: logoA
+                    spacing:4
+                    Repeater {
+                        model: logoListModel_VPWW54
+                        Image {
+                            height:parent.height
+                            fillMode:Image.PreserveAspectFit
+                            source: model.value
+                            antialiasing: true
+                        }
                     }
                 }
+                //横線
+                Rectangle {
+                    width: parent.width
+                    height: 2
+                    color: "gray"
+                }
+                Text {
+                    id: headlineText
+                    width: parent.width
+                    text: ""
+                    wrapMode: TextEdit.Wrap
+                }
+
+
                 
                 // 更新ボタン
                 Button {
