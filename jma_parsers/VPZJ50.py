@@ -10,7 +10,7 @@ class VPZJ50(BaseJMAParser):
         """
         一般報 (VPZJ50) のXMLを解析します。
         """
-        print(f"地震情報 ({self.data_type}) を解析中...")
+        print(f"気象情報 ({self.data_type}) を解析中...")
         parsed_data = {}
         parsed_data['category']="meteorology"
         parsed_data["data_type"]=data_type_code
@@ -19,6 +19,18 @@ class VPZJ50(BaseJMAParser):
         parsed_data['datetime'] = self._get_text(xml_tree, '//jmx_ib:ReportDateTime/text()', namespaces)
         parsed_data['area'] = "全般"
         
+        hier=""
+        if data_type_code == "VPZJ50":
+            hier="japan"
+        if data_type_code == "VPCJ50":
+            hier="region"
+        if data_type_code == "VPFJ50":
+            hier="pref"
+        #地域名→コードの対応を作る
+        #areacode = self._get_text(xml_tree,'//jmx_mete:Code/text()', namespaces)
+        areacode = "460100"
+        parsed_data["hier"]=hier
+        parsed_data["areacode"]=areacode
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)

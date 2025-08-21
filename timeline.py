@@ -154,6 +154,11 @@ class TimelineManager(QObject):
             self.VPOA50(id,data)
             #print(self.mete_status["pref"])
             self.meteStatusChanged.emit()
+        
+        if data["data_type"]=="VPFJ50":
+            self.VPZJ50(id,data)
+            #print(self.mete_status["pref"])
+            #self.meteStatusChanged.emit()
             
     def VPWW54(self,id,data):
         dt=data["report_datetime"]
@@ -239,6 +244,15 @@ class TimelineManager(QObject):
                         self.appendForAllChildren(hier,areacode,dt,id)
                     except:
                         print(f"key error at area code {areacode}" )
+                        
+    def VPZJ50(self,id,data):
+        dt=data["report_datetime"]
+        hier=data["pref"]
+        areacode=data["areacode"]
+        self.mete_status[hier][areacode][f"{data["data_type"]}_updated"]=dt
+        self.mete_status[hier][areacode][f"{data["data_type"]}_id"]=id
+        
+
     
     def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
         child_hier=self.getChild(hier)
@@ -695,6 +709,61 @@ class TimelineManager(QObject):
         try:
             id=self.getVPOA50ID(hierarchy,code)
             return self.mete_timeline[id]["headline_text"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    # VPZJ50
+    @Slot(str,str,result=str)
+    def getVZJ50ID(self, hierarchy, code, data_type):
+        """情報IDを取得"""
+        try:
+            return self.mete_status[hierarchy][code][f"{data_type}_id"]
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    
+    @Slot(str,str,result=str)
+    def getVPZJ50Updated(self, hierarchy, code, data_type):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            dt: datetime.datetime =self.mete_status[hierarchy][code][f"{data_type}updated"]
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    @Slot(str,str,result=str)
+    def getVPZJ50Title(self,hierarchy, code, data_type):
+        """情報IDを取得"""
+        try:
+            id=self.getVPOA50ID(hierarchy,code, data_type)
+            return self.mete_timeline[id]["head_title"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=str)
+    def getVPZJ50HeadlineText(self,hierarchy, code, data_type):
+        """情報IDを取得"""
+        try:
+            id=self.getVPOA50ID(hierarchy,code, data_type)
+            return self.mete_timeline[id]["headline_text"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    @Slot(str,str,result=str)
+    def getVPZJ50BodyText(self,hierarchy, code, data_type):
+        """情報IDを取得"""
+        try:
+            id=self.getVPOA50ID(hierarchy,code, data_type)
+            return self.mete_timeline[id]["body_text"]
             
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
