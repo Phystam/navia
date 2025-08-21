@@ -1,6 +1,6 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
-
+from datetime import datetime, timezone,timedelta
 class VPHW51(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -19,9 +19,10 @@ class VPHW51(BaseJMAParser):
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
-        parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces)
-        parsed_data['valid_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ValidDateTime/text()', namespaces)
+        parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst)
+        parsed_data['valid_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ValidDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst) + timedelta(hours=1)
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        parsed_data['headline_text']=headline
         notify_level=1
         if "最大級の警戒" in headline or "安全の確保" in headline:
             notify_level=5
@@ -47,14 +48,11 @@ class VPHW51(BaseJMAParser):
             for j in range(lenitem):
                 # codeelements は["1"]になる
                 codeelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]/jmx_ib:Kind/jmx_ib:Code/text()',namespaces)
-                
                 areacode = self._get_text(xml_tree, f'//jmx_ib:Information[@type="{type}"]/jmx_ib:Item[{j+1}]//jmx_ib:Area/jmx_ib:Code/text()',namespaces)
                 #print(areacode)
                 #print(codeelements)
                 codeList.append({areacode: codeelements})
             parsed_data[areakeys[i]]=codeList
-        return parsed_data
-
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):
