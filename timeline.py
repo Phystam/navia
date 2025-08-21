@@ -25,6 +25,9 @@ class TimelineManager(QObject):
         with open("settings/area.json","rb") as f:
             area_txt=f.read()
             self.areacode=json.loads(area_txt)
+        with open("settings/area_decode.json","rb") as f:
+            area_txt=f.read()
+            self.area_decode=json.loads(area_txt)
         region_codes=list(self.areacode["centers"].keys())
         pref_codes=list(self.areacode["prefs"].keys())
         class10_codes=list(self.areacode["class10s"].keys())
@@ -192,21 +195,25 @@ class TimelineManager(QObject):
                     try:
                         if self.mete_status[hier][areacode]["VXWW50_updated"] < dt:
                             self.mete_status[hier][areacode]["VXWW50_updated"]=dt
-                            self.mete_status[hier][areacode]["VXWW50_status"]=item[areacode]
-                            self.mete_status[hier][areacode]["VXWW50_id"]=id
-                            #親地域に伝播させる
-                            parent_hier=hier
-                            parent_areacode=areacode
-                            while True:
-                                parent_areacode=self.mete_status[parent_hier][parent_areacode]["parent"]
-                                parent_hier=self.getParent(parent_hier)
-                                if parent_hier=="":
-                                    break
-                                self.mete_status[parent_hier][parent_areacode]["VXWW50_updated"]=dt
-                                self.mete_status[parent_hier][parent_areacode]["VXWW50_status"]=item[areacode]
-                                self.mete_status[parent_hier][parent_areacode]["VXWW50_id"]=id
+                            if item[areacode] == ["3"]:
+                                self.mete_status[hier][areacode]["VXWW50_status"]=item[areacode]
+                                self.mete_status[hier][areacode]["VXWW50_id"]=id
+                                #親地域に伝播させる
+                                parent_hier=hier
+                                parent_areacode=areacode
+                                while True:
+                                    parent_areacode=self.mete_status[parent_hier][parent_areacode]["parent"]
+                                    parent_hier=self.getParent(parent_hier)
+                                    if parent_hier=="":
+                                        break
+                                    self.mete_status[parent_hier][parent_areacode]["VXWW50_updated"]=dt
+                                    self.mete_status[parent_hier][parent_areacode]["VXWW50_status"]=item[areacode]
+                                    self.mete_status[parent_hier][parent_areacode]["VXWW50_id"]=id
                                 #hier=parent_hier
                                 #areacode=parent_areacode
+                            else:
+                                self.mete_status[hier][areacode]["VXWW50_status"]=item[areacode]
+                                self.mete_status[hier][areacode]["VXWW50_id"]=""
                     except:
                         print(f"key error at area code {areacode}" )
     
@@ -247,10 +254,16 @@ class TimelineManager(QObject):
                         
     def VPZJ50(self,id,data):
         dt=data["report_datetime"]
-        hier=data["pref"]
-        areacode=data["areacode"]
+        hier=data["hier"]
+        areacode=""
+        for item in self.area_decode.keys():
+            if item in data["head_title"]:
+                areacode=self.area_decode[item]
+        print(f"VPZJ50: areacode={areacode}")
         self.mete_status[hier][areacode][f"{data["data_type"]}_updated"]=dt
         self.mete_status[hier][areacode][f"{data["data_type"]}_id"]=id
+        #子に伝播させる
+        self.appendForAllChildren(hier,areacode,dt,id,prefix=data["data_type"])
         
 
     
@@ -262,7 +275,7 @@ class TimelineManager(QObject):
         for child_areacode in child_areacodes:
             self.mete_status[child_hier][child_areacode][f"{prefix}_updated"]=dt
             self.mete_status[child_hier][child_areacode][f"{prefix}_id"]=id
-            self.appendForAllChildren(child_hier,child_areacode,dt,id)
+            self.appendForAllChildren(child_hier,child_areacode,dt,id,prefix)
     
     def getParent(self,hier):
         if hier=="pref" or hier=="region":
@@ -715,8 +728,8 @@ class TimelineManager(QObject):
             return ""
         
     # VPZJ50
-    @Slot(str,str,result=str)
-    def getVZJ50ID(self, hierarchy, code, data_type):
+    @Slot(str,str,str,result=str)
+    def getVPZJ50ID(self, hierarchy, code, data_type):
         """情報IDを取得"""
         try:
             return self.mete_status[hierarchy][code][f"{data_type}_id"]
@@ -724,11 +737,11 @@ class TimelineManager(QObject):
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
     
-    @Slot(str,str,result=str)
+    @Slot(str,str,str,result=str)
     def getVPZJ50Updated(self, hierarchy, code, data_type):
         """指定された階層とコードの警報レベルを取得する"""
         try:
-            dt: datetime.datetime =self.mete_status[hierarchy][code][f"{data_type}updated"]
+            dt: datetime.datetime =self.mete_status[hierarchy][code][f"{data_type}_updated"]
             text = dt.strftime("%Y/%m/%d %H:%M:%S")
             if text != "2000/01/01 00:00:00":
                 return text
@@ -737,32 +750,34 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
-    @Slot(str,str,result=str)
+        except:
+            return ""
+    @Slot(str,str,str,result=str)
     def getVPZJ50Title(self,hierarchy, code, data_type):
         """情報IDを取得"""
         try:
-            id=self.getVPOA50ID(hierarchy,code, data_type)
+            id=self.getVPZJ50ID(hierarchy,code, data_type)
             return self.mete_timeline[id]["head_title"]
             
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
         
-    @Slot(str,str,result=str)
+    @Slot(str,str,str,result=str)
     def getVPZJ50HeadlineText(self,hierarchy, code, data_type):
         """情報IDを取得"""
         try:
-            id=self.getVPOA50ID(hierarchy,code, data_type)
+            id=self.getVPZJ50ID(hierarchy,code, data_type)
             return self.mete_timeline[id]["headline_text"]
             
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
-    @Slot(str,str,result=str)
+    @Slot(str,str,str,result=str)
     def getVPZJ50BodyText(self,hierarchy, code, data_type):
         """情報IDを取得"""
         try:
-            id=self.getVPOA50ID(hierarchy,code, data_type)
+            id=self.getVPZJ50ID(hierarchy,code, data_type)
             return self.mete_timeline[id]["body_text"]
             
         except KeyError:

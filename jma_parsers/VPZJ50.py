@@ -15,8 +15,8 @@ class VPZJ50(BaseJMAParser):
         parsed_data['category']="meteorology"
         parsed_data["data_type"]=data_type_code
         # Control/Title
-        parsed_data['title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
-        parsed_data['datetime'] = self._get_text(xml_tree, '//jmx_ib:ReportDateTime/text()', namespaces)
+        parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
+        parsed_data['report_datetime'] = self._get_datetime(xml_tree, '//jmx_ib:ReportDateTime/text()', namespaces)
         parsed_data['area'] = "全般"
         
         hier=""
@@ -30,7 +30,6 @@ class VPZJ50(BaseJMAParser):
         #areacode = self._get_text(xml_tree,'//jmx_mete:Code/text()', namespaces)
         areacode = "460100"
         parsed_data["hier"]=hier
-        parsed_data["areacode"]=areacode
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)

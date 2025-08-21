@@ -93,7 +93,7 @@ Window {
         if (codes_VXWW50.length > 0) {
             headlineText_VXWW50.text = timelineManager.getVXWW50HeadlineText(hierarchy,code);
             infoHeadTitle_VXWW50.text = timelineManager.getVXWW50Title(hierarchy,code);
-            var dt = timelineManager.getUpdated(hierarchy,code);
+            var dt = timelineManager.getVXWW50Updated(hierarchy,code);
             if (dt=="2000/01/01 00:00:00"){
                 infoDateTime_VXWW50.text = ""
                 infoImage_VXWW50.source = "";
@@ -114,7 +114,7 @@ Window {
         if (codes_VPHW51.length > 0) {
             headlineText_VPHW51.text = timelineManager.getVPHW51HeadlineText(hierarchy,code);
             infoHeadTitle_VPHW51.text = timelineManager.getVPHW51Title(hierarchy,code);
-            var dt = timelineManager.getUpdated(hierarchy,code);
+            var dt = timelineManager.getVPHW51Updated(hierarchy,code);
             if (dt=="2000/01/01 00:00:00"){
                 infoDateTime_VPHW51.text = ""
                 infoImage_VPHW51.source = "";
@@ -134,18 +134,35 @@ Window {
         if (timelineManager.getVPOA50ID(hierarchy,code)!="") {
             headlineText_VPOA50.text = timelineManager.getVPOA50HeadlineText(hierarchy,code);
             infoHeadTitle_VPOA50.text = timelineManager.getVPOA50Title(hierarchy,code);
-            var dt = timelineManager.getUpdated(hierarchy,code);
+            var dt = timelineManager.getVPOA50Updated(hierarchy,code);
             if (dt=="2000/01/01 00:00:00"){
                 infoDateTime_VPOA50.text = ""
                 infoImage_VPOA50.source = "";
             }else{
                 infoDateTime_VPOA50.text = timelineManager.getVPOA50Updated(hierarchy,code);
             }
-               
         } else {
             infoHeadTitle_VPOA50.text = "";
             headlineText_VPOA50.text = "";
             infoDateTime_VPOA50.text = "";
+        }
+        // VPFJ50 府県気象情報
+        var data_type="VPFJ50"
+        if (timelineManager.getVPZJ50ID(hierarchy,code,data_type)!="") {
+            headlineText_VPFJ50.text = timelineManager.getVPZJ50HeadlineText(hierarchy,code,data_type);
+            infoHeadTitle_VPFJ50.text = timelineManager.getVPZJ50Title(hierarchy,code,data_type);
+            bodyText_VPFJ50.text = timelineManager.getVPZJ50BodyText(hierarchy,code,data_type);
+            var dt = timelineManager.getVPZJ50Updated(hierarchy,code,data_type);
+            if (dt=="2000/01/01 00:00:00"){
+                infoDateTime_VPFJ50.text = ""
+            }else{
+                infoDateTime_VPFJ50.text = timelineManager.getVPZJ50Updated(hierarchy,code,data_type);
+            }
+        } else {
+            infoHeadTitle_VPFJ50.text = "";
+            headlineText_VPFJ50.text = "";
+            infoDateTime_VPFJ50.text = "";
+            bodyText_VPFJ50.text="";
         }
     }
 
@@ -489,224 +506,279 @@ Window {
         }
         // 情報表示用のコンテナ
         Rectangle {
+            id: infoarea
             anchors.fill: parent
             color: "#f0f0f0"
             border.color: "gray"
             border.width: 1
-            
-            Column {
+            Flickable {
                 anchors.fill: parent
-                anchors.margins: 5
-                spacing: 5
-                Label {
-                    id: infoTitle
-                    //anchors.fill:parent
-                    text: "地域名"
-                    font.pixelSize: 18
-                    font.bold: true
-                    background: Rectangle {
-                        color: "#bafff9ff"
-                    }
-                }
-                //Rectangle{
-                //    //anchors.top: parent.top
-                //    //anchors.left: parent.left
-                //    color: "#bafff9ff"
-                //    width: parent.width
-                //    height: 24
-                //}
-                //土砂災害警戒情報用
-                Column{
-                    spacing: 2
-                    move: trans
-                    visible: {
-                        infoHeadTitle_VXWW50.text != ""
-                    }
+                anchors.margins:5
+                contentWidth: availableWidth
+                contentHeight: contentColumn.height
+                flickableDirection: Flickable.VerticalFlick || Flickable.HorizontalFlick
+                clip: true
+
+                Column {
+                    id: contentColumn
                     width: parent.width
-                    Text {
-                        id: infoDateTime_VXWW50
-                        text: ""
-                        font.pixelSize: 12
-                        font.bold: false
-                    }
-                    Text {
-                        id: infoHeadTitle_VXWW50
-                        text: ""
-                        font.pixelSize: 16
+                    anchors.margins: 5
+                    spacing: 5
+                    
+                    Label {
+                        id: infoTitle
+                        //anchors.fill:parent
+                        text: "地域名"
+                        font.pixelSize: 18
                         font.bold: true
-                        wrapMode: TextEdit.Wrap
+                        background: Rectangle {
+                            color: "#75fff3ff"
+                        }
                     }
-                    Row{
-                        height: {
-                            logoListModel_VXWW50.count>0 ? 22 : 0
+                    //土砂災害警戒情報用
+                    Column{
+                        spacing: 2
+                        visible: {
+                            infoHeadTitle_VXWW50.text != ""
                         }
                         width: parent.width
-                        id: logo_VXWW50
-                        spacing:4
-                        Repeater {
-                            model: logoListModel_VXWW50
-                            Image {
-                                height:parent.height
-                                fillMode:Image.PreserveAspectFit
-                                source: model.value
-                                antialiasing: true
+                        Text {
+                            id: infoDateTime_VXWW50
+                            text: ""
+                            font.pixelSize: 12
+                            font.bold: false
+                        }
+                        Text {
+                            id: infoHeadTitle_VXWW50
+                            text: ""
+                            font.pixelSize: 16
+                            font.bold: true
+                            width: parent.width
+                            wrapMode: Text.WrapAnywhere
+                        }
+                        Row{
+                            height: {
+                                logoListModel_VXWW50.count>0 ? 22 : 0
+                            }
+                            width: parent.width
+                            id: logo_VXWW50
+                            spacing:4
+                            Repeater {
+                                model: logoListModel_VXWW50
+                                Image {
+                                    height:parent.height
+                                    fillMode:Image.PreserveAspectFit
+                                    source: model.value
+                                    antialiasing: true
+                                }
                             }
                         }
-                    }
-                    //横線
-                    Rectangle {
-                        width: parent.width
-                        height: 2
-                        color: "gray"
-                        visible: { 
-                            infoHeadTitle_VXWW50.text != "" 
-                        }
-                    }
-                    Text {
-                        id: headlineText_VXWW50
-                        width: parent.width
-                        text: ""
-                        wrapMode: TextEdit.Wrap
-                    }
-                }
-                //竜巻注意情報用
-                Column{
-                    spacing: 2
-                    visible: {
-                        infoHeadTitle_VPHW51.text != ""
-                    }
-                    width: parent.width
-                    Text {
-                        id: infoDateTime_VPHW51
-                        text: ""
-                        font.pixelSize: 12
-                        font.bold: false
-                    }
-                    Text {
-                        id: infoHeadTitle_VPHW51
-                        text: ""
-                        font.pixelSize: 16
-                        font.bold: true
-                        wrapMode: TextEdit.Wrap
-                    }
-                    Row{
-                        height: {
-                            logoListModel_VPHW51.count>0 ? 22 : 0
-                        }
-                        width: parent.width
-                        id: logo_VPHW51
-                        spacing:4
-                        Repeater {
-                            model: logoListModel_VPHW51
-                            Image {
-                                height:parent.height
-                                fillMode:Image.PreserveAspectFit
-                                source: model.value
-                                antialiasing: true
+                        //横線
+                        Rectangle {
+                            width: parent.width
+                            height: 2
+                            color: "gray"
+                            visible: { 
+                                infoHeadTitle_VXWW50.text != "" 
                             }
                         }
-                    }
-                    //横線
-                    Rectangle {
-                        width: parent.width
-                        height: 2
-                        color: "gray"
-                        visible: { 
-                            infoHeadTitle_VPHW51.text != "" 
+                        Text {
+                            id: headlineText_VXWW50
+                            width: parent.width
+                            text: ""
+                            wrapMode: TextEdit.Wrap
                         }
                     }
-                    Text {
-                        id: headlineText_VPHW51
-                        width: parent.width
-                        text: ""
-                        wrapMode: TextEdit.Wrap
-                    }
-                }
-                //気象警報用
-                Column{
-                    spacing:{
-                        infoHeadTitle.text == "" ? 0 : 2
-                    }
-                    width: parent.width
-                    Text {
-                        id: infoDateTime
-                        text: ""
-                        font.pixelSize: 12
-                        font.bold: false
-                    }
-                    Text {
-                        id: infoHeadTitle
-                        text: ""
-                        font.pixelSize: 16
-                        font.bold: true
-                        wrapMode: TextEdit.Wrap
-                    }
-                    Row{
-                        height: {
-                            logoListModel_VPWW54.count>0 ? 22 : 0
+                    //竜巻注意情報用
+                    Column{
+                        spacing: 2
+                        visible: {
+                            infoHeadTitle_VPHW51.text != ""
                         }
                         width: parent.width
-                        id: logoA
-                        spacing:4
-                        Repeater {
-                            model: logoListModel_VPWW54
-                            Image {
-                                height:parent.height
-                                fillMode:Image.PreserveAspectFit
-                                source: model.value
-                                antialiasing: true
+                        Text {
+                            id: infoDateTime_VPHW51
+                            text: ""
+                            font.pixelSize: 12
+                            font.bold: false
+                        }
+                        Text {
+                            id: infoHeadTitle_VPHW51
+                            text: ""
+                            font.pixelSize: 16
+                            font.bold: true
+                            width: parent.width
+                            wrapMode: Text.WrapAnywhere
+                        }
+                        Row{
+                            height: {
+                                logoListModel_VPHW51.count>0 ? 22 : 0
+                            }
+                            width: parent.width
+                            id: logo_VPHW51
+                            spacing:4
+                            Repeater {
+                                model: logoListModel_VPHW51
+                                Image {
+                                    height:parent.height
+                                    fillMode:Image.PreserveAspectFit
+                                    source: model.value
+                                    antialiasing: true
+                                }
                             }
                         }
-                    }
-                    //横線
-                    Rectangle {
-                        width: parent.width
-                        height: 2
-                        color: "gray"
-                        visible: { 
-                            infoHeadTitle.text != "" 
+                        //横線
+                        Rectangle {
+                            width: parent.width
+                            height: 2
+                            color: "gray"
+                            visible: { 
+                                infoHeadTitle_VPHW51.text != "" 
+                            }
+                        }
+                        Text {
+                            id: headlineText_VPHW51
+                            width: parent.width
+                            text: ""
+                            wrapMode: TextEdit.Wrap
                         }
                     }
-                    Text {
-                        id: headlineText
+                    //気象警報用
+                    Column{
+                        spacing:{
+                            infoHeadTitle.text == "" ? 0 : 2
+                        }
+                        visible: {
+                            infoHeadTitle.text != ""
+                        }
                         width: parent.width
-                        text: ""
-                        wrapMode: TextEdit.Wrap
-                    }
-                }
-                //記録的短時間大雨情報
-                Column{
-                    spacing:{
-                        infoHeadTitle_VPOA50.text == "" ? 0 : 2
-                    }
-                    width: parent.width
-                    Text {
-                        id: infoDateTime_VPOA50
-                        text: ""
-                        font.pixelSize: 12
-                        font.bold: false
-                    }
-                    Text {
-                        id: infoHeadTitle_VPOA50
-                        text: ""
-                        font.pixelSize: 16
-                        font.bold: true
-                        wrapMode: TextEdit.Wrap
-                    }
-                    //横線
-                    Rectangle {
-                        width: parent.width
-                        height: 2
-                        color: "gray"
-                        visible: { 
-                            infoHeadTitle_VPOA50.text != "" 
+                        Text {
+                            id: infoDateTime
+                            text: ""
+                            font.pixelSize: 12
+                            font.bold: false
+                        }
+                        Text {
+                            id: infoHeadTitle
+                            text: ""
+                            font.pixelSize: 16
+                            font.bold: true
+                            width: parent.width
+                            wrapMode: Text.WrapAnywhere
+                        }
+                        Row{
+                            height: {
+                                logoListModel_VPWW54.count>0 ? 22 : 0
+                            }
+                            width: parent.width
+                            id: logoA
+                            spacing:4
+                            Repeater {
+                                model: logoListModel_VPWW54
+                                Image {
+                                    height:parent.height
+                                    fillMode:Image.PreserveAspectFit
+                                    source: model.value
+                                    antialiasing: true
+                                }
+                            }
+                        }
+                        //横線
+                        Rectangle {
+                            width: parent.width
+                            height: 2
+                            color: "gray"
+                            visible: { 
+                                infoHeadTitle.text != "" 
+                            }
+                        }
+                        Text {
+                            id: headlineText
+                            width: parent.width
+                            text: ""
+                            wrapMode: TextEdit.Wrap
                         }
                     }
-                    Text {
-                        id: headlineText_VPOA50
+                    //記録的短時間大雨情報
+                    Column{
+                        spacing:{
+                            infoHeadTitle_VPOA50.text == "" ? 0 : 2
+                        }
+                        visible: {
+                            infoHeadTitle_VPOA50.text != ""
+                        }
                         width: parent.width
-                        text: ""
-                        wrapMode: TextEdit.Wrap
+                        Text {
+                            id: infoDateTime_VPOA50
+                            text: ""
+                            font.pixelSize: 12
+                            font.bold: false
+                        }
+                        Text {
+                            id: infoHeadTitle_VPOA50
+                            width: parent.width
+                            text: ""
+                            font.pixelSize: 16
+                            font.bold: true
+                            wrapMode: Text.WrapAnywhere
+                        }
+                        //横線
+                        Rectangle {
+                            width: parent.width
+                            height: 2
+                            color: "gray"
+                            visible: { 
+                                infoHeadTitle_VPOA50.text != "" 
+                            }
+                        }
+                        Text {
+                            id: headlineText_VPOA50
+                            width: parent.width
+                            text: ""
+                            wrapMode: TextEdit.Wrap
+                        }
+                    }
+                    //府県気象情報用
+                    Column{
+                        spacing:{
+                            infoHeadTitle_VPFJ50.text == "" ? 0 : 2
+                        }
+                        width: parent.width
+                        Text {
+                            id: infoDateTime_VPFJ50
+                            text: ""
+                            font.pixelSize: 12
+                            font.bold: false
+                        }
+                        Text {
+                            id: infoHeadTitle_VPFJ50
+                            text: ""
+                            font.pixelSize: 16
+                            font.bold: true
+                            width: parent.width
+                            wrapMode: Text.WrapAnywhere
+                        }
+                        Text {
+                            id: headlineText_VPFJ50
+                            width: parent.width
+                            text: ""
+                            wrapMode: TextEdit.Wrap
+                        }
+                        //横線
+                        Rectangle {
+                            width: parent.width
+                            height: 2
+                            color: "gray"
+                            visible: { 
+                                infoHeadTitle_VPFJ50.text != "" 
+                            }
+                        }
+                        Text {
+                            id: bodyText_VPFJ50
+                            width: parent.width
+                            text: ""
+                            wrapMode: TextEdit.Wrap
+                        }
                     }
                 }
             }
