@@ -60,7 +60,7 @@ Item{
   //緊急地震速報用のタイマー
   Timer {
     id: telopTimer2
-    interval: 30000 // 4秒ごとにテキストを表示
+    interval: 10000 // 10秒でテキストクリア
     repeat: true
     running:false
     triggeredOnStart: true
@@ -101,9 +101,22 @@ Item{
   function push(_soundList, _logoList, _textList, emergency) {
     // 現在入っているリストが空であるか確認
     var is_first=false;
-    if (telop.textList.length == 0) {
-      // 既存のリストをクリア
-      is_first=true;
+    if (!emergency){
+      var is_first=telop.textList.length == 0;
+      for(var i=0;i<_soundList.length;i++){
+        telop.soundList.push(_soundList[i])
+      }
+      for(var i=0;i<_logoList.length;i++){
+        telop.logoList.push(_logoList[i])
+      }
+      for(var i=0;i<_textList.length;i++){
+        telop.textList.push(_textList[i])
+        //console.log("telop.textList.push: " + _textList[i]) 
+      }
+      if (is_first) {
+        //初期化時に何も表示されていない場合は、最初のテキストを表示する
+        telopTimer1.start()
+      }
     }
     //表示中にEEWが入ったときはこっち。
     if (emergency){
@@ -117,23 +130,8 @@ Item{
         telop.textList_emergency.push(_textList[i])
         //console.log("telop.textList.push: " + _textList[i]) 
       }
-    }
-    for(var i=0;i<_soundList.length;i++){
-      telop.soundList.push(_soundList[i])
-    }
-    for(var i=0;i<_logoList.length;i++){
-      telop.logoList.push(_logoList[i])
-    }
-    for(var i=0;i<_textList.length;i++){
-      telop.textList.push(_textList[i])
-      //console.log("telop.textList.push: " + _textList[i]) 
-    }
-    if (is_first) {
-      //初期化時に何も表示されていない場合は、最初のテキストを表示する
-      telopTimer1.start()
-    }
-    //緊急地震速報用
-    if (emergency) {
+      //緊急地震速報用。次が来たらすぐ表示したいので、is_firstのチェックはしない。
+      telopTimer2.stop()
       telopTimer2.start()
     }
   }
@@ -204,12 +202,13 @@ Item{
   function nextText_emergency(){
     logoListModel3.clear()
     logoListModel4.clear()
-    if(soundList[index]!=""){
-      playSound(soundList[index])
+    if(soundList_emergency[index]!=""){
+      playSound(soundList_emergency[index])
     }
-    soundList.shift() // 音声も同様に削除
+    soundList_emergency.shift() // 音声も同様に削除
     // ロゴがない場合 → 上部全体を使ってテロップを表示する
-    if (logoList[0][0]=="" && logoList[0][1]==""){
+    console.log(logoList_emergency[0])
+    if (logoList_emergency[0][0]=="" && logoList_emergency[0][1]==""){
       text3=textList_emergency[0][0]
       text4=textList_emergency[0][1]
       //console.log("telop.textList: " + text1 + ", " + text2)
@@ -240,6 +239,7 @@ Item{
         }
       }
       for(var i=logo4array.length-1;i>=0;i--){
+        print(logo4array[i])
         if(logo4array[i]!="no"){
           logoListModel4.append({"value":logo4array[i]})
         } else {
@@ -249,14 +249,14 @@ Item{
       text3=textList_emergency[0][0]
       text4=textList_emergency[0][1]
       //txt1.width=telop.width*0.6
-      txt3.horizontalAlignment=Text.AlignLeft
-      txt3.anchors.left=telop.horizontalCenter
-      txt3.anchors.leftMargin=-telop.width*0.1
-      txt3.anchors.right=telop.right
+      //txt3.horizontalAlignment=Text.AlignLeft
+      //txt3.anchors.left=telop.horizontalCenter
+      //txt3.anchors.leftMargin=-telop.width*0.1
+      //txt3.anchors.right=telop.right
       //txt2.width=telop.width*0.6
       txt4.horizontalAlignment=Text.AlignLeft
       txt4.anchors.left=telop.horizontalCenter
-      txt4.anchors.leftMargin=-telop.width*0.1
+      txt4.anchors.leftMargin=-telop.width*0.2
       //console.log("telop.textList: " + text1 + ", " + text2)
     }
     textList_emergency.shift() // テキストを表示したらリストから削除
@@ -282,11 +282,6 @@ Item{
     style: Text.Outline
     styleColor: "black"
     fontSizeMode:Text.Fit
-    /* Rectangle {
-      anchors.fill: parent
-      color: "transparent"
-      border.color: "red"
-    } */
   }
   Text {
     verticalAlignment: Text.AlignVCenter
@@ -380,5 +375,38 @@ Item{
       }
     }
   }
-
+Row{
+    anchors.top: logoB.bottom
+    anchors.right:txt3.left
+    anchors.rightMargin: parent.width*0.01
+    height:parent.height*5/11
+    layoutDirection:Qt.RightToLeft
+    id: logoC
+    spacing:parent.width*0.005
+    Repeater {
+      model: logoListModel3
+      Image {
+        height:parent.height
+        fillMode:Image.PreserveAspectFit
+        source: model.value
+      }
+    }
+  }
+  Row{
+    anchors.top:logoC.bottom
+    anchors.right:txt4.left
+    anchors.rightMargin: parent.width*0.01
+    height:parent.height*5/11
+    layoutDirection:Qt.RightToLeft
+    id: logoD
+    spacing:parent.width*0.005
+    Repeater {
+      model: logoListModel4
+      Image {
+        height:parent.height
+        fillMode:Image.PreserveAspectFit
+        source: model.value
+      }
+    }
+  }
 }

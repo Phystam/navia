@@ -82,6 +82,7 @@ Window {
         mainApp.tsunamiReceived.connect(onTsunamiReceived);
     }
     function onTelopReceived(data,emergency) {
+        console.log(emergency)
         telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"],emergency); // ロゴとテキストを設定
     }
     function onTsunamiReceived(data) {

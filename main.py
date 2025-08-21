@@ -78,6 +78,12 @@ class MainApp(QObject):
         testAction = QAction("試験", self)
         testAction.triggered.connect(self.onTest)
         trayMenu.addAction(testAction)
+        testAction2 = QAction("EEW試験", self)
+        testAction2.triggered.connect(self.onTestEEW)
+        trayMenu.addAction(testAction2)
+        testAction3 = QAction("EEW試験2", self)
+        testAction3.triggered.connect(self.onTestEEW2)
+        trayMenu.addAction(testAction3)
         quitAction = QAction("終了", self)
         quitAction.triggered.connect(QApplication.quit) # アプリケーション終了に接続
         trayMenu.addAction(quitAction)
@@ -191,6 +197,12 @@ class MainApp(QObject):
             print(dataname)
             data=f.read()
             self.jma_fetcher.processReport(dataname,data,test=True, playtelop=True,save=False,parse=True)
+    @Slot()
+    def onTestEEW(self):
+        self.axsis_manager.sendData()
+    @Slot()
+    def onTestEEW2(self):
+        self.axsis_manager.sendData2()
             
 if __name__ == "__main__":
     # QApplicationを使用するように変更

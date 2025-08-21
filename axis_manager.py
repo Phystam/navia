@@ -45,13 +45,19 @@ class AxisManager(QObject):
         pass
         
     def sendData(self):
-        with open(R"json\20240101071254_0_VTSE41_010000.json", encoding="shift_jis") as f:
-            text=f.read()
-            self.onMessage(text)
+        with open(R"axisjsondata/eew20250821-104407.json.zst", "rb") as f:
+            data=f.read()
+            text=zstd.decompress(data)
+            result1=text.decode('shift_jis')
+            print(result1)
+            self.onMessage(result1)
     def sendData2(self):
-        with open(R"json\20231227135004_0_VXSE53_010000.json", encoding="shift_jis") as f:
-            text=f.read()
-            self.onMessage(text)
+        with open(R"axisjsondata/eew20250821-104409.json.zst", "rb") as f:
+            data=f.read()
+            text=zstd.decompress(data)
+            result1=text.decode('shift_jis')
+            print(result1)
+            self.onMessage(result1)
     def sendDataNews(self):
         with open(R"json\20240826060605_0_VXKO54_130000.json", encoding="shift_jis") as f:
             text=f.read()
@@ -117,13 +123,25 @@ class AxisManager(QObject):
                 pass
             texts=json_data["message"]["Text"]
             texts.insert(0,"")
-            texts.insert(0,"<i><b>NHK</b></i><b> ニュース速報</b>")
-            if len(texts)%2==1:
+            textlist=[]
+            logolist=[]
+            soundlist=[]
+            textlist.append(["<i><b>NHK</b></i><b> ニュース速報</b>",""])
+            logolist.append(["",""])
+            soundlist.append("./sounds/BreakingNews_sample.wav")
+            len_texts=len(texts)
+            if len_texts % 2 == 1:
                 texts.append("")
-            logoarray=[""]*len(texts)
-            sound_path="sound/BreakingNews_sample.wav"
-            print(texts)
-            self.newsReceived.emit(texts,logoarray,sound_path)
+            for i in range(len(texts)/2):
+                textlist.append([texts[2*i],texts[2*i+1]])
+                logolist.append(["",""])
+                soundlist.append("")
+            telop_dict = {
+                'sound_list': soundlist,
+                'logo_list': logolist,
+                'text_list': textlist
+            }
+            self.telopDataReceived.emit(telop_dict,False)
             
 
         if channel=="eew":
@@ -162,14 +180,15 @@ class AxisManager(QObject):
         if not is_emergency:
             text=f"震源は{hypocenter_name} 深さ {json_data['message']['Hypocenter']['Depth']} マグニチュード{json_data['message']['Magnitude']}"
             
-            text_list=[title, text]
-            logo_list=["",""]
+            text_list=[[title, text]]
+            logo_list=[["",f"materials/grade{intensity}.svg"]]
             sound_list=[f"sounds/Grade{intensity}.wav"]
             telop_dict = {
                 'sound_list': sound_list,
                 'logo_list': logo_list,
                 'text_list': text_list
             }
+            print(telop_dict)
             self.telopDataReceived.emit(telop_dict,True)
         else:
             pass

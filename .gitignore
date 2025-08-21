@@ -10,3 +10,4 @@ voicevox_core/*
 *.wav
 output_combined.*
 settings/token.json
+axisjsondata/*
