@@ -260,8 +260,8 @@ class TimelineManager(QObject):
             if item in data["head_title"]:
                 areacode=self.area_decode[item]
         print(f"VPZJ50: areacode={areacode}")
-        self.mete_status[hier][areacode][f"{data["data_type"]}_updated"]=dt
-        self.mete_status[hier][areacode][f"{data["data_type"]}_id"]=id
+        self.mete_status[hier][areacode][f"{data['data_type']}_updated"]=dt
+        self.mete_status[hier][areacode][f"{data['data_type']}_id"]=id
         #子に伝播させる
         self.appendForAllChildren(hier,areacode,dt,id,prefix=data["data_type"])
         

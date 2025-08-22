@@ -61,18 +61,20 @@ class BaseJMAParser(QObject):
             print(f"座標データ: {entry.strip()}")
             # 各要素を正規表現で抽出
             # 緯度、経度、高度がそれぞれ+または-で始まり、数字が続くことを想定
-            match = re.match(r'([+-]\d+\.\d+)([+-]\d+\.\d+)([+-]\d+)', entry.strip())
+            match = re.match(r'([+-]\d+\.\d+)([+-]\d+\.\d+)([+-]\d+)?', entry.strip())
             if match:
                 latitude_str = match.group(1)
                 longitude_str = match.group(2)
                 altitude_str = match.group(3)
-
+                print(f"lat: {latitude_str}, lon: {longitude_str}, alt: {altitude_str}")
                 #latitude = self.dms_to_decimal(latitude_str)
                 #longitude = self.dms_to_decimal(longitude_str)
                 latitude = float(latitude_str) if latitude_str else None
                 longitude = float(longitude_str) if longitude_str else None
-                altitude = int(altitude_str) # 高度は常に整数
-
+                if altitude_str is not None:
+                    altitude = int(altitude_str) # 高度は常に整数
+                else:
+                    altitude = None
                 if latitude is not None and longitude is not None:
                     results.append({'latitude': latitude,
                                     'longitude': longitude,

@@ -496,14 +496,6 @@ Window {
         anchors.bottom: parent.bottom
         width: 350
         anchors.margins: 5
-        
-        Transition {
-            id: trans
-            NumberAnimation {
-                properties: "x,y"
-                duration: 1000
-            }
-        }
         // 情報表示用のコンテナ
         Rectangle {
             id: infoarea
@@ -784,4 +776,56 @@ Window {
             }
         }
     }
+
+    // 再利用可能な情報セクションコンポーネント
+    //Component {
+    //    id: infoSectionTemplate
+    //    property string dateTimeText: ""
+    //    property string headTitleText: ""
+    //    property string headlineText: ""
+    //    property var logoListModel: null
+    //    width: parent.width
+//
+    //    Column {
+    //        spacing: 2
+    //        visible: headTitleText !== ""
+    //        Text {
+    //            text: dateTimeText
+    //            font.pixelSize: 12
+    //            font.bold: false
+    //        }
+    //        Text {
+    //            text: headTitleText
+    //            font.pixelSize: 16
+    //            font.bold: true
+    //            width: parent.width
+    //            wrapMode: Text.WrapAnywhere
+    //        }
+    //        Row {
+    //            height: logoListModel.count > 0 ? 22 : 0
+    //            width: parent.width
+    //            spacing: 4
+    //            Repeater {
+    //                model: logoListModel
+    //                Image {
+    //                    height: parent.height
+    //                    fillMode: Image.PreserveAspectFit
+    //                    source: model.value
+    //                    antialiasing: true
+    //                }
+    //            }
+    //        }
+    //        Rectangle {
+    //            width: parent.width
+    //            height: 2
+    //            color: "gray"
+    //            visible: headTitleText !== ""
+    //        }
+    //        Text {
+    //            text: headlineText
+    //            width: parent.width
+    //            wrapMode: Text.Edit.Wrap
+    //        }
+    //    }
+    //}
 }
