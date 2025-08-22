@@ -24,12 +24,13 @@ class VPZJ50(BaseJMAParser):
             hier="japan"
         if data_type_code == "VPCJ50":
             hier="region"
-        if data_type_code == "VPFJ50":
+        if data_type_code == "VPFJ50" or data_type_code == "VPFG50":
             hier="pref"
         #地域名→コードの対応を作る
-        #areacode = self._get_text(xml_tree,'//jmx_mete:Code/text()', namespaces)
-        areacode = "460100"
         parsed_data["hier"]=hier
+        if data_type_code == "VPFG50":
+            parsed_data["areacode"] = self._get_text(xml_tree, '//jmx_mete:TargetArea[@codeType="気象情報／府県予報区・細分区域等"]/jmx_mete:Code/text()', namespaces)
+            print(f'hehe{parsed_data["areacode"]}')
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)

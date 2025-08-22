@@ -59,110 +59,125 @@ Window {
 
 
     function handleRegionClick(hierarchy, code, name) {
-        // VPWW54 気象警報用
-        var codes = timelineManager.getMeteWarningCode(hierarchy, code);
         var pref = timelineManager.getPrefName(hierarchy, code);
-        if( name==pref){
-            infoTitle.text = pref;
+        if( name === pref || name === "鹿児島県（奄美地方除く）"){
+            infoTitle.text = name;
         }else{
-            infoTitle.text = pref + " " + name; // Use getMeteWarningName for region name
+            infoTitle.text = pref + " " + name;
         }
         logoListModel_VPWW54.clear()
         logoListModel_VXWW50.clear()
         logoListModel_VPHW51.clear()
-        if (codes.length > 0) {
 
-            headlineText.text = timelineManager.getHeadlineText(hierarchy,code);
-            infoHeadTitle.text = timelineManager.getTitle(hierarchy,code);
-            var dt = timelineManager.getUpdated(hierarchy,code);
-            if (dt=="2000/01/01 00:00:00"){
-                infoDateTime.text = ""
-            }else{
-                infoDateTime.text = timelineManager.getUpdated(hierarchy,code);
+        // VPWW54 気象警報用
+        if (infoLoader_VPWW54.item) {
+            var codes_VPWW54 = timelineManager.getMeteWarningCode(hierarchy, code);
+            if (codes_VPWW54.length > 0) {
+                infoLoader_VPWW54.item.headlineText = timelineManager.getHeadlineText(hierarchy,code);
+                infoLoader_VPWW54.item.headTitleText = timelineManager.getTitle(hierarchy,code);
+                var dt_VPWW54 = timelineManager.getUpdated(hierarchy,code);
+                infoLoader_VPWW54.item.dateTimeText = (dt_VPWW54 === "2000/01/01 00:00:00") ? "" : dt_VPWW54;
+                var logolist_VPWW54 = timelineManager.getMeteWarningLogoPath(hierarchy,code);
+                for (var i=0; i<logolist_VPWW54.length; i++){
+                    logoListModel_VPWW54.append({"value":logolist_VPWW54[i]});
+                }
+                infoLoader_VPWW54.item.logoListModel = logoListModel_VPWW54;
+            } else {
+                infoLoader_VPWW54.item.dateTimeText = "";
+                infoLoader_VPWW54.item.headTitleText = "";
+                infoLoader_VPWW54.item.headlineText = "";
+                infoLoader_VPWW54.item.bodyText = "";
             }
-            var logolist=timelineManager.getMeteWarningLogoPath(hierarchy,code);
-            for (var i=0;i<logolist.length;i++){
-                logoListModel_VPWW54.append({"value":logolist[i]}); // Load SVG based on code
-            }   
-        } else {
-            infoTitle.text = "No warnings";
-            infoHeadline.text = "";
         }
+
         // VXWW50 土砂災害警戒情報用
-        var codes_VXWW50 = timelineManager.getVXWW50WarningCode(hierarchy, code);
-        if (codes_VXWW50.length > 0) {
-            headlineText_VXWW50.text = timelineManager.getVXWW50HeadlineText(hierarchy,code);
-            infoHeadTitle_VXWW50.text = timelineManager.getVXWW50Title(hierarchy,code);
-            var dt = timelineManager.getVXWW50Updated(hierarchy,code);
-            if (dt=="2000/01/01 00:00:00"){
-                infoDateTime_VXWW50.text = ""
-                infoImage_VXWW50.source = "";
-            }else{
-                infoDateTime_VXWW50.text = timelineManager.getVXWW50Updated(hierarchy,code);
+        if (infoLoader_VXWW50.item) {
+            var codes_VXWW50 = timelineManager.getVXWW50WarningCode(hierarchy, code);
+            if (codes_VXWW50.length > 0) {
+                infoLoader_VXWW50.item.headlineText = timelineManager.getVXWW50HeadlineText(hierarchy,code);
+                infoLoader_VXWW50.item.headTitleText = timelineManager.getVXWW50Title(hierarchy,code);
+                var dt_VXWW50 = timelineManager.getVXWW50Updated(hierarchy,code);
+                infoLoader_VXWW50.item.dateTimeText = (dt_VXWW50 === "2000/01/01 00:00:00") ? "" : dt_VXWW50;
+                var logolist_VXWW50 = timelineManager.getVXWW50LogoPath(hierarchy,code);
+                for (var j=0; j<logolist_VXWW50.length; j++){
+                    logoListModel_VXWW50.append({"value":logolist_VXWW50[j]});
+                }
+                infoLoader_VXWW50.item.logoListModel = logoListModel_VXWW50;
+            } else {
+                infoLoader_VXWW50.item.dateTimeText = "";
+                infoLoader_VXWW50.item.headTitleText = "";
+                infoLoader_VXWW50.item.headlineText = "";
+                infoLoader_VXWW50.item.bodyText = "";
             }
-            var logolist_VXWW50=timelineManager.getVXWW50LogoPath(hierarchy,code);
-            for (var i=0;i<logolist_VXWW50.length;i++){
-                logoListModel_VXWW50.append({"value":logolist_VXWW50[i]}); // Load SVG based on code
-            }   
-        } else {
-            infoHeadTitle_VXWW50.text = "No warnings";
-            headlineText_VXWW50.text = "";
         }
+
         // VPHW51 竜巻注意情報
-        var check=timelineManager.checkVPHW51(hierarchy, code);
-        var codes_VPHW51 = timelineManager.getVPHW51WarningCode(hierarchy, code);
-        if (codes_VPHW51.length > 0) {
-            headlineText_VPHW51.text = timelineManager.getVPHW51HeadlineText(hierarchy,code);
-            infoHeadTitle_VPHW51.text = timelineManager.getVPHW51Title(hierarchy,code);
-            var dt = timelineManager.getVPHW51Updated(hierarchy,code);
-            if (dt=="2000/01/01 00:00:00"){
-                infoDateTime_VPHW51.text = ""
-                infoImage_VPHW51.source = "";
-            }else{
-                infoDateTime_VPHW51.text = timelineManager.getVPHW51Updated(hierarchy,code);
+        if (infoLoader_VPHW51.item) {
+            var codes_VPHW51 = timelineManager.getVPHW51WarningCode(hierarchy, code);
+            if (codes_VPHW51.length > 0) {
+                infoLoader_VPHW51.item.headlineText = timelineManager.getVPHW51HeadlineText(hierarchy,code);
+                infoLoader_VPHW51.item.headTitleText = timelineManager.getVPHW51Title(hierarchy,code);
+                var dt_VPHW51 = timelineManager.getVPHW51Updated(hierarchy,code);
+                infoLoader_VPHW51.item.dateTimeText = (dt_VPHW51 === "2000/01/01 00:00:00") ? "" : dt_VPHW51;
+                var logolist_VPHW51 = timelineManager.getVPHW51LogoPath(hierarchy,code);
+                for (var k=0; k<logolist_VPHW51.length; k++){
+                    logoListModel_VPHW51.append({"value":logolist_VPHW51[k]});
+                }
+                infoLoader_VPHW51.item.logoListModel = logoListModel_VPHW51;
+            } else {
+                infoLoader_VPHW51.item.dateTimeText = "";
+                infoLoader_VPHW51.item.headTitleText = "";
+                infoLoader_VPHW51.item.headlineText = "";
+                infoLoader_VPHW51.item.bodyText = "";
             }
-            var logolist_VPHW51=timelineManager.getVPHW51LogoPath(hierarchy,code);
-            for (var i=0;i<logolist_VPHW51.length;i++){
-                logoListModel_VPHW51.append({"value":logolist_VPHW51[i]}); // Load SVG based on code
-            }   
-        } else {
-            infoHeadTitle_VPHW51.text = "";
-            headlineText_VPHW51.text = "";
         }
 
         // VPOA50 記録的短時間大雨情報
-        if (timelineManager.getVPOA50ID(hierarchy,code)!="") {
-            headlineText_VPOA50.text = timelineManager.getVPOA50HeadlineText(hierarchy,code);
-            infoHeadTitle_VPOA50.text = timelineManager.getVPOA50Title(hierarchy,code);
-            var dt = timelineManager.getVPOA50Updated(hierarchy,code);
-            if (dt=="2000/01/01 00:00:00"){
-                infoDateTime_VPOA50.text = ""
-                infoImage_VPOA50.source = "";
-            }else{
-                infoDateTime_VPOA50.text = timelineManager.getVPOA50Updated(hierarchy,code);
+        if (infoLoader_VPOA50.item) {
+            if (timelineManager.getVPOA50ID(hierarchy,code)!="") {
+                infoLoader_VPOA50.item.headlineText = timelineManager.getVPOA50HeadlineText(hierarchy,code);
+                infoLoader_VPOA50.item.headTitleText = timelineManager.getVPOA50Title(hierarchy,code);
+                var dt_VPOA50 = timelineManager.getVPOA50Updated(hierarchy,code);
+                infoLoader_VPOA50.item.dateTimeText = (dt_VPOA50 === "2000/01/01 00:00:00") ? "" : dt_VPOA50;
+            } else {
+                infoLoader_VPOA50.item.dateTimeText = "";
+                infoLoader_VPOA50.item.headTitleText = "";
+                infoLoader_VPOA50.item.headlineText = "";
+                infoLoader_VPOA50.item.bodyText = "";
             }
-        } else {
-            infoHeadTitle_VPOA50.text = "";
-            headlineText_VPOA50.text = "";
-            infoDateTime_VPOA50.text = "";
+        }
+
+        // VPFJ50 府県気象情報
+        if (infoLoader_VPFJ50.item) {
+            var data_type="VPFJ50"
+            if (timelineManager.getVPZJ50ID(hierarchy,code,data_type)!="") {
+                infoLoader_VPFJ50.item.headlineText = timelineManager.getVPZJ50HeadlineText(hierarchy,code,data_type);
+                infoLoader_VPFJ50.item.headTitleText = timelineManager.getVPZJ50Title(hierarchy,code,data_type);
+                infoLoader_VPFJ50.item.bodyText = timelineManager.getVPZJ50BodyText(hierarchy,code,data_type);
+                var dt_VPFJ50 = timelineManager.getVPZJ50Updated(hierarchy,code,data_type);
+                infoLoader_VPFJ50.item.dateTimeText = (dt_VPFJ50 === "2000/01/01 00:00:00") ? "" : dt_VPFJ50;
+            } else {
+                infoLoader_VPFJ50.item.dateTimeText = "";
+                infoLoader_VPFJ50.item.headTitleText = "";
+                infoLoader_VPFJ50.item.headlineText = "";
+                infoLoader_VPFJ50.item.bodyText = "";
+            }
         }
         // VPFJ50 府県気象情報
-        var data_type="VPFJ50"
-        if (timelineManager.getVPZJ50ID(hierarchy,code,data_type)!="") {
-            headlineText_VPFJ50.text = timelineManager.getVPZJ50HeadlineText(hierarchy,code,data_type);
-            infoHeadTitle_VPFJ50.text = timelineManager.getVPZJ50Title(hierarchy,code,data_type);
-            bodyText_VPFJ50.text = timelineManager.getVPZJ50BodyText(hierarchy,code,data_type);
-            var dt = timelineManager.getVPZJ50Updated(hierarchy,code,data_type);
-            if (dt=="2000/01/01 00:00:00"){
-                infoDateTime_VPFJ50.text = ""
-            }else{
-                infoDateTime_VPFJ50.text = timelineManager.getVPZJ50Updated(hierarchy,code,data_type);
+        if (infoLoader_VPFG50.item) {
+            var data_type="VPFG50"
+            if (timelineManager.getVPZJ50ID(hierarchy,code,data_type)!="") {
+                infoLoader_VPFG50.item.headlineText = timelineManager.getVPZJ50HeadlineText(hierarchy,code,data_type);
+                infoLoader_VPFG50.item.headTitleText = timelineManager.getVPZJ50Title(hierarchy,code,data_type);
+                infoLoader_VPFG50.item.bodyText = timelineManager.getVPZJ50BodyText(hierarchy,code,data_type);
+                var dt_VPFG50 = timelineManager.getVPZJ50Updated(hierarchy,code,data_type);
+                infoLoader_VPFG50.item.dateTimeText = (dt_VPFG50 === "2000/01/01 00:00:00") ? "" : dt_VPFG50;
+            } else {
+                infoLoader_VPFG50.item.dateTimeText = "";
+                infoLoader_VPFG50.item.headTitleText = "";
+                infoLoader_VPFG50.item.headlineText = "";
+                infoLoader_VPFG50.item.bodyText = "";
             }
-        } else {
-            infoHeadTitle_VPFJ50.text = "";
-            headlineText_VPFJ50.text = "";
-            infoDateTime_VPFJ50.text = "";
-            bodyText_VPFJ50.text="";
         }
     }
 
@@ -494,7 +509,7 @@ Window {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: 350
+        width: 400
         anchors.margins: 5
         // 情報表示用のコンテナ
         Rectangle {
@@ -503,329 +518,74 @@ Window {
             color: "#f0f0f0"
             border.color: "gray"
             border.width: 1
+            Label {
+                id: infoTitle
+                anchors.leftMargin: 3
+                anchors.topMargin: 3
+                anchors.rightMargin:3
+                text: "地域名"
+                anchors.top:parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                font.pixelSize: 20
+                font.bold: true
+                background: Rectangle {
+                    color: "#75fff3ff"
+                }
+            }
             Flickable {
-                anchors.fill: parent
-                anchors.margins:5
-                contentWidth: availableWidth
-                contentHeight: contentColumn.height
+                anchors.top: infoTitle.bottom
+                anchors.bottom: parent.bottom
+                anchors.left:infoTitle.left
+                anchors.right:infoTitle.right
+                contentWidth: parent.width-2*infoTitle.anchors.leftMargin
+                contentHeight: parent.height-infoTitle.height-infoTitle.anchors.topMargin-5
                 flickableDirection: Flickable.VerticalFlick || Flickable.HorizontalFlick
                 clip: true
 
                 Column {
                     id: contentColumn
                     width: parent.width
-                    anchors.margins: 5
                     spacing: 5
                     
-                    Label {
-                        id: infoTitle
-                        //anchors.fill:parent
-                        text: "地域名"
-                        font.pixelSize: 18
-                        font.bold: true
-                        background: Rectangle {
-                            color: "#75fff3ff"
-                        }
-                    }
-                    //土砂災害警戒情報用
-                    Column{
-                        spacing: 2
-                        visible: {
-                            infoHeadTitle_VXWW50.text != ""
-                        }
+                    Loader {
+                        id: infoLoader_VPWW54
+                        source: "infoText_component.qml"
                         width: parent.width
-                        Text {
-                            id: infoDateTime_VXWW50
-                            text: ""
-                            font.pixelSize: 12
-                            font.bold: false
-                        }
-                        Text {
-                            id: infoHeadTitle_VXWW50
-                            text: ""
-                            font.pixelSize: 16
-                            font.bold: true
-                            width: parent.width
-                            wrapMode: Text.WrapAnywhere
-                        }
-                        Row{
-                            height: {
-                                logoListModel_VXWW50.count>0 ? 22 : 0
-                            }
-                            width: parent.width
-                            id: logo_VXWW50
-                            spacing:4
-                            Repeater {
-                                model: logoListModel_VXWW50
-                                Image {
-                                    height:parent.height
-                                    fillMode:Image.PreserveAspectFit
-                                    source: model.value
-                                    antialiasing: true
-                                }
-                            }
-                        }
-                        //横線
-                        Rectangle {
-                            width: parent.width
-                            height: 2
-                            color: "gray"
-                            visible: { 
-                                infoHeadTitle_VXWW50.text != "" 
-                            }
-                        }
-                        Text {
-                            id: headlineText_VXWW50
-                            width: parent.width
-                            text: ""
-                            wrapMode: TextEdit.Wrap
-                        }
+                        //height: item ? item.height : 0
                     }
-                    //竜巻注意情報用
-                    Column{
-                        spacing: 2
-                        visible: {
-                            infoHeadTitle_VPHW51.text != ""
-                        }
+                    Loader {
+                        id: infoLoader_VXWW50
+                        source: "infoText_component.qml"
                         width: parent.width
-                        Text {
-                            id: infoDateTime_VPHW51
-                            text: ""
-                            font.pixelSize: 12
-                            font.bold: false
-                        }
-                        Text {
-                            id: infoHeadTitle_VPHW51
-                            text: ""
-                            font.pixelSize: 16
-                            font.bold: true
-                            width: parent.width
-                            wrapMode: Text.WrapAnywhere
-                        }
-                        Row{
-                            height: {
-                                logoListModel_VPHW51.count>0 ? 22 : 0
-                            }
-                            width: parent.width
-                            id: logo_VPHW51
-                            spacing:4
-                            Repeater {
-                                model: logoListModel_VPHW51
-                                Image {
-                                    height:parent.height
-                                    fillMode:Image.PreserveAspectFit
-                                    source: model.value
-                                    antialiasing: true
-                                }
-                            }
-                        }
-                        //横線
-                        Rectangle {
-                            width: parent.width
-                            height: 2
-                            color: "gray"
-                            visible: { 
-                                infoHeadTitle_VPHW51.text != "" 
-                            }
-                        }
-                        Text {
-                            id: headlineText_VPHW51
-                            width: parent.width
-                            text: ""
-                            wrapMode: TextEdit.Wrap
-                        }
+                        //height: item ? item.height : 0
                     }
-                    //気象警報用
-                    Column{
-                        spacing:{
-                            infoHeadTitle.text == "" ? 0 : 2
-                        }
-                        visible: {
-                            infoHeadTitle.text != ""
-                        }
+                    Loader {
+                        id: infoLoader_VPHW51
+                        source: "infoText_component.qml"
                         width: parent.width
-                        Text {
-                            id: infoDateTime
-                            text: ""
-                            font.pixelSize: 12
-                            font.bold: false
-                        }
-                        Text {
-                            id: infoHeadTitle
-                            text: ""
-                            font.pixelSize: 16
-                            font.bold: true
-                            width: parent.width
-                            wrapMode: Text.WrapAnywhere
-                        }
-                        Row{
-                            height: {
-                                logoListModel_VPWW54.count>0 ? 22 : 0
-                            }
-                            width: parent.width
-                            id: logoA
-                            spacing:4
-                            Repeater {
-                                model: logoListModel_VPWW54
-                                Image {
-                                    height:parent.height
-                                    fillMode:Image.PreserveAspectFit
-                                    source: model.value
-                                    antialiasing: true
-                                }
-                            }
-                        }
-                        //横線
-                        Rectangle {
-                            width: parent.width
-                            height: 2
-                            color: "gray"
-                            visible: { 
-                                infoHeadTitle.text != "" 
-                            }
-                        }
-                        Text {
-                            id: headlineText
-                            width: parent.width
-                            text: ""
-                            wrapMode: TextEdit.Wrap
-                        }
+                        //height: item ? item.height : 0
                     }
-                    //記録的短時間大雨情報
-                    Column{
-                        spacing:{
-                            infoHeadTitle_VPOA50.text == "" ? 0 : 2
-                        }
-                        visible: {
-                            infoHeadTitle_VPOA50.text != ""
-                        }
+                    Loader {
+                        id: infoLoader_VPOA50
+                        source: "infoText_component.qml"
                         width: parent.width
-                        Text {
-                            id: infoDateTime_VPOA50
-                            text: ""
-                            font.pixelSize: 12
-                            font.bold: false
-                        }
-                        Text {
-                            id: infoHeadTitle_VPOA50
-                            width: parent.width
-                            text: ""
-                            font.pixelSize: 16
-                            font.bold: true
-                            wrapMode: Text.WrapAnywhere
-                        }
-                        //横線
-                        Rectangle {
-                            width: parent.width
-                            height: 2
-                            color: "gray"
-                            visible: { 
-                                infoHeadTitle_VPOA50.text != "" 
-                            }
-                        }
-                        Text {
-                            id: headlineText_VPOA50
-                            width: parent.width
-                            text: ""
-                            wrapMode: TextEdit.Wrap
-                        }
+                        //height: item ? item.height : 0
                     }
-                    //府県気象情報用
-                    Column{
-                        spacing:{
-                            infoHeadTitle_VPFJ50.text == "" ? 0 : 2
-                        }
+                    Loader {
+                        id: infoLoader_VPFJ50
+                        source: "infoText_component.qml"
                         width: parent.width
-                        Text {
-                            id: infoDateTime_VPFJ50
-                            text: ""
-                            font.pixelSize: 12
-                            font.bold: false
-                        }
-                        Text {
-                            id: infoHeadTitle_VPFJ50
-                            text: ""
-                            font.pixelSize: 16
-                            font.bold: true
-                            width: parent.width
-                            wrapMode: Text.WrapAnywhere
-                        }
-                        Text {
-                            id: headlineText_VPFJ50
-                            width: parent.width
-                            text: ""
-                            wrapMode: TextEdit.Wrap
-                        }
-                        //横線
-                        Rectangle {
-                            width: parent.width
-                            height: 2
-                            color: "gray"
-                            visible: { 
-                                infoHeadTitle_VPFJ50.text != "" 
-                            }
-                        }
-                        Text {
-                            id: bodyText_VPFJ50
-                            width: parent.width
-                            text: ""
-                            wrapMode: TextEdit.Wrap
-                        }
+                        //height: item ? item.height : 0
+                    }
+                    Loader {
+                        id: infoLoader_VPFG50
+                        source: "infoText_component.qml"
+                        width: parent.width
+                        //height: item ? item.height : 0
                     }
                 }
             }
         }
     }
-
-    // 再利用可能な情報セクションコンポーネント
-    //Component {
-    //    id: infoSectionTemplate
-    //    property string dateTimeText: ""
-    //    property string headTitleText: ""
-    //    property string headlineText: ""
-    //    property var logoListModel: null
-    //    width: parent.width
-//
-    //    Column {
-    //        spacing: 2
-    //        visible: headTitleText !== ""
-    //        Text {
-    //            text: dateTimeText
-    //            font.pixelSize: 12
-    //            font.bold: false
-    //        }
-    //        Text {
-    //            text: headTitleText
-    //            font.pixelSize: 16
-    //            font.bold: true
-    //            width: parent.width
-    //            wrapMode: Text.WrapAnywhere
-    //        }
-    //        Row {
-    //            height: logoListModel.count > 0 ? 22 : 0
-    //            width: parent.width
-    //            spacing: 4
-    //            Repeater {
-    //                model: logoListModel
-    //                Image {
-    //                    height: parent.height
-    //                    fillMode: Image.PreserveAspectFit
-    //                    source: model.value
-    //                    antialiasing: true
-    //                }
-    //            }
-    //        }
-    //        Rectangle {
-    //            width: parent.width
-    //            height: 2
-    //            color: "gray"
-    //            visible: headTitleText !== ""
-    //        }
-    //        Text {
-    //            text: headlineText
-    //            width: parent.width
-    //            wrapMode: Text.Edit.Wrap
-    //        }
-    //    }
-    //}
 }

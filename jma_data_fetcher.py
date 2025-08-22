@@ -109,7 +109,7 @@ class JMADataFetcher(QObject):
             "VPTI50": VPZJ50(self), # 全般台風情報（総合情報、上陸等情報），発達する熱帯低気圧に関する情報 一般報
             "VPTI51": VPZJ50(self), # 全般台風情報 （位置、発生情報），発達する熱帯低気圧に関する情報 一般報
             "VPTI52": VPZJ50(self), # 全般台風情報 （位置詳細）一般報
-            #"VPFG50": VPZJ50(self), # 府県天気概況
+            "VPFG50": VPZJ50(self), # 府県天気概況
             "VMCJ50": VPZJ50(self), # 全般潮位情報 一般報
             "VMCJ51": VPZJ50(self), # 地方潮位情報 一般報
             "VMCJ52": VPZJ50(self), # 府県潮位情報 一般報
