@@ -755,7 +755,7 @@
             ]
         }
     },
-        "prefs": {
+    "prefs": {
         "100000": {
             "name": "群馬県",
             "enName": "Gunma",
@@ -1254,6 +1254,33 @@
             "children": [
                 "013010",
                 "013020",
+                "013030"
+            ]
+        },
+        "013010": {
+            "name": "網走地方",
+            "enName": "Abashiri Kitami Mombetsu",
+            "officeName": "網走地方気象台",
+            "parent": "010100",
+            "children": [
+                "013010"
+            ]
+        },
+        "013020": {
+            "name": "北見地方",
+            "enName": "Abashiri Kitami Mombetsu",
+            "officeName": "網走地方気象台",
+            "parent": "010100",
+            "children": [
+                "013020"
+            ]
+        },
+        "013030": {
+            "name": "紋別地方",
+            "enName": "Abashiri Kitami Mombetsu",
+            "officeName": "網走地方気象台",
+            "parent": "010100",
+            "children": [
                 "013030"
             ]
         },

@@ -9,6 +9,7 @@ from timeline import TimelineManager
 # パーサーをインポート
 from jma_parsers.jma_base_parser import BaseJMAParser
 from jma_parsers.VPZJ50 import VPZJ50
+from jma_parsers.VPFD51 import VPFD51
 from jma_parsers.VPOA50 import VPOA50
 from jma_parsers.VGSK50 import VGSK50
 from jma_parsers.VPWW54 import VPWW54
@@ -113,6 +114,7 @@ class JMADataFetcher(QObject):
             "VMCJ50": VPZJ50(self), # 全般潮位情報 一般報
             "VMCJ51": VPZJ50(self), # 地方潮位情報 一般報
             "VMCJ52": VPZJ50(self), # 府県潮位情報 一般報
+            "VPFD51": VPFD51(self), # 府県天気予報（R1）
             "VPOA50": VPOA50(self), # 記録的短時間大雨情報
             "VXWW50": VXWW50(self), # 土砂災害警戒情報
             "VPWW54": VPWW54(self), # 気象警報

@@ -19,13 +19,8 @@ class VPFD51(BaseJMAParser):
         parsed_data['report_datetime'] = self._get_datetime(xml_tree, '//jmx_ib:ReportDateTime/text()', namespaces)
         parsed_data['area'] = "全般"
         
-        hier=""
-        if data_type_code == "VPZJ50":
-            hier="japan"
-        if data_type_code == "VPCJ50":
-            hier="region"
-        if data_type_code == "VPFJ50" or data_type_code == "VPFG50":
-            hier="pref"
+
+        hier="pref"
         #地域名→コードの対応を作る
         parsed_data["hier"]=hier
         if data_type_code == "VPFG50":

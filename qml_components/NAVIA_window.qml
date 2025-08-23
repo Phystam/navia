@@ -163,7 +163,7 @@ Window {
                 infoLoader_VPFJ50.item.bodyText = "";
             }
         }
-        // VPFJ50 府県気象情報
+        // VPFJ50 府県気象概況
         if (infoLoader_VPFG50.item) {
             var data_type="VPFG50"
             if (timelineManager.getVPZJ50ID(hierarchy,code,data_type)!="") {
@@ -177,6 +177,22 @@ Window {
                 infoLoader_VPFG50.item.headTitleText = "";
                 infoLoader_VPFG50.item.headlineText = "";
                 infoLoader_VPFG50.item.bodyText = "";
+            }
+        }
+        // VPFD51 府県天気予報
+        if (infoLoader_VPFD51.item) {
+            var data_type="VPFD51"
+            if (timelineManager.getVPFD51ID(hierarchy,code,data_type)!="") {
+                infoLoader_VPFD51.item.headlineText = timelineManager.getVPFD51HeadlineText(hierarchy,code,data_type);
+                infoLoader_VPFD51.item.headTitleText = timelineManager.getVPFD51Title(hierarchy,code,data_type);
+                infoLoader_VPFD51.item.bodyText = timelineManager.getVPFD51BodyText(hierarchy,code,data_type);
+                var dt_VPFD51 = timelineManager.getVPFD51Updated(hierarchy,code,data_type);
+                infoLoader_VPFD51.item.dateTimeText = (dt_VPFD51 === "2000/01/01 00:00:00") ? "" : dt_VPFD51;
+            } else {
+                infoLoader_VPFD51.item.dateTimeText = "";
+                infoLoader_VPFD51.item.headTitleText = "";
+                infoLoader_VPFD51.item.headlineText = "";
+                infoLoader_VPFD51.item.bodyText = "";
             }
         }
     }
@@ -555,7 +571,7 @@ Window {
                     spacing: 5
                     
                     Loader {
-                        id: infoLoader_VPWW54
+                        id: infoLoader_VPFD51
                         source: "infoText_component.qml"
                         width: parent.width
                         //height: item ? item.height : 0
@@ -566,6 +582,13 @@ Window {
                         width: parent.width
                         //height: item ? item.height : 0
                     }
+                    Loader {
+                        id: infoLoader_VPWW54
+                        source: "infoText_component.qml"
+                        width: parent.width
+                        //height: item ? item.height : 0
+                    }
+                    
                     Loader {
                         id: infoLoader_VPHW51
                         source: "infoText_component.qml"
