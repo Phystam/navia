@@ -26,7 +26,7 @@ class BaseJMAParser(QObject):
         """
         raise NotImplementedError("Subclasses must implement this method.")
 
-    def _get_text(self, element, xpath, namespaces, default="N/A"):
+    def _get_text(self, element, xpath, namespaces, default=""):
         """XPathで要素のテキストを取得するヘルパー関数"""
         result = element.xpath(xpath, namespaces=namespaces)
         return result[0] if result else default
@@ -36,7 +36,7 @@ class BaseJMAParser(QObject):
         result = element.xpath(xpath, namespaces=namespaces)
         return result if result else default
 
-    def _get_attribute(self, element, xpath, namespaces, default="N/A"):
+    def _get_attribute(self, element, xpath, namespaces, default=""):
         """XPathで要素の属性を取得するヘルパー関数"""
         result = element.xpath(xpath, namespaces=namespaces)
         return result[0] if result else default

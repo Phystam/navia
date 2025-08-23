@@ -17,6 +17,7 @@ from axis_manager import AxisManager
 class MainApp(QObject):
     
     telopDataReceived= Signal(dict,bool)  # テロップ情報を受け取るためのシグナル
+    eewReceived = Signal(list,str,str,str)
     onSettingsApplied = Signal(dict)
     
     def __init__(self, engine_instance, parent=None):
@@ -29,7 +30,7 @@ class MainApp(QObject):
         # JMADataFetcherは内部でQTimerを持っており、定期的にデータ取得を行います
         self.jma_fetcher = JMADataFetcher(self.timeline_manager, self)
 
-        self.axsis_manager = AxisManager(self)
+        self.axis_manager = AxisManager(self)
         # 設定用インスタンス
         self.settings_manager = SettingsManager(self)
         self.settings_manager._load_settings()
@@ -42,7 +43,8 @@ class MainApp(QObject):
         # JMADataFetcherからのシグナルをメインアプリのメソッドに接続
         self.jma_fetcher.dataFetched.connect(self.onDataFetched)
         self.jma_fetcher.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
-        self.axsis_manager.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
+        self.axis_manager.telopDataReceived.connect(self.onTelopDataReceived)  # テロップデータを受け取る
+        self.axis_manager.eewReceived.connect(self.onEEWReceived)
         self.jma_fetcher.errorOccurred.connect(self.onErrorOccurred)
         
         self.navia_window: QObject = None
@@ -114,6 +116,11 @@ class MainApp(QObject):
     @Slot(dict,bool)
     def onTelopDataReceived(self, telop_dict,emergency=False):
         self.telopDataReceived.emit(telop_dict,emergency)
+        
+    @Slot(list,str,str,str)
+    def onEEWReceived(self,hypocenter,hypocenter_name,text,soundfile):
+        print(f"EEW received: {text}")
+        self.eewReceived.emit(hypocenter,hypocenter_name,text,soundfile)
 
     @Slot(str)
     def onErrorOccurred(self, message):
@@ -192,6 +199,7 @@ class MainApp(QObject):
         #entry_data=R"jmaxml_20250710_Samples/15_13_01_161226_VPWW54.xml"
         #entry_data=R"jmaxml_20250710_Samples/17_01_01_190529_VXWW50.xml"
         entry_data=R"jmaxml_20250710_Samples/18_01_01_100806_VPOA50.xml"
+        entry_data=R"jmaxml_20250710_Samples/32-35_08_07_240613_VXSE53.xml"
         with open(entry_data,"rb") as f:
             dataname=entry_data[-10:-4]
             print(dataname)
@@ -199,10 +207,10 @@ class MainApp(QObject):
             self.jma_fetcher.processReport(dataname,data,test=True, playtelop=True,save=False,parse=True)
     @Slot()
     def onTestEEW(self):
-        self.axsis_manager.sendData()
+        self.axis_manager.sendData()
     @Slot()
     def onTestEEW2(self):
-        self.axsis_manager.sendData2()
+        self.axis_manager.sendData2()
             
 if __name__ == "__main__":
     # QApplicationを使用するように変更
@@ -222,6 +230,7 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("mainApp", main_app_instance)
     engine.rootContext().setContextProperty("settingsManager", main_app_instance.settings_manager)
     engine.rootContext().setContextProperty("timelineManager", main_app_instance.timeline_manager)
+    engine.rootContext().setContextProperty("axisManager", main_app_instance.axis_manager)
     # MainAppのインスタンスを作成し、QMLに公開（タスクトレイアイコン用）
     # このインスタンス内でJMADataFetcherも初期化されます
     

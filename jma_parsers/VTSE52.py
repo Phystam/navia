@@ -60,7 +60,7 @@ class VTSE52(BaseJMAParser):
             conditiontext = self._get_text(xml_tree, f'//jmx_seis:Observation/jmx_seis:Item[{i+1}]/jmx_seis:Station/jmx_seis:MaxHeight/jmx_seis:Condition/text()',namespaces)
             logo_list.append([logo,""])
             sound_list.append("")
-            if heighttext !="N/A":
+            if heighttext !="":
                 text_list.append([f"{areatext} {stationtext}",f"{datetimetext.hour}時{datetimetext.minute}分ごろ 最大波  {heighttext}m"])
             else:
                 text_list.append([f"{areatext} {stationtext}",f"{conditiontext}"])   

@@ -45,18 +45,18 @@ class AxisManager(QObject):
         pass
         
     def sendData(self):
-        with open(R"axisjsondata/eew20250821-104407.json.zst", "rb") as f:
+        with open(R"axisjsondata\eew20240101-161217.json.zst", "rb") as f:
             data=f.read()
             text=zstd.decompress(data)
             result1=text.decode('shift_jis')
-            print(result1)
+            #print(result1)
             self.onMessage(result1)
     def sendData2(self):
-        with open(R"axisjsondata/eew20250821-104409.json.zst", "rb") as f:
+        with open(R"axisjsondata/breaking-news20231231-001759.json.zst", "rb") as f:
             data=f.read()
             text=zstd.decompress(data)
             result1=text.decode('shift_jis')
-            print(result1)
+            #print(result1)
             self.onMessage(result1)
     def sendDataNews(self):
         with open(R"json\20240826060605_0_VXKO54_130000.json", encoding="shift_jis") as f:
@@ -122,7 +122,6 @@ class AxisManager(QObject):
             except:
                 pass
             texts=json_data["message"]["Text"]
-            texts.insert(0,"")
             textlist=[]
             logolist=[]
             soundlist=[]
@@ -130,9 +129,10 @@ class AxisManager(QObject):
             logolist.append(["",""])
             soundlist.append("./sounds/BreakingNews_sample.wav")
             len_texts=len(texts)
+            print(len_texts)
             if len_texts % 2 == 1:
                 texts.append("")
-            for i in range(len(texts)/2):
+            for i in range(int(len(texts)/2)):
                 textlist.append([texts[2*i],texts[2*i+1]])
                 logolist.append(["",""])
                 soundlist.append("")
@@ -191,22 +191,21 @@ class AxisManager(QObject):
             print(telop_dict)
             self.telopDataReceived.emit(telop_dict,True)
         else:
-            pass
-            #text=""
-            #hypocenter=json_data["message"]["Hypocenter"]["Coordinate"]
-            #text=f"緊急地震速報(警報) {hypocenter_name} 深さ{json_data["message"]["Hypocenter"]["Depth"]} M{json_data["message"]["Magnitude"]}"
-            #areaarray=[]
-            #for data in json_data["message"]["Forecast"]:
-            #    if data["Intensity"]["To"] in ["4","5弱","5強","6弱","6強","7"]:
-            #        areaarray.append(data["Name"])
-            #    pass
-            #text=""
-            #areaarray=self.EEWAreaFormat(areaarray)
-            #for a in areaarray:
-            #    text=text+" "+a
-            #soundfile="sound/EEW1.wav"
-            #print(text)
-            #self.eewReceived.emit(hypocenter,hypocenter_name,text,soundfile)
+            text=""
+            hypocenter=json_data["message"]["Hypocenter"]["Coordinate"]
+            text=f"緊急地震速報(警報) {hypocenter_name} 深さ{json_data["message"]["Hypocenter"]["Depth"]} M{json_data["message"]["Magnitude"]}"
+            areaarray=[]
+            for data in json_data["message"]["Forecast"]:
+                if data["Intensity"]["To"] in ["4","5弱","5強","6弱","6強","7"]:
+                    areaarray.append(data["Name"])
+                pass
+            text=""
+            areaarray=self.EEWAreaFormat(areaarray)
+            for a in areaarray:
+                text=text+" "+a
+            soundfile="sound/EEW1.wav"
+            print(text)
+            self.eewReceived.emit(hypocenter,hypocenter_name,text,soundfile)
         pass
     
     

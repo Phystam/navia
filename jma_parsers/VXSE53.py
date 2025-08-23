@@ -55,6 +55,8 @@ class VXSE53(BaseJMAParser):
         publishing_office = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         max_intensity = self._get_text(xml_tree, '//jmx_seis:MaxInt/text()', namespaces)
+        if max_intensity=="":
+            max_intensity="不明"
         # 最大震度に応じたサウンドを設定
         sound = f"./sounds/Grade{max_intensity}.wav"  # デフォルトのサウンドファイル
         logo_list.append(["", ""])
@@ -162,4 +164,4 @@ class VXSE53(BaseJMAParser):
             'logo_list': logo_list,
             'text_list': text_list
         }
-        return telop_dict, notify_level
+        return telop_dict, {publishing_office: notify_level}

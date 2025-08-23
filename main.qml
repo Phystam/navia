@@ -2,6 +2,7 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
+import QtPositioning
 
 Window {
     onScreenChanged: {
@@ -66,6 +67,15 @@ Window {
         height: parent.height * 0.1 // 親ウィンドウの25%の高さ
     }
 
+    //Loader {
+    //    id: eewLoader
+    //    source: "EEWContent.qml" // テロップコンポーネントをロード
+    //    //anchors.horizontalCenter: parent.horizontalCenter
+    //    //anchors.top: parent.top
+    //    //anchors.topMargin: parent.height * 0.025 // 上からのマージン
+    //    //width: parent.width * 0.9 // 親ウィンドウの90%の幅
+    //    //height: parent.height * 0.1 // 親ウィンドウの25%の高さ
+    //}
     // ウィンドウを移動可能にするためのMouseArea (開発用)
     //MouseArea {
     //    anchors.fill: parent
@@ -79,7 +89,9 @@ Window {
         telopLoader.item.init();
         // 必要に応じて他の初期化処理を追加
         mainApp.telopDataReceived.connect(onTelopReceived);
-        mainApp.tsunamiReceived.connect(onTsunamiReceived);
+        //mainApp.tsunamiReceived.connect(onTsunamiReceived);
+        mainApp.eewReceived.connect(onEEWReceived);
+        //axisManager.eewReceived.connect(onEEWReceived);
     }
     function onTelopReceived(data,emergency) {
         console.log(emergency)
@@ -89,4 +101,21 @@ Window {
         telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"],emergency); // ロゴとテキストを設定
     }
 
+    function onEEWReceived(center,area1,area2,soundfile) {
+        console.log("EEW received")
+        if(!eew_component){
+            eew_component=Qt.createComponent("EEWContent.qml");
+        }
+        print(eew_component.status)
+        if(eew_component.status == Component.Ready){
+            var hc = QtPositioning.coordinate(center[1],center[0])
+            eew_object=eew_component.createObject(rootWindow,{"warningRegion":area1,"areas":"<b>"+area2+"</b>","hypocenter":hc})
+            eew_object.playSound(soundfile)
+            eew_object.destroy(30000)
+        }
+        print(center)
+        if(eew_component.status == Component.Error){
+            print(eew_component.errorString())
+        }
+    }
 }

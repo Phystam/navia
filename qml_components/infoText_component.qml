@@ -63,13 +63,13 @@ Rectangle {
             text: infoSection.headlineText
             width: parent.width
             wrapMode: Text.WrapAnywhere
-            visible: infoSection.visible
+            visible: infoSection.visible && infoSection.headlineText != ""
         }
         Text {
             text: infoSection.bodyText
             width: parent.width
             wrapMode: Text.WrapAnywhere
-            visible: infoSection.visible
+            visible: infoSection.visible && infoSection.bodyText != ""
         }
     }
 }

@@ -384,14 +384,12 @@ class JMADataFetcher(QObject):
                 parseddata = parser_instance.parse(report_tree,namespaces,data_type_code,test=test)
                 #Signal経由ではなく、直接タイムラインマネージャーに渡すようにした。
                 self.timeline_manager.add_entry(data_id,parseddata)
-                #self.dataParsed.emit(data_id,parseddata)
             # ラジオ用
             #weather_info=["VGSK50","VGSK55","VGSK60",
             #              "VPZJ50","VPZJ51","VPCJ50","VPCJ51",
             #              "VPTI50","VPTI51"]
             #if data_type_code in weather_info:
             #    parsed_data = parser_instance.parse(report_tree, namespaces, data_type_code)
-        
         if (playtelop and playtelop_warning) or test:
             print(f"テロップ情報: {telop_dict}")
             self.telopDataReceived.emit(telop_dict,False)

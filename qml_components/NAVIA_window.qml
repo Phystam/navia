@@ -515,6 +515,7 @@ Window {
         Rectangle {
             id: infoarea
             anchors.fill: parent
+            anchors.bottomMargin:3
             color: "#f0f0f0"
             border.color: "gray"
             border.width: 1
@@ -539,10 +540,15 @@ Window {
                 anchors.left:infoTitle.left
                 anchors.right:infoTitle.right
                 contentWidth: parent.width-2*infoTitle.anchors.leftMargin
-                contentHeight: parent.height-infoTitle.height-infoTitle.anchors.topMargin-5
-                flickableDirection: Flickable.VerticalFlick || Flickable.HorizontalFlick
+                //contentHeight: parent.height-infoTitle.height-infoTitle.anchors.topMargin-5
+                contentHeight: contentColumn.height
+                flickableDirection: Flickable.VerticalFlick
                 clip: true
-
+                Rectangle {
+                    color: "transparent"
+                    border.color: "#ff75ffff"
+                    anchors.fill: parent
+                }
                 Column {
                     id: contentColumn
                     width: parent.width
