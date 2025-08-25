@@ -19,6 +19,7 @@ Rectangle {
   property string areas: ""
   property var hypocenter: QtPositioning.coordinate(35,135)
   property string currentDir: mainApp.getCurrentDir()
+  property var areacode: {}
   SoundEffect {
     id: sound
     source: "sounds/EEW1.wav"
@@ -50,6 +51,17 @@ Rectangle {
     }
     return paths;
   }
+  function getColorByWarningLevel(level) {
+    switch (level) {
+      case "4": return "#fae696"; // 平常
+      case "5弱": return "#ffe600"; // レベル1・早期注意情報
+      case "5強": return "#f29900"; // レベル2・注意報
+      case "6弱": return "#ff2800"; // レベル3・警報
+      case "6強": return "#a50021"; // レベル4・その他の特別警報・危険警報・土砂災害警戒情報等
+      case "7": return "#b40068"; // レベル5・大雨特別警報
+      default: return "#838383";
+    }
+  }
 
   Rectangle {
     id: eewmap
@@ -69,11 +81,11 @@ Rectangle {
       anchors.fill:parent
       plugin: Plugin { name: "itemsoverlay" }
       center: eew_content.hypocenter
-      zoomLevel:8
+      zoomLevel:6.5
       color:"transparent"
       GeoJsonData {
         id: fuken
-        sourceUrl: "file:///" + currentDir + "/geo/緊急地震速報／地方予報区.geojson"
+        sourceUrl: "file:///" + currentDir + "/geo/緊急地震速報／府県予報区.geojson"
       }
       MapItemView{
         id: miv
@@ -81,20 +93,42 @@ Rectangle {
         delegate: MapItemGroup{ 
           id: mapgroup
           required property int index
+          property int item_index: index
+          property var item_model: mapgroup.parent.model
           property var polys: showMap(miv.model,index)
+          property var polycolor: getColorForItem()
           Repeater{
             model: polys
             delegate: MapPolygon{
               path: modelData
-              color: "#838383"
+              color: polycolor//"#838383"
               border.width:5
               border.color:"#525252"
+            }
+          }
+          function getColorForItem(){
+            console.log("getColor")
+            var feature = item_model[item_index];
+            //return "#838383";
+            //return "#ffef10";
+            if (feature && feature.properties) {
+              var code = feature.properties.code;
+              console.log("code="+code)
+              var intensity=eew_content.areacode[code]
+              return getColorByWarningLevel(intensity);
+              //var check = timelineManager.checkVPHW51("pref",code);
+              //var level = timelineManager.getMeteWarningLevel("pref", code);
+              //return getColorByWarningLevel(level);
+            } else {
+              return "#c8c8cb";
             }
           }
         }
         MapQuickItem {
           coordinate: hypocenter
-          z:100
+          anchorPoint.x: centerimage.width/2
+          anchorPoint.y: centerimage.height/2
+          z:eew_content.height*0.04
           sourceItem: Image {
             id: centerimage
             source: "materials/centermark.svg"

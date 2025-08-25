@@ -101,19 +101,19 @@ Window {
         telopLoader.item.push(data["sound_list"], data["logo_list"], data["text_list"],emergency); // ロゴとテキストを設定
     }
 
-    function onEEWReceived(center,area1,area2,soundfile) {
+    function onEEWReceived(data){//center,area1,area2,soundfile) {
         console.log("EEW received")
         if(!eew_component){
             eew_component=Qt.createComponent("EEWContent.qml");
         }
         print(eew_component.status)
         if(eew_component.status == Component.Ready){
-            var hc = QtPositioning.coordinate(center[1],center[0])
-            eew_object=eew_component.createObject(rootWindow,{"warningRegion":area1,"areas":"<b>"+area2+"</b>","hypocenter":hc})
-            eew_object.playSound(soundfile)
+            var hc = QtPositioning.coordinate(data["hypocenter"][1],data["hypocenter"][0])
+            eew_object=eew_component.createObject(rootWindow,{"warningRegion":data["hypocenter_name"],"areas":"<b>"+data["areatext"]+"</b>","hypocenter":hc,"areacode": data["area"]})
+            eew_object.playSound(data["soundfile"])
             eew_object.destroy(30000)
         }
-        print(center)
+        //print(center)
         if(eew_component.status == Component.Error){
             print(eew_component.errorString())
         }

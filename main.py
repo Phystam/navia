@@ -17,7 +17,7 @@ from axis_manager import AxisManager
 class MainApp(QObject):
     
     telopDataReceived= Signal(dict,bool)  # テロップ情報を受け取るためのシグナル
-    eewReceived = Signal(list,str,str,str)
+    eewReceived = Signal(dict)
     onSettingsApplied = Signal(dict)
     
     def __init__(self, engine_instance, parent=None):
@@ -117,10 +117,10 @@ class MainApp(QObject):
     def onTelopDataReceived(self, telop_dict,emergency=False):
         self.telopDataReceived.emit(telop_dict,emergency)
         
-    @Slot(list,str,str,str)
-    def onEEWReceived(self,hypocenter,hypocenter_name,text,soundfile):
-        print(f"EEW received: {text}")
-        self.eewReceived.emit(hypocenter,hypocenter_name,text,soundfile)
+    @Slot(dict)
+    def onEEWReceived(self,data):
+        print(f"EEW received: {data['text']}")
+        self.eewReceived.emit(data)
 
     @Slot(str)
     def onErrorOccurred(self, message):

@@ -13,7 +13,7 @@ class AxisManager(QObject):
     access_token = None
     #json受信時用シグナル
     jsonReceived = Signal(str)
-    eewReceived = Signal(list,str,str,str)
+    eewReceived = Signal(dict)
     eewreportReceived = Signal(list,list,str,bool)
     telopDataReceived = Signal(dict,bool)
     jsondir=R"axisjsondata"
@@ -40,6 +40,8 @@ class AxisManager(QObject):
         self.ws.open(self.req)
         self.timer_id=self.startTimer(30000)
         self.jsondir=R"./axisjsondata"
+        with open(R"settings/seis_area.json","rb") as f:
+            self.areadecoder=json.load(f)
         
     def showSettings(self):
         pass
@@ -192,20 +194,41 @@ class AxisManager(QObject):
             self.telopDataReceived.emit(telop_dict,True)
         else:
             text=""
-            hypocenter=json_data["message"]["Hypocenter"]["Coordinate"]
-            text=f"緊急地震速報(警報) {hypocenter_name} 深さ{json_data["message"]["Hypocenter"]["Depth"]} M{json_data["message"]["Magnitude"]}"
+            forecast={}
+            
+            forecast["hypocenter"]=json_data["message"]["Hypocenter"]["Coordinate"]
+            forecast["hypocenter_name"]=hypocenter_name
+            forecast["text"]=f"緊急地震速報(警報) {hypocenter_name} 深さ{json_data['message']['Hypocenter']['Depth']} M{json_data['message']['Magnitude']}"
+            
             areaarray=[]
+            forecast["intensity"]={}
+            forecast["area"]={}
+            strong_shindo_list=["4","5弱","5強","6弱","6強","7"]
             for data in json_data["message"]["Forecast"]:
-                if data["Intensity"]["To"] in ["4","5弱","5強","6弱","6強","7"]:
+                forecast["intensity"][data["Intensity"]["To"]]=[]
+                if data["Intensity"]["To"] in strong_shindo_list:
                     areaarray.append(data["Name"])
                 pass
+            for data in json_data["message"]["Forecast"]:
+                forecast["intensity"][data["Intensity"]["To"]].append(data["Code"])
+                print(data["Code"])
+                pref=self.areadecoder["class10s"][str(data["Code"])]["parent"]
+                try:
+                    if strong_shindo_list.index(data["Intensity"]["To"]) > strong_shindo_list.index(forecast["area"][pref]):
+                        forecast["area"][pref]=data["Intensity"]["To"]
+                except:
+                    forecast["area"][pref]=data["Intensity"]["To"]
+                        
             text=""
             areaarray=self.EEWAreaFormat(areaarray)
             for a in areaarray:
                 text=text+" "+a
-            soundfile="sound/EEW1.wav"
-            print(text)
-            self.eewReceived.emit(hypocenter,hypocenter_name,text,soundfile)
+            forecast["areatext"]=text
+            soundfile="sounds/EEW1.wav"
+            forecast["soundfile"]=soundfile
+            
+            print(forecast["areatext"])
+            self.eewReceived.emit(forecast)#hypocenter,hypocenter_name,text,soundfile)
         pass
     
     
