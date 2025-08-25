@@ -10,15 +10,10 @@ Rectangle {
     property string headlineText: ""
     property string bodyText: ""
     property var logoListModel: null
+    property bool expanded: false
     width: parent ? parent.width : 400
     height: infoColumn.height
     visible: headTitleText !== ""
-    //Rectangle{
-    //    anchors.fill: parent
-        border.color:"blue"
-        border.width: 1
-    //    color: "transparent"
-    //}
     Column {
         id: infoColumn
         spacing: 2
@@ -53,23 +48,40 @@ Rectangle {
                 }
             }
         }
-        Rectangle {
+        Column {
             width: parent.width
-            height: 2
-            color: "gray"
-            visible: infoSection.visible
+            height: infoSection.expanded ? childrenRect.height : 0
+            clip: true
+
+            Behavior on height {
+                NumberAnimation {
+                    duration: 300
+                    easing.type: Easing.InOutQuad
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 2
+                color: "gray"
+            }
+            Text {
+                text: infoSection.headlineText
+                width: parent.width
+                wrapMode: Text.WrapAnywhere
+                visible: infoSection.headlineText != ""
+            }
+            Text {
+                text: infoSection.bodyText
+                width: parent.width
+                wrapMode: Text.WrapAnywhere
+                visible: infoSection.bodyText != ""
+            }
         }
-        Text {
-            text: infoSection.headlineText
-            width: parent.width
-            wrapMode: Text.WrapAnywhere
-            visible: infoSection.visible && infoSection.headlineText != ""
-        }
-        Text {
-            text: infoSection.bodyText
-            width: parent.width
-            wrapMode: Text.WrapAnywhere
-            visible: infoSection.visible && infoSection.bodyText != ""
-        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: infoSection.expanded = !infoSection.expanded
     }
 }
