@@ -37,24 +37,33 @@ Window {
     }
 
     function onStatusChanged() {
-        //console.log("statuschanged: received")
-        //表示されているMapItemViewのみを強制的に再描画する
-        if (pref.model.length > 0) {
-            //mapComponent.mapgroup.getColorForItem(pref_miv.model)
-            pref_miv.model=[]; pref_miv.model = pref.model[0].data;
-        }
-        if (class10.model.length > 0) {
-            //mapComponent.mapgroup.getColorForItem(class10_miv.model)
-            class10_miv.model=[]; class10_miv.model = class10.model[0].data;
-        }
-        if (class15.model.length > 0) {
-            //mapComponent.mapgroup.getColorForItem(class15_miv.model)
-            class15_miv.model=[]; class15_miv.model = class15.model[0].data;
-        }
-        if (class20.model.length > 0) {
-            //mapComponent.mapgroup.getColorForItem(class20_miv.model)
-            class20_miv.model=[]; class20_miv.model = class20.model[0].data;
-        }
+        loadingIndicator.visible = true;
+
+        // Timerを使用して非同期でモデルを更新し、UIのフリーズを防ぐ
+        Timer.createObject(naviaWindow, {
+            interval: 10, // 短い遅延で実行
+            repeat: false,
+            onTriggered: function() {
+                // 表示されているMapItemViewのみを強制的に再描画する
+                if (pref.model.length > 0 && pref.model[0]) {
+                    pref_miv.model = [];
+                    pref_miv.model = pref.model[0].data;
+                }
+                if (class10.model.length > 0 && class10.model[0]) {
+                    class10_miv.model = [];
+                    class10_miv.model = class10.model[0].data;
+                }
+                if (class15.model.length > 0 && class15.model[0]) {
+                    class15_miv.model = [];
+                    class15_miv.model = class15.model[0].data;
+                }
+                if (class20.model.length > 0 && class20.model[0]) {
+                    class20_miv.model = [];
+                    class20_miv.model = class20.model[0].data;
+                }
+                loadingIndicator.visible = false;
+            }
+        }).start();
     }
 
 
@@ -515,6 +524,17 @@ Window {
                 //}
                 
                 
+            }
+            Text {
+                id: loadingIndicator
+                anchors.centerIn: parent
+                text: "Loading..."
+                font.pixelSize: 48
+                font.bold: true
+                color: "white"
+                style: Text.Outline
+                styleColor: "black"
+                visible: false
             }
         }
     }
