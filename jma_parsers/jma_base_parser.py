@@ -58,7 +58,7 @@ class BaseJMAParser(QObject):
         for entry in entries:
             if not entry.strip():
                 continue
-            print(f"座標データ: {entry.strip()}")
+            #print(f"座標データ: {entry.strip()}")
             # 各要素を正規表現で抽出
             # 緯度、経度、高度がそれぞれ+または-で始まり、数字が続くことを想定
             match = re.match(r'([+-]\d+\.\d+)([+-]\d+\.\d+)([+-]\d+)?', entry.strip())
@@ -66,7 +66,7 @@ class BaseJMAParser(QObject):
                 latitude_str = match.group(1)
                 longitude_str = match.group(2)
                 altitude_str = match.group(3)
-                print(f"lat: {latitude_str}, lon: {longitude_str}, alt: {altitude_str}")
+                #print(f"lat: {latitude_str}, lon: {longitude_str}, alt: {altitude_str}")
                 #latitude = self.dms_to_decimal(latitude_str)
                 #longitude = self.dms_to_decimal(longitude_str)
                 latitude = float(latitude_str) if latitude_str else None
@@ -79,6 +79,40 @@ class BaseJMAParser(QObject):
                     results.append({'latitude': latitude,
                                     'longitude': longitude,
                                     'altitude': altitude})
+                else:
+                    results.append(f'エラー: 無効なデータ形式 - {entry}')
+            else:
+                results.append(f'エラー: パースに失敗 - {entry}')
+        return results
+    
+    def _get_coordinates_list(self, element, xpath, namespaces):
+        """座標情報を取得するヘルパー関数 
+        高度を考慮しない[lat,lon]形式のリストを返す"""
+        data_string = element.xpath(xpath, namespaces=namespaces)
+        """
+        入力されたテキストデータを(緯度, 経度, 高度)の順にフォーマットします。
+        """
+        results = []
+        # /区切りで配列になることを考慮
+        entries = data_string[0].split('/')
+        for entry in entries:
+            if not entry.strip():
+                continue
+            #print(f"座標データ: {entry.strip()}")
+            # 各要素を正規表現で抽出
+            # 緯度、経度がそれぞれ+または-で始まり、数字が続くことを想定
+            match = re.match(r'([+-]\d+\.\d+)([+-]\d+\.\d+)', entry.strip())
+            if match:
+                latitude_str = match.group(1)
+                longitude_str = match.group(2)
+                #print(f"lat: {latitude_str}, lon: {longitude_str}")
+                #latitude = self.dms_to_decimal(latitude_str)
+                #longitude = self.dms_to_decimal(longitude_str)
+                latitude = float(latitude_str) if latitude_str else None
+                longitude = float(longitude_str) if longitude_str else None
+                if latitude is not None and longitude is not None:
+                    # geojsonでは経度、緯度の順
+                    results.append([longitude,latitude])
                 else:
                     results.append(f'エラー: 無効なデータ形式 - {entry}')
             else:
