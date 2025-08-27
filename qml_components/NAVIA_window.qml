@@ -545,7 +545,13 @@ Window {
                                 }
                                 sourceItem: Label {
                                     id: pressureLabel
-                                    text: modelData.properties.pressure
+                                    text: {
+                                        if(modelData.properties.pressure){
+                                            return modelData.properties.pressure;
+                                        }else {
+                                            return "";
+                                        }
+                                    }
                                     font.pointSize: 12
                                     color: "#f7f8f8"
                                     style: Text.Outline
@@ -602,7 +608,13 @@ Window {
                                 anchorPoint.y: slowDirectionLabel.height/2 
                                 sourceItem: Label {
                                     id: slowDirectionLabel
-                                    text: modelData.properties.speed
+                                    text: {
+                                        if(modelData.properties.speed){
+                                            return modelData.properties.speed;
+                                        }else {
+                                            return "";
+                                        }
+                                    }
                                     font.pointSize: 14
                                     color: "#f7f8f8"
                                     style: Text.Outline

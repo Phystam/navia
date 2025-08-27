@@ -11,3 +11,6 @@ voicevox_core/*
 output_combined.*
 settings/token.json
 axisjsondata/*
+build/*
+dist/*
+main.exe
