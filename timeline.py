@@ -918,4 +918,7 @@ class TimelineManager(QObject):
         id=self.getVZSA50ID(data_type)
         #geojson_object=QJsonDocument.fromJson(json.dumps(self.mete_timeline[id]["geojson"]).encode()).object()
         #return geojson_object
-        return self.mete_timeline[id]["geojson"]
+        try:
+            return self.mete_timeline[id]["geojson"]
+        except:
+            return {}

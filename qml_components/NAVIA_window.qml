@@ -61,7 +61,8 @@ Window {
         loadingIndicator.visible = false;
     }
     function onVZSA50Changed(){
-        vzsa50_miv.model = timelineManager.getVZSA50GeoJson("VZSA50")
+        vzsa50_miv.model = [];
+        vzsa50_miv.model = vzsa50GeoJson.features;
     }
 
     function handleRegionClick(hierarchy, code, name) {
@@ -204,12 +205,6 @@ Window {
                 infoLoader_VPFD51.item.bodyText = "";
             }
         }
-        //var obj = timelineManager.getVZSA50GeoJson("VZSA50")
-        var feature = vzsa50GeoJson.features[0]
-        for(var key in feature) {
-            console.log(key,": ",feature[key])
-        }
-        //console.log(vzsa50GeoJson)
     }
 
     Item {
@@ -226,6 +221,16 @@ Window {
             color: "lightblue"
             border.color: "gray"
             border.width: 1
+            radius: 5
+            Rectangle{
+                anchors.left: parent.left
+                anchors.top: parent.top
+                width: 100
+                height: 30
+                border.color: "gray"
+                border.width: 1
+                color: "#222222"
+            }
             
             Map {
                 id:view
@@ -235,7 +240,9 @@ Window {
                 center: QtPositioning.coordinate(35,135)
                 zoomLevel:5
                 color:"transparent"
-                antialiasing: true
+                layer.enabled: true
+                layer.samples: 4
+                //antialiasing: true
                 
                 GeoJsonData {
                     id: pref
@@ -443,7 +450,72 @@ Window {
                         }
                     }
                 }
-                
+                MapItemView{
+                    id: vzsa50_miv
+                    model: vzsa50GeoJson.features
+                    delegate: Component{
+                        //前線
+                        MapItemGroup {
+                            MapPolyline {
+                                visible: {modelData.geometry.type==="LineString" && modelData.properties.type !=="停滞前線"}
+                                path: {
+                                    var linePath = []
+                                    var coords = modelData.geometry.coordinates;
+                                    for (var i in coords) {
+                                        linePath.push(QtPositioning.coordinate(coords[i][1],coords[i][0]));
+                                    }
+                                    return linePath
+                                }
+                                line.color: {
+                                    switch(modelData.properties.type) {
+                                    case "寒冷前線": return "#0101FF";
+                                    case "温暖前線": return "#FF0101";
+                                    case "閉塞前線": return "#FE02FE";
+                                    case "等圧線": 
+                                        var col=modelData.properties.pressure %4 == 0 ? "#313131" : "#999999";
+                                        return col
+                                    default: "transparent"
+                                    }
+                                }
+                                line.width: {
+                                    switch(modelData.properties.type) {
+                                    case "寒冷前線": return 3;
+                                    case "温暖前線": return 3;
+                                    case "閉塞前線": return 3;
+                                    case "等圧線": 
+                                        return modelData.properties.pressure %20 ==0 ? 2 : 1
+                                    default: return 0
+                                    }
+                                }
+                            }
+                            Repeater {
+                                model: modelData.properties.type ==="停滞前線" ? modelData.geometry.coordinates.length - 1 : 0
+                                id: rep1
+                                property var featureData: modelData.geometry.coordinates
+                                MapPolyline {
+                                    
+                                    path: {
+                                        var coords = rep1.featureData;
+                                        return [QtPositioning.coordinate(coords[index][1],     coords[index][0]),
+                                                QtPositioning.coordinate(coords[index + 1][1], coords[index + 1][0])]
+                                    }
+                                    line.color: (Math.floor(index / 10) % 2 === 0) ? "#0101FF" : "#FF0101"
+                                    line.width: 3
+                                }
+                            }
+                            MapQuickItem {
+                                visible: {modelData.geometry.type==="Point" && modelData.properties.type ==="低気圧"}
+                                coordinate: QtPositioning.coordinate(modelData.geometry.coordinates[1],modelData.geometry.coordinates[0])
+                                anchorPoint.x: image.width/2
+                                anchorPoint.y: image.width/2
+                                sourceItem: Image {
+                                    id: image
+                                    source: "../materials/Low.svg"
+                                }
+                            }
+                        }
+                    }
+                }
                 //MapItemView{
                 //    id: miv2
                 //    model: tsunami.model[0].data
@@ -530,19 +602,7 @@ Window {
                 //        }
                 //    }
                 //}
-                
-                
             }
-            //Map {
-            //    id:weathermap
-            //    anchors.fill:parent
-            //    plugin: Plugin { name: "itemsoverlay" }
-            //    //plugin: Plugin { name: "osm" }
-            //    center: view.center//QtPositioning.coordinate(35,135)
-            //    zoomLevel:view.zoomLevel
-            //    color:"transparent"
-            //    antialiasing: true
-            //}
             Text {
                 id: loadingIndicator
                 anchors.centerIn: parent
@@ -581,13 +641,15 @@ Window {
                 anchors.topMargin: 3
                 anchors.rightMargin:3
                 text: "地域名"
+                color: "#ffffff"
                 anchors.top:parent.top
                 anchors.left: parent.left
                 anchors.right: parent.right
                 font.pixelSize: 20
                 font.bold: true
                 background: Rectangle {
-                    color: "#75fff3"
+                    color: "#232427"
+                    radius: 3
                 }
             }
             Flickable {
