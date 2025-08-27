@@ -68,6 +68,7 @@ class VXWW50(BaseJMAParser):
         title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
         notify_level=0
+        sound="sounds/Forecast.wav"
         if "最大級の警戒" in headline or "安全の確保" in headline:
             sound="sounds/EEWalert.wav"
             notify_level=5

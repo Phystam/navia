@@ -8,6 +8,7 @@ Window {
     height: 800
     visible: true // 初期状態では非表示
     title: "NAVIA情報"
+    color: "#333439"
     property string currentDir: mainApp.getCurrentDir()
     // 地図コンポーネント (GeoJSONポリゴンのみ表示)
     Component.onCompleted: {
@@ -40,30 +41,30 @@ Window {
         loadingIndicator.visible = true;
 
         // Timerを使用して非同期でモデルを更新し、UIのフリーズを防ぐ
-        Timer.createObject(naviaWindow, {
-            interval: 10, // 短い遅延で実行
-            repeat: false,
-            onTriggered: function() {
+        //Timer.createObject(naviaWindow, {
+        //    interval: 10, // 短い遅延で実行
+        //    repeat: false,
+        //    onTriggered: function() {
                 // 表示されているMapItemViewのみを強制的に再描画する
-                if (pref.model.length > 0 && pref.model[0]) {
-                    pref_miv.model = [];
-                    pref_miv.model = pref.model[0].data;
-                }
-                if (class10.model.length > 0 && class10.model[0]) {
-                    class10_miv.model = [];
-                    class10_miv.model = class10.model[0].data;
-                }
-                if (class15.model.length > 0 && class15.model[0]) {
-                    class15_miv.model = [];
-                    class15_miv.model = class15.model[0].data;
-                }
-                if (class20.model.length > 0 && class20.model[0]) {
-                    class20_miv.model = [];
-                    class20_miv.model = class20.model[0].data;
-                }
-                loadingIndicator.visible = false;
-            }
-        }).start();
+        if (pref.model.length > 0 && pref.model[0]) {
+            pref_miv.model = [];
+            pref_miv.model = pref.model[0].data;
+        }
+        if (class10.model.length > 0 && class10.model[0]) {
+            class10_miv.model = [];
+            class10_miv.model = class10.model[0].data;
+        }
+        if (class15.model.length > 0 && class15.model[0]) {
+            class15_miv.model = [];
+            class15_miv.model = class15.model[0].data;
+        }
+        if (class20.model.length > 0 && class20.model[0]) {
+            class20_miv.model = [];
+            class20_miv.model = class20.model[0].data;
+        }
+        loadingIndicator.visible = false;
+        //    }
+        //}).start();
     }
 
 
@@ -77,7 +78,10 @@ Window {
         logoListModel_VPWW54.clear()
         logoListModel_VXWW50.clear()
         logoListModel_VPHW51.clear()
-
+        infoLoader_VPWW54.item.expanded = false;
+        infoLoader_VXWW50.item.expanded = false;
+        infoLoader_VPHW51.item.expanded = false;
+        infoLoader_VPOA50.item.expanded = false;
         // VPWW54 気象警報用
         if (infoLoader_VPWW54.item) {
             var codes_VPWW54 = timelineManager.getMeteWarningCode(hierarchy, code);
@@ -525,6 +529,16 @@ Window {
                 
                 
             }
+            //Map {
+            //    id:weathermap
+            //    anchors.fill:parent
+            //    plugin: Plugin { name: "itemsoverlay" }
+            //    //plugin: Plugin { name: "osm" }
+            //    center: view.center//QtPositioning.coordinate(35,135)
+            //    zoomLevel:view.zoomLevel
+            //    color:"transparent"
+            //    antialiasing: true
+            //}
             Text {
                 id: loadingIndicator
                 anchors.centerIn: parent
@@ -547,14 +561,16 @@ Window {
         anchors.bottom: parent.bottom
         width: 400
         anchors.margins: 5
+        //color: "#333439"
+        //radius: 5
         // 情報表示用のコンテナ
         Rectangle {
             id: infoarea
             anchors.fill: parent
             anchors.bottomMargin:3
-            color: "#f0f0f0"
-            border.color: "gray"
-            border.width: 1
+            color: "#333439"
+            //border.color: "gray"
+            //border.width: 1
             Label {
                 id: infoTitle
                 anchors.leftMargin: 3
@@ -567,7 +583,7 @@ Window {
                 font.pixelSize: 20
                 font.bold: true
                 background: Rectangle {
-                    color: "#75fff3ff"
+                    color: "#75fff3"
                 }
             }
             Flickable {
@@ -580,11 +596,11 @@ Window {
                 contentHeight: contentColumn.height
                 flickableDirection: Flickable.VerticalFlick
                 clip: true
-                Rectangle {
-                    color: "transparent"
-                    border.color: "#ff75ffff"
-                    anchors.fill: parent
-                }
+                //Rectangle {
+                //    color: "transparent"
+                //    border.color: "#ff75ffff"
+                //    anchors.fill: parent
+                //}
                 Column {
                     id: contentColumn
                     width: parent.width

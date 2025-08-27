@@ -4,7 +4,9 @@ import QtQuick.Controls
 // 再利用可能な情報セクションコンポーネント
 Rectangle {
     id: infoSection
-    color: "transparent"
+    color: "#232427"
+    radius: 3
+    property var textColor: "#ffffff"
     property string dateTimeText: ""
     property string headTitleText: ""
     property string headlineText: ""
@@ -14,6 +16,7 @@ Rectangle {
     width: parent ? parent.width : 400
     height: infoColumn.height
     visible: headTitleText !== ""
+
     Column {
         id: infoColumn
         spacing: 2
@@ -23,6 +26,7 @@ Rectangle {
             text: infoSection.dateTimeText
             font.pixelSize: 12
             font.bold: false
+            color: infoSection.textColor
             visible: infoSection.visible
         }
         Text {
@@ -31,6 +35,7 @@ Rectangle {
             font.bold: true
             width: parent.width
             wrapMode: Text.WrapAnywhere
+            color: infoSection.textColor
             visible: infoSection.visible
         }
         Row {
@@ -70,12 +75,14 @@ Rectangle {
                 width: parent.width
                 wrapMode: Text.WrapAnywhere
                 visible: infoSection.headlineText != ""
+                color: infoSection.textColor
             }
             Text {
                 text: infoSection.bodyText
                 width: parent.width
                 wrapMode: Text.WrapAnywhere
                 visible: infoSection.bodyText != ""
+                color: infoSection.textColor
             }
         }
     }
