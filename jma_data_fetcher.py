@@ -27,6 +27,7 @@ from jma_parsers.VFVO52 import VFVO52
 from jma_parsers.VFVO53 import VFVO53
 from jma_parsers.VFVO56 import VFVO56
 from jma_parsers.VXKO import VXKO
+from jma_parsers.VZSA50 import VZSA50
 #from jma_parsers.jma_volcano_parser import VolcanoParser # 仮のパーサー
 
 # カスタムResolverクラス (変更なし、ただしxsd_dirのパスが適切であることを確認)
@@ -115,6 +116,7 @@ class JMADataFetcher(QObject):
             "VMCJ51": VPZJ50(self), # 地方潮位情報 一般報
             "VMCJ52": VPZJ50(self), # 府県潮位情報 一般報
             "VPFD51": VPFD51(self), # 府県天気予報（R1）
+            "VZSA50": VZSA50(self), # 天気図
             "VPOA50": VPOA50(self), # 記録的短時間大雨情報
             "VXWW50": VXWW50(self), # 土砂災害警戒情報
             "VPWW54": VPWW54(self), # 気象警報
@@ -370,18 +372,20 @@ class JMADataFetcher(QObject):
             # 解析済みデータをメインアプリケーションに通知
             #self.dataFetched.emit(output_filename, data_type_code, parsed_data)
             # テロップ表示解析後、通知レベルによって表示するか確認
+            if data_type_code == "VZSA50":
+                playtelop=False
+            else:
+                telop_dict, warning_level = parser_instance.content(report_tree, namespaces, data_type_code)
+                notify_levels_region=self.setting_manager._settings["meteorology"]["notify_observatories_telop_level"]
 
-            telop_dict, warning_level = parser_instance.content(report_tree, namespaces, data_type_code)
-            notify_levels_region=self.setting_manager._settings["meteorology"]["notify_observatories_telop_level"]
-            
-            for region in notify_levels_region:
-                for area in notify_levels_region[region]:
-                    try:
-                        playtelop_warning = warning_level[area] >= notify_levels_region[region][area]
-                        #print("")
-                    except:
-                        pass
-                pass
+                for region in notify_levels_region:
+                    for area in notify_levels_region[region]:
+                        try:
+                            playtelop_warning = warning_level[area] >= notify_levels_region[region][area]
+                            #print("")
+                        except:
+                            pass
+                    pass
             if parse or test:
                 parseddata = parser_instance.parse(report_tree,namespaces,data_type_code,test=test)
                 #Signal経由ではなく、直接タイムラインマネージャーに渡すようにした。

@@ -1,11 +1,12 @@
 ## timeline.py
 from datetime import datetime
-from PySide6.QtCore import QObject, Signal, Slot
+from PySide6.QtCore import QObject, Signal, Slot, QJsonDocument
 import zstd, json,os
 import pandas as pd
 import datetime
 class TimelineManager(QObject):
     meteStatusChanged = Signal()
+    vzsa50StatusChanged = Signal()
     def __init__(self,parent=None):
         super().__init__(parent)
         """タイムラインデータを管理するクラス"""
@@ -36,7 +37,8 @@ class TimelineManager(QObject):
         self.hierarchy=["region","pref","class10","class15","class20"]
         for hier in self.hierarchy:
             self.mete_status[hier] ={}
-
+        self.mete_status["VZSA50"]={}
+        self.mete_status["VZSA50"]["updated"]=datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
         for c in region_codes:
             name = self.areacode["centers"][c]["name"]
             children = self.areacode["centers"][c]["children"]
@@ -164,8 +166,13 @@ class TimelineManager(QObject):
             #self.meteStatusChanged.emit()
         if data["data_type"]=="VPFD51":
             self.VPFD51(id,data)
-            #print(self.mete_status["pref"])
-            #self.meteStatusChanged.emit()
+        
+        if data["data_type"]=="VZSA50":
+            #with open("geojson_tenkizu.geojson","w") as f:
+            #    json.dump(data["geojson"],f)
+            self.VZSA50(id,data)
+            
+
             
     def VPWW54(self,id,data):
         dt=data["report_datetime"]
@@ -285,6 +292,15 @@ class TimelineManager(QObject):
         self.mete_status[hier][areacode][f"{data['data_type']}_id"]=id
         #子に伝播させる
         self.appendForAllChildren(hier,areacode,dt,id,prefix=data["data_type"])
+        
+    def VZSA50(self,id,data):
+        dt=data["report_datetime"]
+        self.mete_status["VZSA50"]
+                    #print(f"{dt}, {self.mete_status[hier][areacode]['updated']}")
+        if self.mete_status["VZSA50"]["updated"] <dt:
+            self.mete_status["VZSA50"]["updated"]=dt
+            self.mete_status["VZSA50"]["id"]=id
+            self.vzsa50StatusChanged.emit()
     
     def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
         child_hier=self.getChild(hier)
@@ -859,3 +875,47 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
+        
+
+    # VZSA50
+    @Slot(str,result=str)
+    def getVZSA50ID(self,  data_type):
+        """情報IDを取得"""
+        try:
+            return self.mete_status[data_type]["id"]
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    
+    @Slot(str,result=str)
+    def getVZSA50Updated(self, data_type):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            dt: datetime.datetime =self.mete_status[data_type]["updated"]
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    @Slot(str,result=str)
+    def getVZSA50Title(self,data_type):
+        """情報IDを取得"""
+        try:
+            id=self.getVZSA50ID(data_type)
+            return self.mete_timeline[id]["head_title"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,result=dict)
+    def getVZSA50GeoJson(self,data_type):
+        """情報IDを取得"""
+
+        id=self.getVZSA50ID(data_type)
+        #geojson_object=QJsonDocument.fromJson(json.dumps(self.mete_timeline[id]["geojson"]).encode()).object()
+        #return geojson_object
+        return self.mete_timeline[id]["geojson"]

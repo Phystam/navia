@@ -231,6 +231,7 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("settingsManager", main_app_instance.settings_manager)
     engine.rootContext().setContextProperty("timelineManager", main_app_instance.timeline_manager)
     engine.rootContext().setContextProperty("axisManager", main_app_instance.axis_manager)
+    engine.rootContext().setContextProperty("vzsa50GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSA50"))
     # MainAppのインスタンスを作成し、QMLに公開（タスクトレイアイコン用）
     # このインスタンス内でJMADataFetcherも初期化されます
     

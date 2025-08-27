@@ -14,6 +14,7 @@ Window {
     Component.onCompleted: {
         // 必要に応じて他の初期化処理を追加
         timelineManager.meteStatusChanged.connect(onStatusChanged);
+        timelineManager.vzsa50StatusChanged.connect(onVZSA50Changed);
     }
     ListModel {
         id: logoListModel_VPWW54
@@ -40,11 +41,6 @@ Window {
     function onStatusChanged() {
         loadingIndicator.visible = true;
 
-        // Timerを使用して非同期でモデルを更新し、UIのフリーズを防ぐ
-        //Timer.createObject(naviaWindow, {
-        //    interval: 10, // 短い遅延で実行
-        //    repeat: false,
-        //    onTriggered: function() {
                 // 表示されているMapItemViewのみを強制的に再描画する
         if (pref.model.length > 0 && pref.model[0]) {
             pref_miv.model = [];
@@ -63,10 +59,10 @@ Window {
             class20_miv.model = class20.model[0].data;
         }
         loadingIndicator.visible = false;
-        //    }
-        //}).start();
     }
-
+    function onVZSA50Changed(){
+        vzsa50_miv.model = timelineManager.getVZSA50GeoJson("VZSA50")
+    }
 
     function handleRegionClick(hierarchy, code, name) {
         var pref = timelineManager.getPrefName(hierarchy, code);
@@ -208,6 +204,12 @@ Window {
                 infoLoader_VPFD51.item.bodyText = "";
             }
         }
+        //var obj = timelineManager.getVZSA50GeoJson("VZSA50")
+        var feature = vzsa50GeoJson.features[0]
+        for(var key in feature) {
+            console.log(key,": ",feature[key])
+        }
+        //console.log(vzsa50GeoJson)
     }
 
     Item {
@@ -239,6 +241,7 @@ Window {
                     id: pref
                     //sourceUrl: "file:///f:/navia/geo/府県予報区等.geojson"
                     sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/府県予報区等.geojson"
+
                 }
                 GeoJsonData {
                     id: class10
@@ -440,6 +443,7 @@ Window {
                         }
                     }
                 }
+                
                 //MapItemView{
                 //    id: miv2
                 //    model: tsunami.model[0].data
