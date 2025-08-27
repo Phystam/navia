@@ -11,7 +11,7 @@ class VZSA50(BaseJMAParser):
         """
         天気実況図 (VZSA50) のXMLを解析します。
         """
-        #print(f"気象警報 ({self.data_type}) を解析中...")
+        print(f"天気実況図 ({self.data_type}) を解析中...----------------------------")
         parsed_data = {}
         # Control/Title
         parsed_data["category"]="meteorology"
@@ -40,7 +40,7 @@ class VZSA50(BaseJMAParser):
                 feature['properties']={}
                 feature['properties']['type']=item_type
                 feature['properties']['pressure']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]//jmx_eb:Pressure/text()', namespaces)
-            if item_type=="高気圧" or item_type=="低気圧" or item_type=="高圧部" or item_type=="低圧部" or item_type=="熱帯低気圧":
+            if item_type=="高気圧" or item_type=="低気圧" or item_type=="低圧部" or item_type=="熱帯低気圧" or item_type=="台風":
                 feature['geometry']['type']="Point"
                 feature['geometry']['coordinates']=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]//jmx_eb:Coordinate/text()', namespaces)[0]
                 feature['properties']={}
@@ -49,28 +49,21 @@ class VZSA50(BaseJMAParser):
                 speed=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]//jmx_eb:Speed/text()', namespaces)
                 speed_condition=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]//jmx_eb:Speed/@description', namespaces)
                 feature['properties']['speed']=speed if speed!="" else speed_condition
+                feature['properties']['direction']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]//jmx_eb:Direction/text()', namespaces)
+                if item_type=="台風":
+                    feature['properties']['max_windspeed']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[2]//jmx_eb:WindSpeed/text()', namespaces)
+                    typhoontype=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[3]//jmx_eb:Type/text()', namespaces)
+                    if typhoontype!="":
+                        feature['properties']['name']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[3]//jmx_eb:Name/text()', namespaces)
+                        feature['properties']['namekana']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[3]//jmx_eb:NameKana/text()', namespaces)
+                        feature['properties']['number']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[3]//jmx_eb:Number/text()', namespaces)
             if item_type=="停滞前線" or item_type=="閉塞前線" or item_type=="寒冷前線" or item_type=="温暖前線":
                 feature['geometry']['type']="LineString"
                 feature['geometry']['coordinates']=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]//jmx_eb:Line/text()', namespaces)
                 feature['properties']={}
                 feature['properties']['type']=item_type
                 feature['properties']['condition']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]//jmx_eb:Line/@condition', namespaces)
-                
-            if item_type=="台風":
-                feature['geometry']['type']="Point"
-                feature['geometry']['coordinates']=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[1]//jmx_eb:Coordinate/text()', namespaces)[0]
-                feature['properties']={}
-                feature['properties']['type']=item_type
-                feature['properties']['pressure']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[1]//jmx_eb:Pressure/text()', namespaces)
-                speed=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[1]//jmx_eb:Speed/text()', namespaces)
-                speed_condition=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[1]//jmx_eb:Speed/@description', namespaces)
-                feature['properties']['speed']=speed if speed!="" else speed_condition
-                feature['properties']['max_windspeed']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[2]//jmx_eb:WindSpeed/text()', namespaces)
-                typhoontype=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[3]//jmx_eb:Type/text()', namespaces)
-                if typhoontype!="":
-                    feature['properties']['name']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[3]//jmx_eb:Name/text()', namespaces)
-                    feature['properties']['namekana']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[3]//jmx_eb:NameKana/text()', namespaces)
-                    feature['properties']['number']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]/jmx_mete:Kind[3]//jmx_eb:Number/text()', namespaces)
+
             parsed_data['geojson']['features'].append(feature)
         
         return parsed_data

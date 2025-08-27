@@ -911,6 +911,17 @@ class TimelineManager(QObject):
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
         
+    @Slot(str,result=str)
+    def getVZSA50Time(self,data_type):
+        """情報IDを取得"""
+        try:
+            id=self.getVZSA50ID(data_type)
+            return self.mete_timeline[id]["time"]
+            
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
     @Slot(str,result=dict)
     def getVZSA50GeoJson(self,data_type):
         """情報IDを取得"""
