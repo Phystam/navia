@@ -272,7 +272,7 @@ class TimelineManager(QObject):
                 areacode=self.area_decode[item]
         if data["data_type"]=="VPFG50":
             areacode=data['areacode']
-        print(f"{data['data_type']} {data['head_title']}: areacode={areacode}")
+        #print(f"{data['data_type']} {data['head_title']}: areacode={areacode}")
 
         self.mete_status[hier][areacode][f"{data['data_type']}_updated"]=dt
         self.mete_status[hier][areacode][f"{data['data_type']}_id"]=id
@@ -286,8 +286,8 @@ class TimelineManager(QObject):
         for item in self.area_decode.keys():
             if item in data["head_title"]:
                 areacode=self.area_decode[item]
-        print(f"{data['data_type']} {data['head_title']}: areacode={areacode}")
-        print(areacode)
+        #print(f"{data['data_type']} {data['head_title']}: areacode={areacode}")
+        #print(areacode)
         self.mete_status[hier][areacode][f"{data['data_type']}_updated"]=dt
         self.mete_status[hier][areacode][f"{data['data_type']}_id"]=id
         #子に伝播させる

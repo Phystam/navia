@@ -9,6 +9,7 @@ Window {
     visible: true // 初期状態では非表示
     title: "NAVIA"
     color: "#333439"
+    //icon: "../materials/icon.svg"
     //flags: Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint
     property string currentDir: mainApp.getCurrentDir()
     // 地図コンポーネント (GeoJSONポリゴンのみ表示)

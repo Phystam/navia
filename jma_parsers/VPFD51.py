@@ -10,7 +10,7 @@ class VPFD51(BaseJMAParser):
         """
         府県天気予報 (VPFD51) のXMLを解析します。
         """
-        print(f"府県天気予報 ({self.data_type}) を解析中...")
+        #print(f"府県天気予報 ({self.data_type}) を解析中...")
         parsed_data = {}
         parsed_data['category']="meteorology"
         parsed_data["data_type"]=data_type_code
@@ -25,7 +25,7 @@ class VPFD51(BaseJMAParser):
         parsed_data["hier"]=hier
         if data_type_code == "VPFG50":
             parsed_data["areacode"] = self._get_text(xml_tree, '//jmx_mete:TargetArea[@codeType="気象情報／府県予報区・細分区域等"]/jmx_mete:Code/text()', namespaces)
-            print(f'hehe{parsed_data["areacode"]}')
+            #print(f'hehe{parsed_data["areacode"]}')
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
