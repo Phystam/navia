@@ -15,3 +15,9 @@ build/*
 dist/*
 main.exe
 geo/府県予報区等-1.geojson
+main.dist/*
+main.build/*
+main.onefile-build/*
+geo/一次細分区域等-1.geojson
+geo/市町村等（気象警報等）-1.geojson
+geo/市町村等をまとめた地域等-1.geojson
