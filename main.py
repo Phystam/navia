@@ -3,7 +3,7 @@ import sys,os
 from PySide6.QtCore import QObject, QUrl, Slot, Signal # アプリ部分を移動させても忘れずにimport
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtQml import QQmlApplicationEngine, QQmlComponent
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QMainWindow
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 
 # clock.py から ClockApp をインポート
 from clock import ClockApp
