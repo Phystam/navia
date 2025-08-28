@@ -7,8 +7,9 @@ Window {
     width: 1200
     height: 800
     visible: true // 初期状態では非表示
-    title: "NAVIA情報"
+    title: "NAVIA"
     color: "#333439"
+    //flags: Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint
     property string currentDir: mainApp.getCurrentDir()
     // 地図コンポーネント (GeoJSONポリゴンのみ表示)
     Component.onCompleted: {
@@ -16,6 +17,7 @@ Window {
         timelineManager.meteStatusChanged.connect(onStatusChanged);
         timelineManager.vzsa50StatusChanged.connect(onVZSA50Changed);
     }
+    
     ListModel {
         id: logoListModel_VPWW54
     }
@@ -342,14 +344,14 @@ Window {
                         function showMap(model, j) {
                             var paths = [];
                             var path = [];
-                            if (model[j].type == "Polygon") {
+                            if (model[j] && model[j].type == "Polygon") {
                                 var c = model[j].data.perimeter;
                                 for (var i = 0; i < c.length; i++) {
                                     path.push(QtPositioning.coordinate(c[i].latitude, c[i].longitude));
                                 }
                                 paths.push(path);
                             }
-                            if (model[j].type == "MultiPolygon") {
+                            if (model[j] && model[j].type == "MultiPolygon") {
                                 var polygons = model[j].data;
                                 for (var k = 0; k < polygons.length; k++) {
                                     var c = model[j].data[k].data.perimeter;
@@ -460,7 +462,7 @@ Window {
                                     case "温暖前線": return "#FF0101";
                                     case "閉塞前線": return "#FE02FE";
                                     case "等圧線": 
-                                        var col=modelData.properties.pressure %4 == 0 ? "#999999" : "#313131";
+                                        var col=modelData.properties.pressure %4 == 0 ? "#999999" : "#747474";
                                         return col
                                     default: "transparent"
                                     }
@@ -766,14 +768,17 @@ Window {
             Rectangle{
                 anchors.left: parent.left
                 anchors.top: parent.top
-                width: 120
+                width: 200
                 height: 70
                 color: "#333439"
                 radius: 5
                 Column {
                     anchors.fill: parent
+                    anchors.leftMargin: 3
+                    anchors.topMargin: 3
+                    spacing: 5
                     Text {
-                        text: timelineManager.getVZSA50Title("VZSA50")
+                        text: timelineManager.getVZSA50Title("VZSA50")//timelineManager.getVZSA50Title("VZSA50")
                         color: "#ffffff"
                         font.pixelSize:20
                         font.bold: true
@@ -781,7 +786,7 @@ Window {
                     Text {
                         text: timelineManager.getVZSA50Time("VZSA50")
                         color: "#ffffff"
-                        font.pixelSize:20
+                        font.pixelSize:18
                         font.bold: true
                     }
                 }
