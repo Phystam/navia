@@ -14,3 +14,4 @@ axisjsondata/*
 build/*
 dist/*
 main.exe
+geo/府県予報区等-1.geojson
