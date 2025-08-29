@@ -3,8 +3,8 @@ import QtQuick.Controls
 import QtLocation
 import QtPositioning
 
-//前線
 MapItemGroup {
+    //前線
     MapPolyline {
         visible: {modelData.geometry.type==="LineString" && modelData.properties.type !=="停滞前線"}
         path: {
@@ -154,7 +154,7 @@ MapItemGroup {
             }
         }
     }
-
+////
     //ほとんど停滞
     MapQuickItem {
         visible: {
@@ -214,4 +214,24 @@ MapItemGroup {
             styleColor: "#161616"
         }
     }
+    //MapQuickItem {
+    //    visible: {modelData.properties.type ==="低気圧" || modelData.properties.type ==="高気圧"}
+    //    coordinate: QtPositioning.coordinate(modelData.geometry.coordinates[1],modelData.geometry.coordinates[0])
+    //    anchorPoint.x: image.width/2
+    //    anchorPoint.y: image.width/2
+    //    sourceItem: Image {
+    //        id: center
+    //        property var type: modelData.properties.type
+    //        source: {
+    //            if(type==="低気圧" || type==="低圧部"){
+    //                return "../materials/Low.svg";
+    //            }
+    //            if(type==="高気圧" || type==="高圧部"){
+    //                return "../materials/High.svg";
+    //            }
+    //        }
+    //        width: 30
+    //        height: 30
+    //    }
+    //}
 }
