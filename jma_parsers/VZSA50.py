@@ -11,11 +11,11 @@ class VZSA50(BaseJMAParser):
         """
         天気実況図 (VZSA50) のXMLを解析します。
         """
-        print(f"天気実況図 ({self.data_type}) を解析中...----------------------------")
+        print(f"天気図 ({data_type_code}) を解析中...----------------------------")
         parsed_data = {}
         # Control/Title
         parsed_data["category"]="meteorology"
-        parsed_data["data_type"]=self.data_type
+        parsed_data["data_type"]=data_type_code
         parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
@@ -63,7 +63,6 @@ class VZSA50(BaseJMAParser):
                 feature['properties']={}
                 feature['properties']['type']=item_type
                 feature['properties']['condition']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfos[@type="天気図情報"]/jmx_mete:MeteorologicalInfo/jmx_mete:Item[{i+1}]//jmx_eb:Line/@condition', namespaces)
-
             parsed_data['geojson']['features'].append(feature)
         
         return parsed_data

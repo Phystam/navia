@@ -64,7 +64,7 @@ class LocalXSDResolver(etree.Resolver):
             if url.startswith(uri_prefix):
                 local_path = os.path.join(self.xsd_base_dir, relative_path)
                 if os.path.exists(local_path):
-                    print(f"Resolved JMA URI '{url}' to local file: {local_path}")
+                    #print(f"Resolved JMA URI '{url}' to local file: {local_path}")
                     return self.resolve_filename(local_path, context)
         
         # それ以外の場合はデフォルトのリゾルバーにフォールバック
@@ -118,6 +118,8 @@ class JMADataFetcher(QObject):
             "VMCJ52": VPZJ50(self), # 府県潮位情報 一般報
             "VPFD51": VPFD51(self), # 府県天気予報（R1）
             "VZSA50": VZSA50(self), # 天気図
+            "VZSF50": VZSA50(self), # 予想天気図
+            "VZSF51": VZSA50(self), # 予想天気図
             "VPOA50": VPOA50(self), # 記録的短時間大雨情報
             "VXWW50": VXWW50(self), # 土砂災害警戒情報
             "VPWW54": VPWW54(self), # 気象警報
@@ -203,7 +205,7 @@ class JMADataFetcher(QObject):
         
         initial_delay_ms = delay_seconds * 1000
         
-        print(f"現在の秒: {current_second}秒. 次の取得まで {initial_delay_ms}ms 待ちます。")
+        #print(f"現在の秒: {current_second}秒. 次の取得まで {initial_delay_ms}ms 待ちます。")
         self.fetch_timers[i].setSingleShot(True)
         self.fetch_timers[i].setInterval(initial_delay_ms)
         self.fetch_timers[i].start()
@@ -214,7 +216,7 @@ class JMADataFetcher(QObject):
             self.fetch_timers[i].setSingleShot(False)
             self.fetch_timers[i].setInterval(60 * 1000)
             self.fetch_timers[i].start()
-            print("タイマー間隔を毎分に設定しました。")
+            #print("タイマー間隔を毎分に設定しました。")
 
         self.checkForUpdates(i)
 
@@ -236,7 +238,7 @@ class JMADataFetcher(QObject):
 
             status_code = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
             if status_code == 304:
-                print(f"フィードは更新されていません: {self.feed_urls[i]}")
+                #print(f"フィードは更新されていません: {self.feed_urls[i]}")
                 return
 
             last_modified_header = reply.rawHeader("Last-Modified").data().decode('utf-8')
@@ -378,7 +380,7 @@ class JMADataFetcher(QObject):
             # 解析済みデータをメインアプリケーションに通知
             #self.dataFetched.emit(output_filename, data_type_code, parsed_data)
             # テロップ表示解析後、通知レベルによって表示するか確認
-            if data_type_code == "VZSA50" or "VPTW" in data_type_code:
+            if data_type_code == "VZSA50" or data_type_code=="VZSF50" or data_type_code=="VZSF51" or "VPTW" in data_type_code:
                 playtelop=False
             else:
                 telop_dict, warning_level = parser_instance.content(report_tree, namespaces, data_type_code)

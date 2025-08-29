@@ -17,7 +17,9 @@ Window {
     Component.onCompleted: {
         // 必要に応じて他の初期化処理を追加
         timelineManager.meteStatusChanged.connect(onStatusChanged);
-        timelineManager.vzsa50StatusChanged.connect(onVZSA50Changed);
+        //timelineManager.vzsa50StatusChanged.connect(onVZSA50Changed);
+        //timelineManager.vzsf50StatusChanged.connect(onVZSF50Changed);
+        //timelineManager.vzsf51StatusChanged.connect(onVZSF51Changed);
         //timelineManager.vtw60StatusChanged.connect(onVPTW60Changed);
     }
     
@@ -65,10 +67,18 @@ Window {
         }
         loadingIndicator.visible = false;
     }
-    function onVZSA50Changed(){
-        vzsa50_miv.model = [];
-        vzsa50_miv.model = vzsa50GeoJson.features;
-    }
+    //function onVZSA50Changed(){
+    //    vzsa50_miv.model = [];
+    //    vzsa50_miv.model = vzsa50GeoJson.features;
+    //}
+    //function onVZSF50Changed(){
+    //    vzsf50_miv.model = [];
+    //    vzsf50_miv.model = vzsf51GeoJson.features;
+    //}
+    //function onVZSF51Changed(){
+    //    vzsf51_miv.model = [];
+    //    vzsf51_miv.model = vzsf51GeoJson.features;
+    //}
 
     function handleRegionClick(hierarchy, code, name) {
         var pref = timelineManager.getPrefName(hierarchy, code);
@@ -219,7 +229,18 @@ Window {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.margins: 5
-        
+        property var vzsa50_switch: {
+            switch(vzsa50Slider.value){
+            case 0.6:
+                return "VZSA50"
+            case 0.8:
+                return "VZSF50"
+            case 1:
+                return "VZSF51"
+            default:
+                return "VZSA50"
+            }
+        }
         // GeoJSONポリゴンを描画するコンポーネント
         Rectangle {
             anchors.fill: parent
@@ -237,6 +258,7 @@ Window {
                 layer.enabled: true
                 layer.samples: 4
                 //antialiasing: true
+                
                 
                 GeoJsonData {
                     id: pref
@@ -443,23 +465,19 @@ Window {
                         }
                     }
                 }
-                //MapItemView {
-                //    id: vzsa50_miv
-                //    model: vzsa50GeoJson.features
-                //    delegate: vzsa50DelegateLoader
-                //}
-                //Loader{
-                //    id: vzsa50DelegateLoader
-                //    source: "vzsa50_component.qml"
-                //    asynchronous: true
-                //    visible: status==Loader.Ready
-                //}
-                //Component.onCompleted: {
-                //    vzsa50_miv.delegate = vzsa50DelegateLoader.item
-                //}
+                //天気図
                 MapItemView{
                     id: vzsa50_miv
-                    model: vzsa50GeoJson.features
+                    model: {
+                        console.log(mapComponent.vzsa50_switch)
+                        if( mapComponent.vzsa50_switch=="VZSA50"){
+                            return vzsa50GeoJson.features;
+                        }if(mapComponent.vzsa50_switch=="VZSF50"){
+                            return vzsf50GeoJson.features;
+                        }if(mapComponent.vzsa50_switch=="VZSF51"){
+                            return vzsf51GeoJson.features;
+                        }
+                    }
                     delegate: Component { Vzsa50Delegate {} }
                 }
                 //MapItemView{
@@ -562,16 +580,24 @@ Window {
                     anchors.topMargin: 3
                     spacing: 5
                     Text {
-                        text: timelineManager.getVZSA50Title("VZSA50")//timelineManager.getVZSA50Title("VZSA50")
+                        text: timelineManager.getVZSA50Title(mapComponent.vzsa50_switch)//timelineManager.getVZSA50Title("VZSA50")
                         color: "#ffffff"
                         font.pixelSize:20
                         font.bold: true
                     }
                     Text {
-                        text: timelineManager.getVZSA50Time("VZSA50")
+                        text: timelineManager.getVZSA50Time(mapComponent.vzsa50_switch)
                         color: "#ffffff"
                         font.pixelSize:18
                         font.bold: true
+                    }
+                    Slider {
+                        id: vzsa50Slider
+                        width: parent.width
+                        live: false
+                        snapMode: Slider.SnapAlways
+                        stepSize: 0.2
+                        from: 0
                     }
                 }
             }

@@ -7,6 +7,8 @@ import datetime
 class TimelineManager(QObject):
     meteStatusChanged = Signal()
     vzsa50StatusChanged = Signal()
+    vzsf50StatusChanged = Signal()
+    vzsf51StatusChanged = Signal()
     def __init__(self,parent=None):
         super().__init__(parent)
         """タイムラインデータを管理するクラス"""
@@ -38,7 +40,7 @@ class TimelineManager(QObject):
         for hier in self.hierarchy:
             self.mete_status[hier] ={}
         # 市町村等地域に限定しない情報 (天気図、台風情報など)
-        mete_types=["VZSA50","VPTW60","VPTW61","VPTW62","VPTW63","VPTW64","VPTW65"]
+        mete_types=["VZSA50","VZSF50","VZSF51","VPTW60","VPTW61","VPTW62","VPTW63","VPTW64","VPTW65"]
         for mete_type in mete_types:
             self.mete_status[mete_type]={}
             self.mete_status[mete_type]["updated"]=datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
@@ -171,7 +173,7 @@ class TimelineManager(QObject):
         if data["data_type"]=="VPFD51":
             self.VPFD51(id,data)
         
-        if data["data_type"]=="VZSA50":
+        if data["data_type"]=="VZSA50" or data["data_type"]=="VZSF50" or data["data_type"]=="VZSF51":
             #with open("geojson_tenkizu.geojson","w") as f:
             #    json.dump(data["geojson"],f)
             self.VZSA50(id,data)
@@ -298,13 +300,19 @@ class TimelineManager(QObject):
         self.appendForAllChildren(hier,areacode,dt,id,prefix=data["data_type"])
         
     def VZSA50(self,id,data):
+        datatype=data["data_type"]
         dt=data["report_datetime"]
-        self.mete_status["VZSA50"]
+        self.mete_status[datatype]
                     #print(f"{dt}, {self.mete_status[hier][areacode]['updated']}")
-        if self.mete_status["VZSA50"]["updated"] <dt:
-            self.mete_status["VZSA50"]["updated"]=dt
-            self.mete_status["VZSA50"]["id"]=id
-            self.vzsa50StatusChanged.emit()
+        if self.mete_status[datatype]["updated"] <dt:
+            self.mete_status[datatype]["updated"]=dt
+            self.mete_status[datatype]["id"]=id
+            if datatype=="VZSA50":
+                self.vzsa50StatusChanged.emit()
+            if datatype=="VZSF50":
+                self.vzsf50StatusChanged.emit()
+            if datatype=="VZSF51":
+                self.vzsf51StatusChanged.emit()
     
     def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
         child_hier=self.getChild(hier)
@@ -913,8 +921,10 @@ class TimelineManager(QObject):
         """情報IDを取得"""
         try:
             id=self.getVZSA50ID(data_type)
-            return self.mete_timeline[id]["time"].strftime("%Y/%m/%d %H時 実況")
-            
+            if data_type=="VZSA50":
+                return self.mete_timeline[id]["time"].strftime("%Y/%m/%d %H時 実況")
+            else:
+                return self.mete_timeline[id]["time"].strftime("%Y/%m/%d %H時 予想")
         except KeyError:
             return ""
         
