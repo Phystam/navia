@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtLocation
 import QtPositioning
+import Qt.labs.qmlmodels
 Window {
     id: naviaWindow
     width: 1200
@@ -17,6 +18,7 @@ Window {
         // 必要に応じて他の初期化処理を追加
         timelineManager.meteStatusChanged.connect(onStatusChanged);
         timelineManager.vzsa50StatusChanged.connect(onVZSA50Changed);
+        //timelineManager.vtw60StatusChanged.connect(onVPTW60Changed);
     }
     
     ListModel {
@@ -441,6 +443,20 @@ Window {
                         }
                     }
                 }
+                //MapItemView {
+                //    id: vzsa50_miv
+                //    model: vzsa50GeoJson.features
+                //    delegate: vzsa50DelegateLoader
+                //}
+                //Loader{
+                //    id: vzsa50DelegateLoader
+                //    source: "vzsa50_component.qml"
+                //    asynchronous: true
+                //    visible: status==Loader.Ready
+                //}
+                //Component.onCompleted: {
+                //    vzsa50_miv.delegate = vzsa50DelegateLoader.item
+                //}
                 MapItemView{
                     id: vzsa50_miv
                     model: vzsa50GeoJson.features
@@ -498,10 +514,10 @@ Window {
                             MapQuickItem {
                                 visible: {
                                     modelData.properties.type ==="低気圧" 
-                                 || modelData.properties.type ==="高気圧"
-                                 || modelData.properties.type ==="低圧部"
-                                 || modelData.properties.type ==="熱帯低気圧"
-                                 || modelData.properties.type ==="台風"}
+                                    || modelData.properties.type ==="高気圧"
+                                    || modelData.properties.type ==="低圧部"
+                                    || modelData.properties.type ==="熱帯低気圧"
+                                    || modelData.properties.type ==="台風"}
                                 coordinate: QtPositioning.coordinate(modelData.geometry.coordinates[1],modelData.geometry.coordinates[0])
                                 anchorPoint.x: image.width/2
                                 anchorPoint.y: image.width/2
@@ -533,10 +549,10 @@ Window {
                             MapQuickItem {
                                 visible: {
                                     modelData.properties.type ==="低気圧" 
-                                 || modelData.properties.type ==="高気圧"
-                                 || modelData.properties.type ==="低圧部"
-                                 || modelData.properties.type ==="熱帯低気圧"
-                                 || modelData.properties.type ==="台風"} 
+                                    || modelData.properties.type ==="高気圧"
+                                    || modelData.properties.type ==="低圧部"
+                                    || modelData.properties.type ==="熱帯低気圧"
+                                    || modelData.properties.type ==="台風"} 
                                 coordinate: QtPositioning.coordinate(modelData.geometry.coordinates[1],modelData.geometry.coordinates[0])
                                 anchorPoint.x: image.width/2
                                 anchorPoint.y: {
@@ -565,11 +581,11 @@ Window {
                             MapQuickItem {
                                 visible: {
                                     (modelData.properties.type ==="低気圧" 
-                                 || modelData.properties.type ==="高気圧"
-                                 || modelData.properties.type ==="低圧部"
-                                 || modelData.properties.type ==="熱帯低気圧"
-                                 || modelData.properties.type ==="台風")
-                                 && modelData.properties.speed !=="ほとんど停滞" }
+                                    || modelData.properties.type ==="高気圧"
+                                    || modelData.properties.type ==="低圧部"
+                                    || modelData.properties.type ==="熱帯低気圧"
+                                    || modelData.properties.type ==="台風")
+                                    && modelData.properties.speed !=="ほとんど停滞" }
                                 id: arrowItem
                                 coordinate: QtPositioning.coordinate(modelData.geometry.coordinates[1],modelData.geometry.coordinates[0])
                                 anchorPoint.x: directionArrow.width/2  - 40*Math.sin(Math.PI/180*directionArrow.angle)
@@ -596,16 +612,16 @@ Window {
                                     }
                                 }
                             }
-
+////
                             //ほとんど停滞
                             MapQuickItem {
                                 visible: {
                                     (modelData.properties.type ==="低気圧" 
-                                 || modelData.properties.type ==="高気圧"
-                                 || modelData.properties.type ==="低圧部"
-                                 || modelData.properties.type ==="熱帯低気圧"
-                                 || modelData.properties.type ==="台風")
-                                 && (modelData.properties.speed ==="ほとんど停滞" )}
+                                    || modelData.properties.type ==="高気圧"
+                                    || modelData.properties.type ==="低圧部"
+                                    || modelData.properties.type ==="熱帯低気圧"
+                                    || modelData.properties.type ==="台風")
+                                    && (modelData.properties.speed ==="ほとんど停滞" )}
                                 coordinate: QtPositioning.coordinate(modelData.geometry.coordinates[1],modelData.geometry.coordinates[0])
                                 anchorPoint.x: -20
                                 anchorPoint.y: slowDirectionLabel.height/2 
@@ -628,11 +644,11 @@ Window {
                             MapQuickItem {
                                 visible: {
                                     (modelData.properties.type ==="低気圧" 
-                                 || modelData.properties.type ==="高気圧"
-                                 || modelData.properties.type ==="低圧部"
-                                 || modelData.properties.type ==="熱帯低気圧"
-                                 || modelData.properties.type ==="台風")
-                                 && (modelData.properties.speed !=="ほとんど停滞" )}
+                                    || modelData.properties.type ==="高気圧"
+                                    || modelData.properties.type ==="低圧部"
+                                    || modelData.properties.type ==="熱帯低気圧"
+                                    || modelData.properties.type ==="台風")
+                                    && (modelData.properties.speed !=="ほとんど停滞" )}
                                 coordinate: QtPositioning.coordinate(modelData.geometry.coordinates[1],modelData.geometry.coordinates[0])
                                 anchorPoint.x: arrowItem.anchorPoint.x
                                 anchorPoint.y: {

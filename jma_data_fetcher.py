@@ -123,7 +123,11 @@ class JMADataFetcher(QObject):
             "VPWW54": VPWW54(self), # 気象警報
             "VPHW51": VPHW51(self), # 竜巻注意情報
             "VXKO": VXKO(self), # 河川予報
-            "VPTW": VPTW(self), # 河川予報
+            "VPTW60": VPTW(self), # 台風
+            "VPTW61": VPTW(self), # 台風
+            "VPTW62": VPTW(self), # 台風
+            "VPTW63": VPTW(self), # 台風
+            "VPTW64": VPTW(self), # 台風
             "VXSE51": VXSE51(self), # 震度速報
             "VXSE52": VXSE52(self), # 震源に関する情報
             "VXSE53": VXSE53(self), # 震源・震度情報
@@ -357,8 +361,6 @@ class JMADataFetcher(QObject):
         playtelop_warning=False
         if "VXKO" in data_type_code:
             data_type_code="VXKO"
-        if "VPTW" in data_type_code:
-            data_type_code="VPTW"
         if data_type_code in self.parsers:
             parser_instance: BaseJMAParser = self.parsers[data_type_code]
             # JMA XMLの共通名前空間をパーサーに渡す
@@ -376,7 +378,7 @@ class JMADataFetcher(QObject):
             # 解析済みデータをメインアプリケーションに通知
             #self.dataFetched.emit(output_filename, data_type_code, parsed_data)
             # テロップ表示解析後、通知レベルによって表示するか確認
-            if data_type_code == "VZSA50" or data_type_code=="VPTW":
+            if data_type_code == "VZSA50" or "VPTW" in data_type_code:
                 playtelop=False
             else:
                 telop_dict, warning_level = parser_instance.content(report_tree, namespaces, data_type_code)
