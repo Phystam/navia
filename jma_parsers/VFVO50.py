@@ -15,10 +15,10 @@ class VFVO50(BaseJMAParser):
         parsed_data['category']="volcanology"
         parsed_data["data_type"]=self.data_type
         # Control/Title
-        parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
-        parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Control/jmx:Title/text()', namespaces)
+        parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
         # Head/Title
-        parsed_data['head_title'] = self._get_text(xml_tree, '/jmx:Report/jmx_ib:Head/jmx_ib:Title/text()', namespaces)
+        parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
         return parsed_data
     
@@ -56,7 +56,7 @@ class VFVO50(BaseJMAParser):
         else:
             sound="sounds/GeneralInfo.wav"
             notify_level=1
-        publishing_office = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        publishing_office = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         logo_list.append(["", ""])
         text_list.append([f"<b>{publishing_office}発表 {title}</b>",""])

@@ -85,6 +85,10 @@ class JMADataFetcher(QObject):
             "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
             "https://www.data.jma.go.jp/developer/xml/feed/regular.xml",
             "https://www.data.jma.go.jp/developer/xml/feed/extra.xml"]
+        self.long_feed_urls = [
+            "https://www.data.jma.go.jp/developer/xml/feed/eqvol_l.xml",
+            "https://www.data.jma.go.jp/developer/xml/feed/regular_l.xml",
+            "https://www.data.jma.go.jp/developer/xml/feed/extra_l.xml"]
         self.last_modifieds = [None, None, None]
         self.data_dir = "jmadata"
         self.xsd_dir = "xsdschema" # XSDファイルが置かれているルートディレクトリ
@@ -160,7 +164,7 @@ class JMADataFetcher(QObject):
             self._set_initial_fetch_timer(i)
 
         # アプリケーション起動時に一度更新をチェック
-            self.checkForUpdates(i)
+            self.checkForUpdates(i,first=True)
 
     def _load_existing_ids(self, first=False):
         #print(f"既存のダウンロード済みデータをロード中... {self.data_dir}")
@@ -183,7 +187,7 @@ class JMADataFetcher(QObject):
                                 filedata=zstd.decompress(f.read())  # Zstandard圧縮を解凍
                             except:
                                 continue
-                            self.processReport({'id': extracted_id_part}, filedata,test=False, playtelop=False, save = False) 
+                            self.processReport({'id': extracted_id_part}, filedata,test=False, playtelop=False, save = False, parse=True) 
                             
                 except ValueError:
                     # 日付形式が正しくない場合はスキップ
@@ -218,10 +222,13 @@ class JMADataFetcher(QObject):
             self.fetch_timers[i].start()
             #print("タイマー間隔を毎分に設定しました。")
 
-        self.checkForUpdates(i)
+        self.checkForUpdates(i,first=False)
 
     @Slot()
-    def checkForUpdates(self, i):
+    def checkForUpdates(self, i,first=False):
+        #if first:
+        #    request = QNetworkRequest(QUrl(self.long_feed_urls[i]))
+        #else:
         request = QNetworkRequest(QUrl(self.feed_urls[i]))
         if self.last_modifieds[i]:
             request.setRawHeader(QByteArray(b"If-Modified-Since"), QByteArray(self.last_modifieds[i].encode('utf-8')))

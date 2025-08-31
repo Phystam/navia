@@ -15,8 +15,8 @@ class VPOA50(BaseJMAParser):
         parsed_data["data_type"]=self.data_type
         # Control/Title
         parsed_data["eventID"]=self._get_text(xml_tree, '//jmx:eventID/text()', namespaces)
-        parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Title/text()', namespaces)
-        parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
+        parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Control/jmx:Title/text()', namespaces)
+        parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
         parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
@@ -46,7 +46,7 @@ class VPOA50(BaseJMAParser):
         logo_list = []
         text_list = []
         sound_list = []
-        publishing_office = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
+        publishing_office = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
         title = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         
         headline = self._get_text(xml_tree, '//jmx_ib:Headline/jmx_ib:Text/text()', namespaces)

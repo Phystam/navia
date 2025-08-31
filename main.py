@@ -205,7 +205,7 @@ class MainApp(QObject):
             dataname=entry_data[-10:-4]
             print(dataname)
             data=f.read()
-            self.jma_fetcher.processReport(dataname,data,test=True, playtelop=True,save=False,parse=True)
+            self.jma_fetcher.processReport(dataname,data,test=True, playtelop=False, save=False, parse=True)
     @Slot()
     def onTestEEW(self):
         self.axis_manager.sendData()
@@ -232,9 +232,9 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("settingsManager", main_app_instance.settings_manager)
     engine.rootContext().setContextProperty("timelineManager", main_app_instance.timeline_manager)
     engine.rootContext().setContextProperty("axisManager", main_app_instance.axis_manager)
-    engine.rootContext().setContextProperty("vzsa50GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSA50"))
-    engine.rootContext().setContextProperty("vzsf50GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSF50"))
-    engine.rootContext().setContextProperty("vzsf51GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSF51"))
+    #engine.rootContext().setContextProperty("vzsa50GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSA50"))
+    #engine.rootContext().setContextProperty("vzsf50GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSF50"))
+    #engine.rootContext().setContextProperty("vzsf51GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSF51"))
     # MainAppのインスタンスを作成し、QMLに公開（タスクトレイアイコン用）
     # このインスタンス内でJMADataFetcherも初期化されます
     

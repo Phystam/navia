@@ -17,10 +17,10 @@ Window {
     Component.onCompleted: {
         // 必要に応じて他の初期化処理を追加
         timelineManager.meteStatusChanged.connect(onStatusChanged);
-        //timelineManager.vzsa50StatusChanged.connect(onVZSA50Changed);
+        timelineManager.vzsa50StatusChanged.connect(onVzsa50StatusChanged);
         //timelineManager.vzsf50StatusChanged.connect(onVZSF50Changed);
         //timelineManager.vzsf51StatusChanged.connect(onVZSF51Changed);
-        //timelineManager.vtw60StatusChanged.connect(onVPTW60Changed);
+        timelineManager.vptwStatusChanged.connect(onVptwStatusChanged);
     }
     
     ListModel {
@@ -66,6 +66,14 @@ Window {
             class20_miv.model = class20.model[0].data;
         }
         loadingIndicator.visible = false;
+    }
+    function onVzsa50StatusChanged(){
+        vzsa50_miv.model = [];
+        vzsa50_miv.model = timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0],mapComponent.vzsa50_switch[1]).features;
+    }
+    function onVptwStatusChanged(){
+        vptw_miv.model = [];
+        vptw_miv.model = timelineManager.getVPTWGeoJson("VPTW60",0).features;
     }
     //function onVZSA50Changed(){
     //    vzsa50_miv.model = [];
@@ -231,14 +239,20 @@ Window {
         anchors.margins: 5
         property var vzsa50_switch: {
             switch(vzsa50Slider.value){
+            case 0:
+                return ["VZSA50",3]
+            case 0.2:
+                return ["VZSA50",2]
+            case 0.4:
+                return ["VZSA50",1]
             case 0.6:
-                return "VZSA50"
+                return ["VZSA50",0]
             case 0.8:
-                return "VZSF50"
+                return ["VZSF50",0]
             case 1:
-                return "VZSF51"
+                return ["VZSF51",0]
             default:
-                return "VZSA50"
+                return ["VZSA50",0]
             }
         }
         // GeoJSONポリゴンを描画するコンポーネント
@@ -468,17 +482,13 @@ Window {
                 //天気図
                 MapItemView{
                     id: vzsa50_miv
-                    model: {
-                        console.log(mapComponent.vzsa50_switch)
-                        if( mapComponent.vzsa50_switch=="VZSA50"){
-                            return vzsa50GeoJson.features;
-                        }if(mapComponent.vzsa50_switch=="VZSF50"){
-                            return vzsf50GeoJson.features;
-                        }if(mapComponent.vzsa50_switch=="VZSF51"){
-                            return vzsf51GeoJson.features;
-                        }
-                    }
+                    model: timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0],mapComponent.vzsa50_switch[1]).features
                     delegate: Component { Vzsa50Delegate {} }
+                }
+                MapItemView{
+                    id: vptw_miv
+                    model: timelineManager.getVPTWGeoJson("VPTW60",0).features
+                    delegate: Component { VptwDelegate {} }
                 }
                 //MapItemView{
                 //    id: miv2
@@ -580,13 +590,13 @@ Window {
                     anchors.topMargin: 3
                     spacing: 5
                     Text {
-                        text: timelineManager.getVZSA50Title(mapComponent.vzsa50_switch)//timelineManager.getVZSA50Title("VZSA50")
+                        text: timelineManager.getVZSA50Title(mapComponent.vzsa50_switch[0],mapComponent.vzsa50_switch[1])//timelineManager.getVZSA50Title("VZSA50")
                         color: "#ffffff"
                         font.pixelSize:20
                         font.bold: true
                     }
                     Text {
-                        text: timelineManager.getVZSA50Time(mapComponent.vzsa50_switch)
+                        text: timelineManager.getVZSA50Time(mapComponent.vzsa50_switch[0],mapComponent.vzsa50_switch[1])
                         color: "#ffffff"
                         font.pixelSize:18
                         font.bold: true
