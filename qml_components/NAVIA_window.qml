@@ -228,6 +228,22 @@ Window {
                 infoLoader_VPFD51.item.bodyText = "";
             }
         }
+        // VPFD51 台風情報
+        //if (infoLoader_VPTW60.item) {
+        //    var data_type="VPTW60"
+        //    if (timelineManager.getVPTWID(data_type,0)!="") {
+        //        infoLoader_VPTW60.item.headlineText = timelineManager.getVPTWHeadlineText(data_type,0);
+        //        infoLoader_VPTW60.item.headTitleText = timelineManager.getVPFD51Title(data_type,0);
+        //        infoLoader_VPTW60.item.bodyText = timelineManager.getVPFD51BodyText(data_type,0);
+        //        var dt_VPTW60 = timelineManager.getVPFD51Updated(hierarchy,code,data_type,0);
+        //        infoLoader_VPTW60.item.dateTimeText = (dt_VPFD51 === "2000/01/01 00:00:00") ? "" : dt_VPFD51;
+        //    } else {
+        //        infoLoader_VPTW60.item.dateTimeText = "";
+        //        infoLoader_VPTW60.item.headTitleText = "";
+        //        infoLoader_VPTW60.item.headlineText = "";
+        //        infoLoader_VPTW60.item.bodyText = "";
+        //    }
+        //}
     }
 
     Item {
@@ -719,6 +735,12 @@ Window {
                     }
                     Loader {
                         id: infoLoader_VPFG50
+                        source: "infoText_component.qml"
+                        width: parent.width
+                        //height: item ? item.height : 0
+                    }
+                    Loader {
+                        id: infoLoader_VPTI51
                         source: "infoText_component.qml"
                         width: parent.width
                         //height: item ? item.height : 0

@@ -316,8 +316,8 @@ class TimelineManager(QObject):
         #適当に突っ込んでからソートすることにする。
         self.mete_status[datatype].append({"updated": dt, "id": id})
         #ソート
-        list1=self.mete_status[datatype]
         self.mete_status[datatype]=sorted(self.mete_status[datatype],key=lambda s: s["updated"], reverse=True)
+        print(self.mete_status[datatype])
         
     def VPTW(self,id,data):
         datatype=data["data_type"]
@@ -325,8 +325,9 @@ class TimelineManager(QObject):
         #適当に突っ込んでからソートすることにする。
         self.mete_status[datatype].append({"updated": dt, "id": id})
         #ソート
-        list1=self.mete_status[datatype]
         self.mete_status[datatype]=sorted(self.mete_status[datatype],key=lambda s: s["updated"], reverse=True)
+        
+        print(self.mete_status[datatype])
         
     
     def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
