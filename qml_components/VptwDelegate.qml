@@ -26,8 +26,8 @@ MapItemGroup {
                 visible: parent.containsMouse
                 x: mouse.x + 30
                 y: mouse.y + 10
-                width: 150
-                height: 100
+                width: 250
+                height: 150
                 color: "lightgray"
                 border.color: "black"
                 radius: 5
@@ -47,11 +47,38 @@ MapItemGroup {
                         width: parent.width
                     }
                     Text{
+                        visible: text !=""
+                        text: modelData.properties.remark
+                    }
+                    Text{
+                        visible: modelData.properties.area_class !=""
                         text: "大きさ:\t"+modelData.properties.area_class
                     }
                     Text{
+                        visible: modelData.properties.intensity_class !=""
                         text: "強さ:\t"+modelData.properties.intensity_class
                     }
+                    Text{
+                        visible: modelData.properties.intensity_class !=""
+                        text: "強さ:\t"+modelData.properties.intensity_class
+                    }
+                    Text{
+                        visible: modelData.properties.location !=""
+                        text: "位置:\t"+modelData.properties.location
+                    }
+                    Text{
+                        text: "中心気圧:\t"+modelData.properties.pressure +" hPa"
+                    }
+                    Text{
+                        text: "速度:\t"+modelData.properties.direction +" "+ modelData.properties.speed +" km/h"
+                    }
+                    Text{
+                        text: "最大風速:\t"+modelData.properties.maxwindspeed +" m/s"
+                    }
+                    Text{
+                        text: "最大瞬間風速:\t"+modelData.properties.windspeed +" m/s"
+                    }
+                    
                 }
             }
         }
