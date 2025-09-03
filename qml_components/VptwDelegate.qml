@@ -13,8 +13,8 @@ MapItemGroup {
         anchorPoint.y:typhoon_center_image.height/2
         sourceItem: Image{
             id: typhoon_center_image
-            width: 20
-            height:20
+            width: 15
+            height:15
             source: "../materials/typhoon_center.svg"
         }
         MouseArea {
@@ -26,22 +26,39 @@ MapItemGroup {
                 visible: parent.containsMouse
                 x: mouse.x + 30
                 y: mouse.y + 10
-                width: 100
-                height: 30
+                width: 150
+                height: 100
                 color: "lightgray"
                 border.color: "black"
                 radius: 5
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.properties.name
-                    font.pixelSize: 12
+                Column {
+                    id: toolTipColumn
+                    anchors.fill: toolTip
+                    Label{
+                        font.pixelSize: 22
+                        text: "<b>"+modelData.properties.name+"</b>"
+                    }
+                    Text{
+                        text: modelData.properties.datetime_format
+                    }
+                    Rectangle{
+                        height: 1
+                        border.color: "black"
+                        width: parent.width
+                    }
+                    Text{
+                        text: "大きさ:\t"+modelData.properties.area_class
+                    }
+                    Text{
+                        text: "強さ:\t"+modelData.properties.intensity_class
+                    }
                 }
             }
         }
     }
     MapCircle {
         visible: modelData.properties.probability_radius!=""
-        border.color: "#84ffffff"
+        border.color: "#36ffffff"
         border.width: 1
         center: typhoon_center.coordinate
         radius: Number(modelData.properties.probability_radius)*1000
@@ -62,11 +79,12 @@ MapItemGroup {
         color:"#36FF2800"
         center: QtPositioning.coordinate(modelData.properties.storm_center[1],modelData.properties.storm_center[0])
         radius: Number(modelData.properties.storm_radius)*1000
+        referenceSurface: QtLocation.ReferenceSurface.Globe
     }
 
     MapPolyline {
         visible: modelData.geometry.type==="LineString"
-        line.color: "#84ffffff"
+        line.color: "#36ffffff"
         line.width: 1
         path: {
             var linePath = []

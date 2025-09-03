@@ -1,6 +1,9 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
 from datetime import datetime, timezone,timedelta
+import math
+from geopy.distance import geodesic,Distance
+import geopy.distance
 class VPTW(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -15,6 +18,7 @@ class VPTW(BaseJMAParser):
             "西": 270,
             "北西":315
         }
+        self.RADIUS = 6371.0
         
 
     def parse(self, xml_tree, namespaces, data_type_code, test=False):
@@ -43,7 +47,6 @@ class VPTW(BaseJMAParser):
         path_feature['properties']={}
         path_feature['geometry']['type']="LineString"
         path_feature['geometry']['coordinates']=[]
-        # 高気圧
         for i in range(len_info):
             feature={}
             feature['type']="Feature"
@@ -60,6 +63,7 @@ class VPTW(BaseJMAParser):
                 path_feature['geometry']['coordinates'].append(feature['geometry']['coordinates'])
             feature['properties']['datetime_type']=self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/@type', namespaces)
             feature['properties']['datetime']=self._get_datetime(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/text()', namespaces)
+            feature['properties']['datetime_format']=self._get_datetime(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/text()', namespaces).strftime("%m月%d日 %H時 ")+self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/@type', namespaces)[:2]
             feature['properties']['area_class']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_eb:AreaClass/text()', namespaces)
             feature['properties']['intensity_class']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_eb:IntensityClass/text()', namespaces)
             feature['properties']['name']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:NameKana/text()', namespaces)
@@ -107,10 +111,50 @@ class VPTW(BaseJMAParser):
                 feature['properties'][f'storm_center']=self.calc_center_point(feature['geometry']['coordinates'][0],feature['geometry']['coordinates'][0],degree,distance)
                 feature['properties'][f'storm_radius']=storm_radius
                 
-            
             #print(item_type)
             parsed_data['geojson']['features'].append(feature)
         parsed_data['geojson']['features'].append(path_feature)
+        #接線を描く
+        for i in range(len_info):
+            datetime_type=self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/@type', namespaces)
+            print(datetime_type)
+            if datetime_type=="実況" or datetime_type=="推定　１時間後":
+                continue
+            else:
+                #2点の座標と半径
+                lonlat1=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:ProbabilityCircle/jmx_eb:BasePoint[@type="中心位置（度）"]/text()', namespaces)[0]
+                radius1=int(self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:ProbabilityCircle//jmx_eb:Radius[@unit="km"]/text()', namespaces))
+                last_type=self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_mete:DateTime/@type', namespaces)
+                print("lasttype:" +last_type)
+                if last_type=="実況" or last_type=="推定　１時間後":
+                    lonlat2=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_eb:Coordinate[@type="中心位置（度）"]/text()', namespaces)[0]
+                    radius2=0
+                else:
+                    print("lasttype2:" +last_type)
+                    lonlat2=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_mete:ProbabilityCircle/jmx_eb:BasePoint[@type="中心位置（度）"]/text()', namespaces)[0]
+                    radius2=int(self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_mete:ProbabilityCircle//jmx_eb:Radius[@unit="km"]/text()', namespaces))
+            #
+            
+            line1,line2=self.connectTwoCircles(lonlat1, lonlat2,radius1,radius2)
+            feature={}
+            feature['type']="Feature"
+            feature['geometry']={}
+            feature['properties']={}
+            feature['properties']['probability_line']=True
+            feature['geometry']['type']="LineString"
+            feature['geometry']['coordinates']=line1
+            parsed_data['geojson']['features'].append(feature)
+            
+            feature={}
+            feature['type']="Feature"
+            feature['geometry']={}
+            feature['properties']={}
+            feature['properties']['probability_line']=True
+            feature['geometry']['type']="LineString"
+            feature['geometry']['coordinates']=line2
+            parsed_data['geojson']['features'].append(feature)
+            
+        
         print(parsed_data)
         return parsed_data
     
