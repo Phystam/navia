@@ -35,8 +35,8 @@ MapItemGroup {
                     id: toolTipColumn
                     anchors.fill: toolTip
                     Label{
-                        font.pixelSize: 22
-                        text: "<b>"+modelData.properties.name+"</b>"
+                        font.pixelSize: 20
+                        text: "<b>台風"+modelData.properties.typhoon_number+"号 "+modelData.properties.name+"</b>"
                     }
                     Text{
                         text: modelData.properties.datetime_format

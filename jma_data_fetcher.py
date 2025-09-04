@@ -28,6 +28,7 @@ from jma_parsers.VFVO53 import VFVO53
 from jma_parsers.VFVO56 import VFVO56
 from jma_parsers.VXKO import VXKO
 from jma_parsers.VPTW import VPTW
+from jma_parsers.VPTI51 import VPTI51
 from jma_parsers.VZSA50 import VZSA50
 #from jma_parsers.jma_volcano_parser import VolcanoParser # 仮のパーサー
 
@@ -114,7 +115,7 @@ class JMADataFetcher(QObject):
             "VPFJ50": VPZJ50(self), # 府県気象情報 一般報
             "VPFJ51": VPZJ50(self), # 府県気象解説情報 一般報
             "VPTI50": VPZJ50(self), # 全般台風情報（総合情報、上陸等情報），発達する熱帯低気圧に関する情報 一般報
-            "VPTI51": VPZJ50(self), # 全般台風情報 （位置、発生情報），発達する熱帯低気圧に関する情報 一般報
+            "VPTI51": VPTI51(self), # 全般台風情報 （位置、発生情報），発達する熱帯低気圧に関する情報 一般報
             "VPTI52": VPZJ50(self), # 全般台風情報 （位置詳細）一般報
             "VPFG50": VPZJ50(self), # 府県天気概況
             "VMCJ50": VPZJ50(self), # 全般潮位情報 一般報

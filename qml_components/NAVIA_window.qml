@@ -212,38 +212,23 @@ Window {
                 infoLoader_VPFG50.item.bodyText = "";
             }
         }
-        // VPFD51 府県天気予報
-        if (infoLoader_VPFD51.item) {
-            var data_type="VPFD51"
-            if (timelineManager.getVPFD51ID(hierarchy,code,data_type)!="") {
-                infoLoader_VPFD51.item.headlineText = timelineManager.getVPFD51HeadlineText(hierarchy,code,data_type);
-                infoLoader_VPFD51.item.headTitleText = timelineManager.getVPFD51Title(hierarchy,code,data_type);
-                infoLoader_VPFD51.item.bodyText = timelineManager.getVPFD51BodyText(hierarchy,code,data_type);
-                var dt_VPFD51 = timelineManager.getVPFD51Updated(hierarchy,code,data_type);
-                infoLoader_VPFD51.item.dateTimeText = (dt_VPFD51 === "2000/01/01 00:00:00") ? "" : dt_VPFD51;
-            } else {
-                infoLoader_VPFD51.item.dateTimeText = "";
-                infoLoader_VPFD51.item.headTitleText = "";
-                infoLoader_VPFD51.item.headlineText = "";
-                infoLoader_VPFD51.item.bodyText = "";
-            }
-        }
-        // VPFD51 台風情報
-        //if (infoLoader_VPTW60.item) {
-        //    var data_type="VPTW60"
-        //    if (timelineManager.getVPTWID(data_type,0)!="") {
-        //        infoLoader_VPTW60.item.headlineText = timelineManager.getVPTWHeadlineText(data_type,0);
-        //        infoLoader_VPTW60.item.headTitleText = timelineManager.getVPFD51Title(data_type,0);
-        //        infoLoader_VPTW60.item.bodyText = timelineManager.getVPFD51BodyText(data_type,0);
-        //        var dt_VPTW60 = timelineManager.getVPFD51Updated(hierarchy,code,data_type,0);
-        //        infoLoader_VPTW60.item.dateTimeText = (dt_VPFD51 === "2000/01/01 00:00:00") ? "" : dt_VPFD51;
+        // VPTI51 台風情報
+        //if (infoLoader_VPTI51.item) {
+        //    var data_type="VPTI51"
+        //    if (timelineManager.getVPTI51ID(eventID, data_type)!="") {
+        //        infoLoader_VPTI51.item.headlineText = timelineManager.getVPTI51HeadlineText(eventID, data_type);
+        //        infoLoader_VPTI51.item.headTitleText = timelineManager.getVPTI51Title(eventID, data_type);
+        //        infoLoader_VPTI51.item.bodyText = timelineManager.getVPTI51BodyText(eventID, data_type);
+        //        var dt_VPTI51 = timelineManager.getVPTI51Updated(eventID, data_type);
+        //        infoLoader_VPTI51.item.dateTimeText = (dt_VPTI51 === "2000/01/01 00:00:00") ? "" : dt_VPTI51;
         //    } else {
-        //        infoLoader_VPTW60.item.dateTimeText = "";
-        //        infoLoader_VPTW60.item.headTitleText = "";
-        //        infoLoader_VPTW60.item.headlineText = "";
-        //        infoLoader_VPTW60.item.bodyText = "";
+        //        infoLoader_VPTI51.item.dateTimeText = "";
+        //        infoLoader_VPTI51.item.headTitleText = "";
+        //        infoLoader_VPTI51.item.headlineText = "";
+        //        infoLoader_VPTI51.item.bodyText = "";
         //    }
         //}
+        // VPTI51 台風情報
     }
 
     Item {
@@ -501,9 +486,15 @@ Window {
                     model: timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0],mapComponent.vzsa50_switch[1]).features
                     delegate: Component { Vzsa50Delegate {} }
                 }
+                
                 MapItemView{
                     id: vptw_miv
-                    model: timelineManager.getVPTWGeoJson("VPTW60",0).features
+                    property var ti: test
+                    model: {
+                        var eventid=timelineManager.getVPTWEventIDList("VPTW60")[0]
+                        console.log(eventid)
+                        return timelineManager.getVPTWGeoJson("VPTW60", eventid ,0).features
+                    }
                     delegate: Component { VptwDelegate {} }
                 }
                 //MapItemView{

@@ -36,11 +36,13 @@ class VPTW(BaseJMAParser):
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Title/text()', namespaces)
         parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst)
         parsed_data['time']= self._get_datetime(xml_tree,'//jmx_mete:MeteorologicalInfo[1]/jmx_mete:DateTime/text()', namespaces)
-        parsed_data['eventID']=self._get_text(xml_tree,'//jmx_ib:EventID/text()',namespaces)
+        parsed_data['event_id']=self._get_text(xml_tree,'//jmx_ib:EventID/text()',namespaces)
+        parsed_data['typhoon_number']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[1]//jmx_mete:Number/text()', namespaces)[-2:]
         parsed_data['geojson']={}
         parsed_data['geojson']['type']="FeatureCollection"
         parsed_data['geojson']['features']=[]
         len_info = len(self._get_elements(xml_tree,f'//jmx_mete:MeteorologicalInfo', namespaces))
+        print(f"entries: {len_info}")
         path_feature={}
         path_feature['type']="Feature"
         path_feature['geometry']={}
@@ -61,6 +63,7 @@ class VPTW(BaseJMAParser):
                 feature['geometry']['coordinates']=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:ProbabilityCircle/jmx_eb:BasePoint[@type="中心位置（度）"]/text()', namespaces)[0]
                 feature['properties']['probability_radius']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:ProbabilityCircle//jmx_eb:Radius[@unit="km"]/text()', namespaces)
                 path_feature['geometry']['coordinates'].append(feature['geometry']['coordinates'])
+            feature['properties']['typhoon_number']=parsed_data['typhoon_number']
             feature['properties']['datetime_type']=self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/@type', namespaces)
             feature['properties']['datetime']=self._get_datetime(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/text()', namespaces)
             feature['properties']['datetime_format']=self._get_datetime(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/text()', namespaces).strftime("%m月%d日 %H時 ")+self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/@type', namespaces)[:2]
@@ -89,9 +92,9 @@ class VPTW(BaseJMAParser):
                 feature['properties'][f'strong_radius']=feature['properties']['strong_long_radius']
             else:
                 degree=self.degree_dict[feature['properties'][f'strong_long_direction']]
-                strong_radius=(feature['properties']['strong_long_radius']+feature['properties']['strong_short_radius'])/2
-                distance=feature['properties']['strong_long_radius']-feature['properties']['strong_short_radius']
-                feature['properties'][f'strong_center']=self.calc_center_point(feature['geometry']['coordinates'][0],feature['geometry']['coordinates'][0],degree,distance)
+                strong_radius=(float(feature['properties']['strong_long_radius'])+float(feature['properties']['strong_short_radius']))/2
+                distance=(float(feature['properties']['strong_long_radius'])-float(feature['properties']['strong_short_radius']))/2
+                feature['properties'][f'strong_center']=self.calc_center_point(feature['geometry']['coordinates'],degree,distance)
                 feature['properties'][f'strong_radius']=strong_radius
                 
             #暴風域
@@ -106,9 +109,9 @@ class VPTW(BaseJMAParser):
                 feature['properties'][f'storm_radius']=feature['properties']['storm_long_radius']
             else:
                 degree=self.degree_dict[feature['properties'][f'storm_long_direction']]
-                storm_radius=(feature['properties']['storm_long_radius']+feature['properties']['storm_short_radius'])/2
-                distance=feature['properties']['storm_long_radius']-feature['properties']['storm_short_radius']
-                feature['properties'][f'storm_center']=self.calc_center_point(feature['geometry']['coordinates'][0],feature['geometry']['coordinates'][0],degree,distance)
+                storm_radius=(float(feature['properties']['storm_long_radius'])+float(feature['properties']['storm_short_radius']))/2
+                distance=(float(feature['properties']['storm_long_radius'])-float(feature['properties']['storm_short_radius']))/2
+                feature['properties'][f'storm_center']=self.calc_center_point(feature['geometry']['coordinates'],degree,distance)
                 feature['properties'][f'storm_radius']=storm_radius
                 
             #print(item_type)

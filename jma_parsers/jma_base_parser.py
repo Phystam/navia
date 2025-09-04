@@ -205,7 +205,7 @@ class BaseJMAParser(QObject):
             
 
 
-    def calc_center_point(self, lat_deg, lon_deg, bearing_deg, distance_km):
+    def calc_center_point(self, coord_lonlat, bearing_deg, distance_km):
         """
         球面近似での目的地計算
         lat_deg, lon_deg : 出発点の緯度・経度（度）
@@ -213,29 +213,9 @@ class BaseJMAParser(QObject):
         distance_km       : 距離（km）
         戻り値            : (目的地緯度[度], 目的地経度[度])
         """
-
-
-        # 度→ラジアン変換
-        lat1 = math.radians(lat_deg)
-        lon1 = math.radians(lon_deg)
-        bearing = math.radians(bearing_deg)
-
-        # 角距離
-        delta = distance_km / self.RADIUS
-
-        # 緯度計算
-        lat2 = math.asin(math.sin(lat1) * math.cos(delta) +
-                         math.cos(lat1) * math.sin(delta) * math.cos(bearing))
-
-        # 経度計算
-        lon2 = lon1 + math.atan2(math.sin(bearing) * math.sin(delta) * math.cos(lat1),
-                                 math.cos(delta) - math.sin(lat1) * math.sin(lat2))
-
-        # 経度を -180〜180 に正規化
-        lon2 = (lon2 + 3*math.pi) % (2*math.pi) - math.pi
-
+        pointA1=geopy.distance.distance(kilometers=distance_km).destination((coord_lonlat[1],coord_lonlat[0]),bearing=bearing_deg)
         # ラジアン→度変換
-        return [math.degrees(lat2), math.degrees(lon2)]
+        return [pointA1[1],pointA1[0]]
     
     def ll_to_xy(self, lat, lon, ref_lat, ref_lon):
         """緯度経度を基準点からの平面座標(km)に変換します。"""

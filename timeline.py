@@ -40,13 +40,22 @@ class TimelineManager(QObject):
         self.hierarchy=["region","pref","class10","class15","class20"]
         for hier in self.hierarchy:
             self.mete_status[hier] ={}
-        # 市町村等地域に限定しない情報 (天気図、台風情報など)
-        mete_types=["VZSA50","VZSF50","VZSF51","VPTW60","VPTW61","VPTW62","VPTW63","VPTW64","VPTW65"]
+        # 市町村等地域に限定しない情報 (天気図、全般気象情報など)
+        mete_types=["VZSA50","VZSF50","VZSF51"]
         for mete_type in mete_types:
             self.mete_status[mete_type]=[]
             self.mete_status[mete_type].append({})
             self.mete_status[mete_type][0]["updated"]=datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
             self.mete_status[mete_type][0]["id"]=""
+        # 台風のeventIDに紐づく情報
+        typhoon_types=["VPTW60","VPTW61","VPTW62","VPTW63","VPTW64","VPTW65","VPTI51"]
+        for typhoon_type in typhoon_types:
+            self.mete_status[typhoon_type]={}
+            #self.mete_status[typhoon_type]["dummy"]=[]
+            #self.mete_status[typhoon_type]["dummy"].append({})
+            #self.mete_status[typhoon_type]["dummy"][0]["updated"]=datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
+            #self.mete_status[typhoon_type]["dummy"][0]["id"]=""
+            #self.mete_status[typhoon_type]["dummy"][0]["event_id"]=""
 
         for c in region_codes:
             name = self.areacode["centers"][c]["name"]
@@ -188,6 +197,8 @@ class TimelineManager(QObject):
             self.VPTW(id,data)
             self.vptwStatusChanged.emit()
         
+        if data["data_type"]=="VPTI51":
+            self.VPTI51(id,data)
             
 
             
@@ -322,10 +333,26 @@ class TimelineManager(QObject):
     def VPTW(self,id,data):
         datatype=data["data_type"]
         dt=data["report_datetime"]
+        event_id=data["event_id"]
+        if event_id not in self.mete_status[datatype].keys():
+            self.mete_status[datatype][event_id]=[]
         #適当に突っ込んでからソートすることにする。
-        self.mete_status[datatype].append({"updated": dt, "id": id})
+        self.mete_status[datatype][event_id].append({"updated": dt, "id": id})
         #ソート
-        self.mete_status[datatype]=sorted(self.mete_status[datatype],key=lambda s: s["updated"], reverse=True)
+        self.mete_status[datatype][event_id]=sorted(self.mete_status[datatype][event_id],key=lambda s: s["updated"], reverse=True)
+        
+        print(self.mete_status[datatype])
+    
+    def VPTI51(self,id,data):
+        datatype=data["data_type"]
+        dt=data["report_datetime"]
+        event_id=data["event_id"]
+        if event_id not in self.mete_status[datatype].keys():
+            self.mete_status[datatype][event_id]=[]
+        #適当に突っ込んでからソートすることにする。
+        self.mete_status[datatype][event_id].append({"updated": dt, "id": id})
+        #ソート
+        self.mete_status[datatype][event_id]=sorted(self.mete_status[datatype][event_id],key=lambda s: s["updated"], reverse=True)
         
         print(self.mete_status[datatype])
         
@@ -956,28 +983,28 @@ class TimelineManager(QObject):
         
         
     # VPTWii
-    @Slot(str,int,result=str)
-    def getVPTWID(self,  data_type,index):
+    @Slot(str,str, int,result=str)
+    def getVPTWID(self, data_type,event_id, index):
         """情報IDを取得"""
         try:
-            return self.mete_status[data_type][index]["id"]
+            return self.mete_status[data_type][event_id][index]["id"]
         except KeyError:
             return ""
     # VPTWii
-    @Slot(str,int, result=bool)
-    def isVPTW(self,  data_type,index):
+    @Slot(str,str,int, result=bool)
+    def isVPTW(self, data_type,event_id,  index):
         """情報IDを取得"""
         try:
-            id = self.mete_status[data_type][index]["id"]
+            id = self.mete_status[data_type][event_id][index]["id"]
             return id != ""
         except KeyError:
             return False
     
-    @Slot(str,int,result=str)
-    def getVPTWUpdated(self, data_type,index):
+    @Slot(str,str,int,result=str)
+    def getVPTWUpdated(self,  data_type,event_id,index):
         """指定された階層とコードの警報レベルを取得する"""
         try:
-            dt: datetime.datetime =self.mete_status[data_type][index]["updated"]
+            dt: datetime.datetime =self.mete_status[data_type][event_id][index]["updated"]
             text = dt.strftime("%Y/%m/%d %H:%M:%S")
             if text != "2000/01/01 00:00:00":
                 return text
@@ -985,32 +1012,93 @@ class TimelineManager(QObject):
                 return ""
         except KeyError:
             return ""
-    @Slot(str,int, result=str)
-    def getVPTWTitle(self,data_type,index):
+    @Slot(str,str,int, result=str)
+    def getVPTWTitle(self,data_type,event_id, index):
         """情報IDを取得"""
         try:
-            id=self.getVPTWID(data_type,index)
+            id=self.getVPTWID(data_type,event_id, index)
             return self.mete_timeline[id]["head_title"]
             
         except KeyError:
             return ""
         
-    @Slot(str,int, result=str)
-    def getVPTWTime(self,data_type,index):
+    @Slot(str,str,int, result=str)
+    def getVPTWTime(self, data_type,event_id,index):
         """情報IDを取得"""
         try:
-            id=self.getVPTWID(data_type,index)
+            id=self.getVPTWID(data_type,event_id, index)
             return self.mete_timeline[id]["time"].strftime("%Y/%m/%d %H時 実況")
             
         except KeyError:
             return ""
         
-    @Slot(str,int,result=dict)
-    def getVPTWGeoJson(self,data_type,index):
+    @Slot(str,str,int,result=dict)
+    def getVPTWGeoJson(self,data_type,event_id, index):
         """情報IDを取得"""
 
-        id=self.getVPTWID(data_type,index)
+        id=self.getVPTWID(data_type,event_id, index)
+        print(f"id={id}")
         try:
             return self.mete_timeline[id]["geojson"]
         except:
             return {}
+        
+    @Slot(str,result=list)
+    def getVPTWEventIDList(self, data_type):
+        """情報IDを取得"""
+        list1=self.mete_status[data_type].keys()
+        print(list1)
+        return list(self.mete_status[data_type].keys())
+        
+    # VPTI51
+    @Slot(str,str,result=str)
+    def getVPTI51ID(self, data_type,event_id ):
+        """情報IDを取得"""
+        try:
+            return self.mete_status[data_type][event_id]["id"]
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    
+    @Slot(str,str,result=str)
+    def getVPTI51Updated(self, data_type,event_id):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            dt: datetime.datetime =self.mete_status[data_type][event_id]["updated"]
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
+        except KeyError:
+            return ""
+        except:
+            return ""
+    @Slot(str,str,result=str)
+    def getVPTI51Title(self, data_type,event_id):
+        """情報IDを取得"""
+        try:
+            id=self.getVPTI51ID(data_type,event_id)
+            return self.mete_timeline[id]["head_title"]
+            
+        except KeyError:
+            return ""
+        
+    @Slot(str,str,result=str)
+    def getVPTI51HeadlineText(self, data_type,event_id):
+        """情報IDを取得"""
+        try:
+            id=self.getVPTI51ID(data_type,event_id)
+            return self.mete_timeline[id]["headline_text"]
+            
+        except KeyError:
+            return ""
+    @Slot(str,str,result=str)
+    def getVPTI51BodyText(self, data_type,event_id):
+        """情報IDを取得"""
+        try:
+            id=self.getVPTI51ID(data_type,event_id)
+            return self.mete_timeline[id]["body_text"]
+            
+        except KeyError:
+            return ""
