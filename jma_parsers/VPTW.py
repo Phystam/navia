@@ -64,6 +64,7 @@ class VPTW(BaseJMAParser):
                 feature['properties']['probability_radius']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:ProbabilityCircle//jmx_eb:Radius[@unit="km"]/text()', namespaces)
                 path_feature['geometry']['coordinates'].append(feature['geometry']['coordinates'])
             feature['properties']['typhoon_number']=parsed_data['typhoon_number']
+            feature['properties']['event_id']=self._get_text(xml_tree,'//jmx_ib:EventID/text()',namespaces)
             feature['properties']['datetime_type']=self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/@type', namespaces)
             feature['properties']['datetime']=self._get_datetime(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/text()', namespaces)
             feature['properties']['datetime_format']=self._get_datetime(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/text()', namespaces).strftime("%m月%d日 %H時 ")+self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/@type', namespaces)[:2]

@@ -212,7 +212,7 @@ Window {
                 infoLoader_VPFG50.item.bodyText = "";
             }
         }
-        // VPTI51 台風情報
+        //// VPTI51 台風情報
         //if (infoLoader_VPTI51.item) {
         //    var data_type="VPTI51"
         //    if (timelineManager.getVPTI51ID(eventID, data_type)!="") {
@@ -228,7 +228,38 @@ Window {
         //        infoLoader_VPTI51.item.bodyText = "";
         //    }
         //}
+    }
+    function handleTyphoonClick(eventID) {
+        infoTitle.text = "台風情報";
+        logoListModel_VPWW54.clear()
+        logoListModel_VXWW50.clear()
+        logoListModel_VPHW51.clear()
+        infoLoader_VPWW54.item.expanded = false;
+        infoLoader_VXWW50.item.expanded = false;
+        infoLoader_VPHW51.item.expanded = false;
+        infoLoader_VPOA50.item.expanded = false;
+        infoLoader_VPFJ50.item.expanded = false;
+        infoLoader_VPFG50.item.expanded = false;
+        infoLoader_VPTI51.item.expanded = false;
         // VPTI51 台風情報
+        if (infoLoader_VPTI51.item) {
+            var data_type="VPTI51"
+            var index=1
+            var id = timelineManager.getVPTI51ID(data_type,eventID,index)
+            
+            if (id!="") {
+                infoLoader_VPTI51.item.headlineText = timelineManager.getVPTI51HeadlineText( data_type, eventID,index);
+                infoLoader_VPTI51.item.headTitleText = timelineManager.getVPTI51Title(data_type, eventID,index);
+                infoLoader_VPTI51.item.bodyText = timelineManager.getVPTI51BodyText(data_type,eventID,index);
+                var dt_VPTI51 = timelineManager.getVPTI51Updated(data_type,eventID,index);
+                infoLoader_VPTI51.item.dateTimeText = (dt_VPTI51 === "2000/01/01 00:00:00") ? "" : dt_VPTI51;
+            } else {
+                infoLoader_VPTI51.item.dateTimeText = "";
+                infoLoader_VPTI51.item.headTitleText = "";
+                infoLoader_VPTI51.item.headlineText = "";
+                infoLoader_VPTI51.item.bodyText = "";
+            }
+        }
     }
 
     Item {

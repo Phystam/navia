@@ -21,6 +21,12 @@ MapItemGroup {
             anchors.fill: parent
             hoverEnabled: true
             id:mouse
+            onClicked: {
+                console.log("typhoon clicked" + modelData.properties.event_id)
+                if (modelData.properties.event_id) {
+                    naviaWindow.handleTyphoonClick(modelData.properties.event_id)
+                }
+            }
             Rectangle {
                 id: toolTip
                 visible: parent.containsMouse
@@ -36,7 +42,7 @@ MapItemGroup {
                     anchors.fill: toolTip
                     Label{
                         font.pixelSize: 20
-                        text: "<b>台風"+modelData.properties.typhoon_number+"号 "+modelData.properties.name+"</b>"
+                        text: "<b>台風第"+modelData.properties.typhoon_number+"号 "+modelData.properties.name+"</b>"
                     }
                     Text{
                         text: modelData.properties.datetime_format

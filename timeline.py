@@ -415,7 +415,7 @@ class TimelineManager(QObject):
             special_rain=["33"]
             emergency=["32","35","36","37","38","08"]
             VXWW50_emergency=["3"]
-            warning = ["02","03","04","05","06","07","19"]
+            warning = ["02","03","04","05","06","07"]
             VPHW51_warning = ["1"]
             caution = ["10","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27"]
             for item in special_rain:
@@ -1051,20 +1051,20 @@ class TimelineManager(QObject):
         return list(self.mete_status[data_type].keys())
         
     # VPTI51
-    @Slot(str,str,result=str)
-    def getVPTI51ID(self, data_type,event_id ):
+    @Slot(str,str,int,result=str)
+    def getVPTI51ID(self, data_type, event_id ,index):
         """情報IDを取得"""
         try:
-            return self.mete_status[data_type][event_id]["id"]
+            return self.mete_status[data_type][event_id][index]["id"]
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
     
-    @Slot(str,str,result=str)
-    def getVPTI51Updated(self, data_type,event_id):
+    @Slot(str,str,int,result=str)
+    def getVPTI51Updated(self, data_type,event_id,index):
         """指定された階層とコードの警報レベルを取得する"""
         try:
-            dt: datetime.datetime =self.mete_status[data_type][event_id]["updated"]
+            dt: datetime.datetime =self.mete_status[data_type][event_id][index]["updated"]
             text = dt.strftime("%Y/%m/%d %H:%M:%S")
             if text != "2000/01/01 00:00:00":
                 return text
@@ -1074,31 +1074,37 @@ class TimelineManager(QObject):
             return ""
         except:
             return ""
-    @Slot(str,str,result=str)
-    def getVPTI51Title(self, data_type,event_id):
+    @Slot(str,str,int,result=str)
+    def getVPTI51Title(self, data_type,event_id,index):
         """情報IDを取得"""
         try:
-            id=self.getVPTI51ID(data_type,event_id)
+            id=self.getVPTI51ID(data_type,event_id,index)
             return self.mete_timeline[id]["head_title"]
             
         except KeyError:
             return ""
         
-    @Slot(str,str,result=str)
-    def getVPTI51HeadlineText(self, data_type,event_id):
+    @Slot(str,str,int,result=str)
+    def getVPTI51HeadlineText(self, data_type,event_id,index):
         """情報IDを取得"""
         try:
-            id=self.getVPTI51ID(data_type,event_id)
+            id=self.getVPTI51ID(data_type,event_id,index)
             return self.mete_timeline[id]["headline_text"]
             
         except KeyError:
             return ""
-    @Slot(str,str,result=str)
-    def getVPTI51BodyText(self, data_type,event_id):
+    @Slot(str,str,int,result=str)
+    def getVPTI51BodyText(self, data_type,event_id,index):
         """情報IDを取得"""
         try:
-            id=self.getVPTI51ID(data_type,event_id)
+            id=self.getVPTI51ID(data_type,event_id,index)
             return self.mete_timeline[id]["body_text"]
             
         except KeyError:
             return ""
+    @Slot(str,result=list)
+    def getVPTI51EventIDList(self, data_type):
+        """情報IDを取得"""
+        list1=self.mete_status[data_type].keys()
+        print(list1)
+        return list(self.mete_status[data_type].keys())
