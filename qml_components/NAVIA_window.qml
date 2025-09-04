@@ -72,8 +72,12 @@ Window {
         vzsa50_miv.model = timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0],mapComponent.vzsa50_switch[1]).features;
     }
     function onVptwStatusChanged(){
-        vptw_miv.model = [];
-        vptw_miv.model = timelineManager.getVPTWGeoJson("VPTW60",0).features;
+        var eventid = timelineManager.getVPTWEventIDList("VPTW60")[0];
+        if (eventid) {
+            vptw_miv.model = timelineManager.getVPTWGeoJson("VPTW60", eventid, 0).features;
+        } else {
+            vptw_miv.model = [];
+        }
     }
     //function onVZSA50Changed(){
     //    vzsa50_miv.model = [];
@@ -102,6 +106,8 @@ Window {
         infoLoader_VXWW50.item.expanded = false;
         infoLoader_VPHW51.item.expanded = false;
         infoLoader_VPOA50.item.expanded = false;
+        infoLoader_VPTI50.item.expanded = false;
+        infoLoader_VPTI51.item.expanded = false;
         // VPWW54 気象警報用
         if (infoLoader_VPWW54.item) {
             var codes_VPWW54 = timelineManager.getMeteWarningCode(hierarchy, code);
@@ -212,22 +218,6 @@ Window {
                 infoLoader_VPFG50.item.bodyText = "";
             }
         }
-        //// VPTI51 台風情報
-        //if (infoLoader_VPTI51.item) {
-        //    var data_type="VPTI51"
-        //    if (timelineManager.getVPTI51ID(eventID, data_type)!="") {
-        //        infoLoader_VPTI51.item.headlineText = timelineManager.getVPTI51HeadlineText(eventID, data_type);
-        //        infoLoader_VPTI51.item.headTitleText = timelineManager.getVPTI51Title(eventID, data_type);
-        //        infoLoader_VPTI51.item.bodyText = timelineManager.getVPTI51BodyText(eventID, data_type);
-        //        var dt_VPTI51 = timelineManager.getVPTI51Updated(eventID, data_type);
-        //        infoLoader_VPTI51.item.dateTimeText = (dt_VPTI51 === "2000/01/01 00:00:00") ? "" : dt_VPTI51;
-        //    } else {
-        //        infoLoader_VPTI51.item.dateTimeText = "";
-        //        infoLoader_VPTI51.item.headTitleText = "";
-        //        infoLoader_VPTI51.item.headlineText = "";
-        //        infoLoader_VPTI51.item.bodyText = "";
-        //    }
-        //}
     }
     function handleTyphoonClick(eventID) {
         infoTitle.text = "台風情報";
@@ -240,11 +230,30 @@ Window {
         infoLoader_VPOA50.item.expanded = false;
         infoLoader_VPFJ50.item.expanded = false;
         infoLoader_VPFG50.item.expanded = false;
+        infoLoader_VPTI50.item.expanded = false;
         infoLoader_VPTI51.item.expanded = false;
         // VPTI51 台風情報
+        if (infoLoader_VPTI50.item) {
+            var data_type="VPTI50"
+            var index=0
+            var id = timelineManager.getVPTI51ID(data_type,eventID,index)
+            
+            if (id!="") {
+                infoLoader_VPTI50.item.headlineText = timelineManager.getVPTI51HeadlineText( data_type, eventID,index);
+                infoLoader_VPTI50.item.headTitleText = timelineManager.getVPTI51Title(data_type, eventID,index);
+                infoLoader_VPTI50.item.bodyText = timelineManager.getVPTI51BodyText(data_type,eventID,index);
+                var dt_VPTI50 = timelineManager.getVPTI51Updated(data_type,eventID,index);
+                infoLoader_VPTI50.item.dateTimeText = (dt_VPTI50 === "2000/01/01 00:00:00") ? "" : dt_VPTI50;
+            } else {
+                infoLoader_VPTI50.item.dateTimeText = "";
+                infoLoader_VPTI50.item.headTitleText = "";
+                infoLoader_VPTI50.item.headlineText = "";
+                infoLoader_VPTI50.item.bodyText = "";
+            }
+        }
         if (infoLoader_VPTI51.item) {
             var data_type="VPTI51"
-            var index=1
+            var index=0
             var id = timelineManager.getVPTI51ID(data_type,eventID,index)
             
             if (id!="") {
@@ -514,19 +523,38 @@ Window {
                 //天気図
                 MapItemView{
                     id: vzsa50_miv
-                    model: timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0],mapComponent.vzsa50_switch[1]).features
+                    model: [] // Initially empty, will be populated by Connections
                     delegate: Component { Vzsa50Delegate {} }
+                    Component.onCompleted: {
+                        onVzsa50StatusChanged()
+                    }
                 }
-                
+                Connections {
+                    target: timelineManager
+                    function onVzsa50StatusChanged() {
+                        vzsa50_miv.model = [];
+                        vzsa50_miv.model = timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0], mapComponent.vzsa50_switch[1]).features;
+                    }
+                }
+
                 MapItemView{
                     id: vptw_miv
-                    property var ti: test
-                    model: {
-                        var eventid=timelineManager.getVPTWEventIDList("VPTW60")[0]
-                        console.log(eventid)
-                        return timelineManager.getVPTWGeoJson("VPTW60", eventid ,0).features
-                    }
+                    model: [] // Initially empty, will be populated by Connections
                     delegate: Component { VptwDelegate {} }
+                    Component.onCompleted: {
+                        onVptwStatusChanged()
+                    }
+                }
+                Connections {
+                    target: timelineManager
+                    function onVptwStatusChanged() {
+                        var eventid = timelineManager.getVPTWEventIDList("VPTW60")[0];
+                        if (eventid) {
+                            vptw_miv.model = timelineManager.getVPTWGeoJson("VPTW60", eventid, 0).features;
+                        } else {
+                            vptw_miv.model = [];
+                        }
+                    }
                 }
                 //MapItemView{
                 //    id: miv2
@@ -646,6 +674,32 @@ Window {
                         snapMode: Slider.SnapAlways
                         stepSize: 0.2
                         from: 0
+                        value: 0.6
+                        onValueChanged: {
+                            switch(value){
+                            case 0:
+                                mapComponent.vzsa50_switch= ["VZSA50",3]
+                                break;
+                            case 0.2:
+                                mapComponent.vzsa50_switch= ["VZSA50",2]
+                                break;
+                            case 0.4:
+                                mapComponent.vzsa50_switch= ["VZSA50",1]
+                                break;
+                            case 0.6:
+                                mapComponent.vzsa50_switch= ["VZSA50",0]
+                                break;
+                            case 0.8:
+                                mapComponent.vzsa50_switch= ["VZSF50",0]
+                                break;
+                            case 1:
+                                mapComponent.vzsa50_switch= ["VZSF51",0]
+                                break;
+                            default:
+                                mapComponent.vzsa50_switch= ["VZSA50",0]
+                            }
+                            onVzsa50StatusChanged()
+                        }
                     }
                 }
             }
@@ -686,7 +740,7 @@ Window {
                 anchors.leftMargin: 3
                 anchors.topMargin: 3
                 anchors.rightMargin:3
-                text: "地域名"
+                text: "地図をクリックして情報を表示"
                 color: "#ffffff"
                 anchors.top:parent.top
                 anchors.left: parent.left
@@ -761,7 +815,14 @@ Window {
                         width: parent.width
                         //height: item ? item.height : 0
                     }
+
+                    
                     Loader {
+                        id: infoLoader_VPTI50
+                        source: "infoText_component.qml"
+                        width: parent.width
+                        //height: item ? item.height : 0
+                    }Loader {
                         id: infoLoader_VPTI51
                         source: "infoText_component.qml"
                         width: parent.width

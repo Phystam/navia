@@ -48,7 +48,7 @@ class TimelineManager(QObject):
             self.mete_status[mete_type][0]["updated"]=datetime.datetime(2000,1,1,0,0,0,tzinfo=self.jst)
             self.mete_status[mete_type][0]["id"]=""
         # 台風のeventIDに紐づく情報
-        typhoon_types=["VPTW60","VPTW61","VPTW62","VPTW63","VPTW64","VPTW65","VPTI51"]
+        typhoon_types=["VPTW60","VPTW61","VPTW62","VPTW63","VPTW64","VPTW65","VPTI50","VPTI51"]
         for typhoon_type in typhoon_types:
             self.mete_status[typhoon_type]={}
             #self.mete_status[typhoon_type]["dummy"]=[]
@@ -197,7 +197,7 @@ class TimelineManager(QObject):
             self.VPTW(id,data)
             self.vptwStatusChanged.emit()
         
-        if data["data_type"]=="VPTI51":
+        if data["data_type"]=="VPTI50" or data["data_type"]=="VPTI51":
             self.VPTI51(id,data)
             
 
