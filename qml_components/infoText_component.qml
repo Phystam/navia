@@ -16,7 +16,15 @@ Rectangle {
     width: parent ? parent.width : 400
     height: infoColumn.height
     visible: headTitleText !== ""
-
+    
+    function initInfo(){
+        dateTimeText=""
+        headTitleText=""
+        headlineText=""
+        bodyText=""
+        logoListModel=null
+        expanded=false
+    }
     Column {
         id: infoColumn
         spacing: 2

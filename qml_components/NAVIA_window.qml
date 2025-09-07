@@ -79,6 +79,21 @@ Window {
             vptw_miv.model = [];
         }
     }
+
+    function initMessages(){
+        logoListModel_VPWW54.clear()
+        logoListModel_VXWW50.clear()
+        logoListModel_VPHW51.clear()
+        infoLoader_VPFD51.item.initInfo()
+        infoLoader_VXWW50.item.initInfo()
+        infoLoader_VPWW54.item.initInfo()
+        infoLoader_VPHW51.item.initInfo()
+        infoLoader_VPOA50.item.initInfo()
+        infoLoader_VPFJ50.item.initInfo()
+        infoLoader_VPFG50.item.initInfo()
+        infoLoader_VPTI50.item.initInfo()
+        infoLoader_VPTI51.item.initInfo()
+    }
     //function onVZSA50Changed(){
     //    vzsa50_miv.model = [];
     //    vzsa50_miv.model = vzsa50GeoJson.features;
@@ -99,15 +114,7 @@ Window {
         }else{
             infoTitle.text = pref + " " + name;
         }
-        logoListModel_VPWW54.clear()
-        logoListModel_VXWW50.clear()
-        logoListModel_VPHW51.clear()
-        infoLoader_VPWW54.item.expanded = false;
-        infoLoader_VXWW50.item.expanded = false;
-        infoLoader_VPHW51.item.expanded = false;
-        infoLoader_VPOA50.item.expanded = false;
-        infoLoader_VPTI50.item.expanded = false;
-        infoLoader_VPTI51.item.expanded = false;
+        initMessages()
         // VPWW54 気象警報用
         if (infoLoader_VPWW54.item) {
             var codes_VPWW54 = timelineManager.getMeteWarningCode(hierarchy, code);
@@ -220,18 +227,9 @@ Window {
         }
     }
     function handleTyphoonClick(eventID) {
+        initMessages()
         infoTitle.text = "台風情報";
-        logoListModel_VPWW54.clear()
-        logoListModel_VXWW50.clear()
-        logoListModel_VPHW51.clear()
-        infoLoader_VPWW54.item.expanded = false;
-        infoLoader_VXWW50.item.expanded = false;
-        infoLoader_VPHW51.item.expanded = false;
-        infoLoader_VPOA50.item.expanded = false;
-        infoLoader_VPFJ50.item.expanded = false;
-        infoLoader_VPFG50.item.expanded = false;
-        infoLoader_VPTI50.item.expanded = false;
-        infoLoader_VPTI51.item.expanded = false;
+        
         // VPTI51 台風情報
         if (infoLoader_VPTI50.item) {
             var data_type="VPTI50"
