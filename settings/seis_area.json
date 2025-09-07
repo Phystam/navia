@@ -1,5 +1,5 @@
 {
-  "prefs": {
+  "seis_prefs": {
     "9011": {
       "name": "北海道道央",
       "children": [
@@ -470,7 +470,7 @@
       ]
     }
   },
-  "class10s": {
+  "seis_class10s": {
     "100": {
       "name": "石狩地方北部",
       "parent": "9011"

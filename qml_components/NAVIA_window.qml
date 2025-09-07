@@ -10,6 +10,11 @@ Window {
     visible: true // 初期状態では非表示
     title: "NAVIA"
     color: "#333439"
+    property int currentMode: 1 //1: 気象情報 2: 地震情報 3: 火山情報 4: 設定
+    property bool meteMode: currentMode==1
+    property bool seisMode: currentMode==2
+    property bool volcMode: currentMode==3
+    property bool settingMode: currentMode==4
     //icon: "../materials/icon.svg"
     //flags: Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint
     property string currentDir: mainApp.getCurrentDir()
@@ -94,18 +99,7 @@ Window {
         infoLoader_VPTI50.item.initInfo()
         infoLoader_VPTI51.item.initInfo()
     }
-    //function onVZSA50Changed(){
-    //    vzsa50_miv.model = [];
-    //    vzsa50_miv.model = vzsa50GeoJson.features;
-    //}
-    //function onVZSF50Changed(){
-    //    vzsf50_miv.model = [];
-    //    vzsf50_miv.model = vzsf51GeoJson.features;
-    //}
-    //function onVZSF51Changed(){
-    //    vzsf51_miv.model = [];
-    //    vzsf51_miv.model = vzsf51GeoJson.features;
-    //}
+    
 
     function handleRegionClick(hierarchy, code, name) {
         var pref = timelineManager.getPrefName(hierarchy, code);
@@ -332,7 +326,19 @@ Window {
                     sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/市町村等（気象警報等）.geojson"
                 }
                 GeoJsonData {
-                    id: tsunami
+                    id: seis_pref
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/地震情報／都道府県等.geojson"
+                }
+                GeoJsonData {
+                    id: seis_class10
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/地震情報／細分区域.geojson"
+                }
+                GeoJsonData {
+                    id: seis_class20
+                    sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/市町村等（地震津波関係）.geojson"
+                }
+                GeoJsonData {
+                    id: seis_tsunami
                     sourceUrl: "file:///"+naviaWindow.currentDir+"/geo/津波予報区.geojson"
                 }
                 GeoJsonData {
@@ -445,35 +451,144 @@ Window {
                     }
                 }
 
+                Component {
+                    id: seisMapDelegate
+                    MapItemGroup {
+                        id: seis_mapgroup
+                        required property int index
+                        property int item_index: index
+                        property var item_model: seis_mapgroup.parent.model
+                        property string hierarchy: seis_mapgroup.parent.hierarchy
+                        property var polys: showMap(item_model, index)
+                        Repeater {
+                            model: polys
+                            delegate: MapPolygon {
+                                id: polygon
+                                path: modelData
+                                color: "#3F4045"
+                                border.width: 1
+                                border.color: "#ACB6BE"
+                                antialiasing: true
+                                MouseArea {
+                                    id: mouseArea
+                                    anchors.fill: parent
+                                    propagateComposedEvents: true
+                                    hoverEnabled: true
+                                    onClicked: (mouse) => {
+                                        // マウス座標を地図の地理座標に変換
+                                        var pointInMap = mouseArea.mapToItem(view, mouse.x, mouse.y);
+                                        var coordinate = view.toCoordinate(pointInMap, false);
+
+                                        if (isPointInPolygon(coordinate, modelData)) {
+                                            mouse.accepted = true
+                                            var feature = item_model[item_index];
+                                            //handleRegionClick(hierarchy, feature.properties.code, feature.properties.name) // Example hierarchy and code
+                                        } else {
+                                            mouse.accepted = false
+                                        }
+                                    }
+                                }
+                                function isPointInPolygon(point, polygon) {
+                                    let x = point.longitude;
+                                    let y = point.latitude;
+                                    let inside = false;
+
+                                    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                                        let xi = polygon[i].longitude, yi = polygon[i].latitude;
+                                        let xj = polygon[j].longitude, yj = polygon[j].latitude;
+
+                                        let intersect = ((yi > y) !== (yj > y)) &&
+                                            (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                                        if (intersect) inside = !inside;
+                                    }
+
+                                    return inside;
+                                }
+                            }
+                        }
+                        function showMap(model, j) {
+                            var paths = [];
+                            var path = [];
+                            if (model[j] && model[j].type == "Polygon") {
+                                var c = model[j].data.perimeter;
+                                for (var i = 0; i < c.length; i++) {
+                                    path.push(QtPositioning.coordinate(c[i].latitude, c[i].longitude));
+                                }
+                                paths.push(path);
+                            }
+                            if (model[j] && model[j].type == "MultiPolygon") {
+                                var polygons = model[j].data;
+                                for (var k = 0; k < polygons.length; k++) {
+                                    var c = model[j].data[k].data.perimeter;
+                                    for (var i = 0; i < c.length; i++) {
+                                        path.push(QtPositioning.coordinate(c[i].latitude, c[i].longitude));
+                                    }
+                                    paths.push(path);
+                                    path = [];
+                                }
+                            }
+                            return paths;
+                        }
+                    }
+                }
                 MapItemView {
                     id: pref_miv
                     model: pref.model.length > 0 ? pref.model[0].data : []
                     delegate: mapDelegate
-                    visible: view.zoomLevel < 6
+                    visible: meteMode && view.zoomLevel < 6 
                     property string hierarchy: "pref"
                 }
                 MapItemView {
                     id: class10_miv
                     model: class10.model.length >0 ? class10.model[0].data : []
                     delegate: mapDelegate
-                    visible: view.zoomLevel >= 6 && view.zoomLevel < 7
+                    visible: meteMode && view.zoomLevel >= 6 && view.zoomLevel < 7
                     property string hierarchy: "class10"
                 }
                 MapItemView {
                     id: class15_miv
                     model: class15.model.length >0 ? class15.model[0].data : []
                     delegate: mapDelegate
-                    visible: view.zoomLevel >= 7 && view.zoomLevel < 9
+                    visible: meteMode && view.zoomLevel >= 7 && view.zoomLevel < 9
                     property string hierarchy: "class15"
                 }
                 MapItemView {
                     id: class20_miv
                     model: class20.model.length >0 ? class20.model[0].data : []
                     delegate: mapDelegate
-                    visible: view.zoomLevel >= 9
+                    visible: meteMode && view.zoomLevel >= 9
                     property string hierarchy: "class20"
                 }
 
+
+                MapItemView {
+                    id: seis_pref_miv
+                    model: seis_pref.model.length > 0 ? seis_pref.model[0].data : []
+                    delegate: seisMapDelegate
+                    visible: seisMode && view.zoomLevel < 6 
+                    property string hierarchy: "pref"
+                }
+                MapItemView {
+                    id: seis_class20class10_miv
+                    model: seis_class10.model.length >0 ? seis_class10.model[0].data : []
+                    delegate: seisMapDelegate
+                    visible: seisMode && view.zoomLevel >= 6 && view.zoomLevel < 9
+                    property string hierarchy: "class10"
+                }
+
+                MapItemView {
+                    id: seis_class20_miv
+                    model: seis_class20.model.length >0 ? seis_class20.model[0].data : []
+                    delegate: seisMapDelegate
+                    visible: seisMode && view.zoomLevel >= 9
+                    property string hierarchy: "class20"
+                }
+                //MapItemView {
+                //    id: seis_tsunami_miv
+                //    model: seis_tsunami.model.length >0 ? seis_tsunami.model[0].data : []
+                //    delegate: seisMapDelegate
+                //    visible: seisMode
+                //}
                 MapItemView{
                     id: miv_world
                     model: world.model[0].data
@@ -521,39 +636,41 @@ Window {
                 //天気図
                 MapItemView{
                     id: vzsa50_miv
+                    visible: meteMode
                     model: [] // Initially empty, will be populated by Connections
                     delegate: Component { Vzsa50Delegate {} }
                     Component.onCompleted: {
                         onVzsa50StatusChanged()
                     }
                 }
-                Connections {
-                    target: timelineManager
-                    function onVzsa50StatusChanged() {
-                        vzsa50_miv.model = [];
-                        vzsa50_miv.model = timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0], mapComponent.vzsa50_switch[1]).features;
-                    }
-                }
+                //Connections {
+                //    target: timelineManager
+                //    function onVzsa50StatusChanged() {
+                //        vzsa50_miv.model = [];
+                //        vzsa50_miv.model = timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0], mapComponent.vzsa50_switch[1]).features;
+                //    }
+                //}
 
                 MapItemView{
                     id: vptw_miv
+                    visible: meteMode
                     model: [] // Initially empty, will be populated by Connections
                     delegate: Component { VptwDelegate {} }
                     Component.onCompleted: {
                         onVptwStatusChanged()
                     }
                 }
-                Connections {
-                    target: timelineManager
-                    function onVptwStatusChanged() {
-                        var eventid = timelineManager.getVPTWEventIDList("VPTW60")[0];
-                        if (eventid) {
-                            vptw_miv.model = timelineManager.getVPTWGeoJson("VPTW60", eventid, 0).features;
-                        } else {
-                            vptw_miv.model = [];
-                        }
-                    }
-                }
+                //Connections {
+                //    target: timelineManager
+                //    function onVptwStatusChanged() {
+                //        var eventid = timelineManager.getVPTWEventIDList("VPTW60")[0];
+                //        if (eventid) {
+                //            vptw_miv.model = timelineManager.getVPTWGeoJson("VPTW60", eventid, 0).features;
+                //        } else {
+                //            vptw_miv.model = [];
+                //        }
+                //    }
+                //}
                 //MapItemView{
                 //    id: miv2
                 //    model: tsunami.model[0].data
@@ -645,7 +762,7 @@ Window {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 width: 200
-                height: 70
+                height: 100
                 color: "#333439"
                 radius: 5
                 Column {
@@ -701,7 +818,7 @@ Window {
                     }
                 }
             }
-            Text {
+            Label {
                 id: loadingIndicator
                 anchors.centerIn: parent
                 text: "Loading..."
@@ -711,6 +828,51 @@ Window {
                 style: Text.Outline
                 styleColor: "black"
                 visible: false
+            }
+            Item {
+                id: menuTray
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                width: 120
+                height: 40
+                Row {
+                    spacing: 4
+                    Image {
+                        height: menuTray.height
+                        width: menuTray.height
+                        source: "../materials/settings.svg"
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked:{
+                                currentMode=4
+                            }
+                        }
+                    }
+                    Image {
+                        height: menuTray.height
+                        width: menuTray.height
+                        source: "../materials/mete_icon.svg"
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked:{
+                                currentMode=1
+                                infoTitle.text="気象情報"
+                            }
+                        }
+                    }
+                    Image {
+                        height: menuTray.height
+                        width: menuTray.height
+                        source: "../materials/seis_icon.svg"
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked:{
+                                currentMode=2
+                                infoTitle.text="地震情報"
+                            }
+                        }
+                    }
+                }
             }
         }
     }
