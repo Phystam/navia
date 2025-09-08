@@ -931,62 +931,65 @@ Window {
                     id: contentColumn
                     width: parent.width
                     spacing: 5
-                    
+                    //気象情報
                     Loader {
                         id: infoLoader_VPFD51
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
                     }
                     Loader {
                         id: infoLoader_VXWW50
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
                     }
                     Loader {
                         id: infoLoader_VPWW54
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
                     }
                     
                     Loader {
                         id: infoLoader_VPHW51
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
                     }
                     Loader {
                         id: infoLoader_VPOA50
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
                     }
                     Loader {
                         id: infoLoader_VPFJ50
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
                     }
                     Loader {
                         id: infoLoader_VPFG50
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
                     }
-
-                    
                     Loader {
                         id: infoLoader_VPTI50
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
-                    }Loader {
+                    }
+                    Loader {
                         id: infoLoader_VPTI51
+                        visible: naviaWindow.meteMode
                         source: "infoText_component.qml"
                         width: parent.width
-                        //height: item ? item.height : 0
+                    }
+                    //地震情報
+                    SeisComponent {
+                        visible: naviaWindow.seisMode
                     }
                 }
             }
