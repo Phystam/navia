@@ -65,10 +65,6 @@ MapItemGroup {
                         text: "強さ:\t"+modelData.properties.intensity_class
                     }
                     Text{
-                        visible: modelData.properties.intensity_class !=""
-                        text: "強さ:\t"+modelData.properties.intensity_class
-                    }
-                    Text{
                         visible: modelData.properties.location !=""
                         text: "位置:\t"+modelData.properties.location
                     }

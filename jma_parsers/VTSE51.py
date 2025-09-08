@@ -10,10 +10,10 @@ class VTSE51(BaseJMAParser):
         """
         気象警報 (VPWW54) のXMLを解析します。
         """
-        print(f"気象警報 ({self.data_type}) を解析中...")
+        print(f"地震情報 ({data_type_code}) を解析中...")
         parsed_data = {}
         parsed_data['category']="seismology"
-        parsed_data["data_type"]=self.data_type
+        parsed_data["data_type"]=data_type_code
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Control/jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
