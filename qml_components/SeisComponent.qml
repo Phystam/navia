@@ -7,26 +7,9 @@ Rectangle {
     color: "#232427"
     radius: 3
     property var textColor: "#ffffff"
-    property string dateTimeText: "2025/10/11 21:34:50"
-    property string headTitleText: "三重県南東沖"
-    property string headTitleText2: "深さ30km M4.2"
-    property string headlineText: "aaa"
-    property string bodyText: "aaa"
-    property var logoListModel: null
-    property bool expanded: false
-    property string maxintensity: "1"
+    
     width: parent ? parent.width : 400
     height: seisColumn.height
-    visible: headTitleText !== ""
-    
-    function initInfo(){
-        dateTimeText=""
-        headTitleText=""
-        headlineText=""
-        bodyText=""
-        logoListModel=null
-        expanded=false
-    }
     //Column {
     //    //width: parent.width
     //    //height: seisSection.expanded ? childrenRect.height : 0
@@ -34,32 +17,39 @@ Rectangle {
     Row{
         id: titleRow
         spacing: 2
+        property string dateTimeText: "2025/10/11 21:34:50"
+        property string headTitleText: "三重県南東沖 深さ30km M4.2"
+        property string headlineText: "aaa"
+        property string bodyText: "aaa"
+        property var logoListModel: null
+        property bool expanded: false
+        property string maxintensity: "1"
+        function initInfo(){
+            dateTimeText=""
+            headTitleText=""
+            headlineText=""
+            bodyText=""
+            logoListModel=null
+            expanded=false
+        }
         Image {
             id: seisImage
-            height:45*1.5
-            width:40*1.5
-            source: "../materials/seis"+seisSection.maxintensity+".svg"
+            height:45
+            width:40
+            source: "../materials/seis"+titleRow.maxintensity+".svg"
         }
         Column {
             id: seisColumn
-            spacing: 1
+            spacing: 3
             width: parent.width-seisImage.width-titleRow.spacing
             Text {
-                text: seisSection.dateTimeText
+                text: titleRow.dateTimeText
                 font.pixelSize: 12
                 font.bold: false
                 color: seisSection.textColor
             }
             Text {
-                text: seisSection.headTitleText
-                font.pixelSize: 20
-                font.bold: true
-                width: parent.width
-                wrapMode: Text.WrapAnywhere
-                color: seisSection.textColor
-            }
-            Text {
-                text: seisSection.headTitleText2
+                text: titleRow.headTitleText
                 font.pixelSize: 20
                 font.bold: true
                 width: parent.width
