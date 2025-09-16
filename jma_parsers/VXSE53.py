@@ -11,12 +11,12 @@ class VXSE53(BaseJMAParser):
         """
         地震情報 (VXSE53) のXMLを解析します。
         """
-        print(f"地震情報 ({data_type_code}) を解析中...")
         shindo_codelist = {"震度７": "7",
                        "震度６強": "6+",
                        "震度６弱": "6-",
                        "震度５強": "5+",
                        "震度５弱": "5-",
+                       "震度５弱以上未入電": "5-+",
                        "震度４": "4",
                        "震度３": "3",
                        "震度２": "2",
@@ -30,6 +30,7 @@ class VXSE53(BaseJMAParser):
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
         parsed_data['event_id']=self._get_text(xml_tree, '//jmx_ib:EventID/text()', namespaces)
         parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst)
+        parsed_data['event_id']=self._get_text(xml_tree, '//jmx_ib:EventID/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
@@ -59,6 +60,12 @@ class VXSE53(BaseJMAParser):
                 inten[shindo]['area'].append(area)
                 inten[shindo]['code'].append(areacode)
         parsed_data['shindo_list']=inten
+        parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
+
+        parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
+        parsed_data['magnitude'] = self._get_text(xml_tree, '//jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces)
+        
+        parsed_data['coordinates'] = self._get_coordinates(xml_tree, '//jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):
@@ -74,6 +81,7 @@ class VXSE53(BaseJMAParser):
                        "震度６弱": "6-",
                        "震度５強": "5+",
                        "震度５弱": "5-",
+                       "震度５弱以上未入電": "5-+",
                        "震度４": "4",
                        "震度３": "3",
                        "震度２": "2",
