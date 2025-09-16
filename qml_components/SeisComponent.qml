@@ -8,16 +8,14 @@ Rectangle {
     radius: 3
     property var textColor: "#ffffff"
     property string dateTimeText: "2025/10/11 21:34:50"
-    property string headTitleText: "三重県南東沖"
-    property string headTitleText2: "深さ30km M4.2"
+    property string headTitleText: "三重県南東沖 深さ30km"
     property string headlineText: "aaa"
     property string bodyText: "aaa"
     property var logoListModel: null
     property bool expanded: false
     property string maxintensity: "1"
     width: parent ? parent.width : 400
-    height: seisColumn.height
-    visible: headTitleText !== ""
+    height: childrenRect.height
     
     function initInfo(){
         dateTimeText=""
@@ -31,50 +29,97 @@ Rectangle {
     //    //width: parent.width
     //    //height: seisSection.expanded ? childrenRect.height : 0
     //    //clip: true
-    Row{
-        id: titleRow
-        spacing: 2
-        Image {
-            id: seisImage
-            height:45*1.5
-            width:40*1.5
-            source: "../materials/seis"+seisSection.maxintensity+".svg"
+    Column {
+        id: seisColumn
+        spacing: 0
+        width: parent.width
+        height: childrenRect.height
+        clip: true
+        Item {
+            width: parent.width
+            height: childrenRect.height
+            Row{
+                id: titleRow
+                spacing: 2
+                width: parent.width
+                height: childrenRect.height
+                Image {
+                    id: seisImage
+                    height:titleColumn.height
+                    width:height*0.8
+                    source: "../materials/seis"+seisSection.maxintensity+".svg"
+                }
+                Column {
+                    id: titleColumn
+                    spacing: 1
+                    width: parent.width - seisImage.width - titleRow.spacing*4 - magUnit.width - magValue.width
+                    Text {
+                        text: seisSection.dateTimeText
+                        font.pixelSize: 12
+                        font.bold: false
+                        color: seisSection.textColor
+                    }
+                    Text {
+                        text: seisSection.headTitleText
+                        font.pixelSize: 20
+                        font.bold: true
+                        width: parent.width
+                        wrapMode: Text.WrapAnywhere
+                        color: seisSection.textColor
+                    }
+                }
+                Text {
+                    id: magUnit
+                    color: seisSection.textColor
+                    font.pixelSize: 18
+                    //anchors.right: magValue.left
+                    //anchors.bottom: parent.bottom
+                    //anchors.margins: 2
+                    text: "Mj"
+                }
+                Text {
+                    id: magValue
+                    color: seisSection.textColor
+                    font.bold: true
+                    font.pixelSize: 30
+                    //anchors.right: parent.right
+                    //anchors.bottom: parent.bottom
+                    //anchors.margins: 2
+
+                    text: "2.5"
+                }
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    seisSection.expanded = !seisSection.expanded
+                    seisInfo.expanded = false
+                }
+            }
         }
         Column {
-            id: seisColumn
-            spacing: 1
-            width: parent.width-seisImage.width-titleRow.spacing
-            Text {
-                text: seisSection.dateTimeText
-                font.pixelSize: 12
-                font.bold: false
-                color: seisSection.textColor
+            width: parent.width
+            height: seisSection.expanded ? childrenRect.height : 0
+            clip: true
+            Behavior on height {
+                NumberAnimation {
+                    duration: 300
+                    easing.type: Easing.InOutQuad
+                }
             }
-            Text {
-                text: seisSection.headTitleText
-                font.pixelSize: 20
-                font.bold: true
+            Rectangle {
+                //visible: seisSection.expanded
                 width: parent.width
-                wrapMode: Text.WrapAnywhere
-                color: seisSection.textColor
+                height: seisSection.expanded ? 2 : 0
+                color: "gray"
             }
-            Text {
-                text: seisSection.headTitleText2
-                font.pixelSize: 20
-                font.bold: true
-                width: parent.width
-                wrapMode: Text.WrapAnywhere
-                color: seisSection.textColor
+            SeisInfoText {
+                id: seisInfo
+                height: seisSection.expanded ? childrenRect.height : 0
             }
         }
     }
-
-    //}
-
-    MouseArea {
-        anchors.fill: parent
-        onClicked: seisSection.expanded = !seisSection.expanded
-    }
+    
 }
     //    Behavior on height {
     //        NumberAnimation {

@@ -1,5 +1,6 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
+from datetime import datetime,timedelta
 
 class VXSE53(BaseJMAParser):
     def __init__(self, parent=None):
@@ -10,28 +11,54 @@ class VXSE53(BaseJMAParser):
         """
         地震情報 (VXSE53) のXMLを解析します。
         """
-        print(f"地震情報 ({self.data_type}) を解析中...")
+        print(f"地震情報 ({data_type_code}) を解析中...")
+        shindo_codelist = {"震度７": "7",
+                       "震度６強": "6+",
+                       "震度６弱": "6-",
+                       "震度５強": "5+",
+                       "震度５弱": "5-",
+                       "震度４": "4",
+                       "震度３": "3",
+                       "震度２": "2",
+                       "震度１": "1"
+                       }
         parsed_data = {}
         parsed_data['category']="seismology"
-        parsed_data["data_type"]=self.data_type
+        parsed_data["data_type"]=data_type_code
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Control/jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        parsed_data['event_id']=self._get_text(xml_tree, '//jmx_ib:EventID/text()', namespaces)
+        parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
         parsed_data['headline_text'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        parsed_data['origintime']=self._get_datetime(xml_tree, '//jmx_seis:OriginTime/text()', namespaces)
         # Body/Earthquake/Hypocenter/Area/Name (震央地名)
-        parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
-        # Body/Earthquake/Magnitude/@description (マグニチュードの説明)
-        parsed_data['magnitude_description'] = self._get_attribute(xml_tree, '//jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/@description', namespaces)
-        # Body/Earthquake/Magnitude/Value (マグニチュードの値)
-        parsed_data['magnitude_value'] = self._get_text(xml_tree, '//jmx_seis:Body/jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces)
-        # Body/Intensity/Observation/MaxInt (最大震度)
-        parsed_data['max_intensity'] = self._get_text(xml_tree, '//jmx_seis:Body/jmx_seis:Intensity/jmx_seis:Observation/jmx_seis:MaxInt/text()', namespaces)
-        # Body/Comments/ForecastComment/Text (津波の心配など)
-        parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:Body/jmx_seis:Comments/jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
-
+        parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
+        parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Hypocenter//jmx_seis:Name/text()', namespaces)
+        parsed_data['hypocenter_coordinate'] = self._get_coordinates(xml_tree, '//jmx_seis:Hypocenter//jmx_eb:Coordinate/text()', namespaces)[0]
+        parsed_data['hypocenter_depth']="ごく浅い" if -int(parsed_data['hypocenter_coordinate']['altitude']/1000)==0 else f"{-int(parsed_data['hypocenter_coordinate']['altitude']/1000)}km"
+        parsed_data['magnitude_type'] = self._get_attribute(xml_tree, '//jmx_eb:Magnitude/@type', namespaces)
+        parsed_data['magnitude'] = self._get_text(xml_tree, '//jmx_eb:Magnitude/text()', namespaces)
+        type_city='"震源・震度に関する情報（市町村等）"'
+        itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item',namespaces)
+        lenitem=len(itemelements)
+        inten={}
+        for i in range(lenitem):
+            shindo = shindo_codelist[ self._get_text(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Name/text()',namespaces) ]
+            areaselements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]//jmx_ib:Area',namespaces)
+            
+            inten[shindo]={}
+            inten[shindo]['area']=[]
+            inten[shindo]['code']=[]
+            for j in range(len(areaselements)):
+                area = self._get_text(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]//jmx_ib:Area[{j+1}]/jmx_ib:Name/text()',namespaces)
+                areacode = self._get_text(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]//jmx_ib:Area[{j+1}]/jmx_ib:Code/text()',namespaces)
+                inten[shindo]['area'].append(area)
+                inten[shindo]['code'].append(areacode)
+        parsed_data['shindo_list']=inten
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):
@@ -68,9 +95,12 @@ class VXSE53(BaseJMAParser):
         
         coordinates = self._get_coordinates(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
         comment = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
-        print(coordinates)
+        depth=-int(coordinates[0]['altitude']/1000)
         if coordinates[0]['altitude'] is not None:
-            message=f"震源は{hypocenter_name} 深さ{-int(coordinates[0]['altitude']/1000)}km マグニチュード{magnitude_value} 最大震度 {max_intensity}"
+            if depth==0:
+                message=f"震源は{hypocenter_name} 深さはごく浅い マグニチュード{magnitude_value} 最大震度 {max_intensity}"
+            else:
+                message=f"震源は{hypocenter_name} 深さ{-int(coordinates[0]['altitude']/1000)}km マグニチュード{magnitude_value} 最大震度 {max_intensity}"
         else:
             message=f"震源は{hypocenter_name} マグニチュード{magnitude_value} 最大震度 {max_intensity}"
         logo_list.append(["", ""])

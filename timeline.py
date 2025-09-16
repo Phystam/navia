@@ -200,6 +200,9 @@ class TimelineManager(QObject):
         if data["data_type"]=="VPTI50" or data["data_type"]=="VPTI51":
             self.VPTI51(id,data)
             
+        if data["data_type"]=="VXSE53":
+            self.VXSE53(id,data)
+            
 
             
     def VPWW54(self,id,data):
@@ -356,7 +359,21 @@ class TimelineManager(QObject):
         
         print(self.mete_status[datatype])
         
-    
+    def VXSE53(self,id,data):
+        datatype=data["data_type"]
+        dt=data["report_datetime"]
+        ot=data["origintime"]
+        hn=data['hypocenter_name']
+        dp=data["hypocenter_depth"]
+        mt=data['magnitude_type']
+        mg=data['magnitude']
+        event_id=data["event_id"]
+        if event_id not in self.seis_status:
+            self.seis_status[event_id]=[]
+        self.seis_status[event_id].append({"updated": dt, "origintime":ot, "id": id, "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_type": mt, "magnitude": mg})
+        self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=True)
+        print(self.seis_status[event_id])
+        
     def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
         child_hier=self.getChild(hier)
         if child_hier=="":
@@ -1059,6 +1076,66 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
+    
+    @Slot(str,str,int,result=str)
+    def getVPTI51Updated(self, data_type,event_id,index):
+        """指定された階層とコードの警報レベルを取得する"""
+        try:
+            dt: datetime.datetime =self.mete_status[data_type][event_id][index]["updated"]
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
+        except KeyError:
+            return ""
+        except:
+            return ""
+    @Slot(str,str,int,result=str)
+    def getVPTI51Title(self, data_type,event_id,index):
+        """情報IDを取得"""
+        try:
+            id=self.getVPTI51ID(data_type,event_id,index)
+            return self.mete_timeline[id]["head_title"]
+            
+        except KeyError:
+            return ""
+        
+    @Slot(str,str,int,result=str)
+    def getVPTI51HeadlineText(self, data_type,event_id,index):
+        """情報IDを取得"""
+        try:
+            id=self.getVPTI51ID(data_type,event_id,index)
+            return self.mete_timeline[id]["headline_text"]
+            
+        except KeyError:
+            return ""
+    @Slot(str,str,int,result=str)
+    def getVPTI51BodyText(self, data_type,event_id,index):
+        """情報IDを取得"""
+        try:
+            id=self.getVPTI51ID(data_type,event_id,index)
+            return self.mete_timeline[id]["body_text"]
+            
+        except KeyError:
+            return ""
+    @Slot(str,result=list)
+    def getVPTI51EventIDList(self, data_type):
+        """情報IDを取得"""
+        list1=self.mete_status[data_type].keys()
+        print(list1)
+        return list(self.mete_status[data_type].keys())
+    
+    
+    #地震情報
+    @Slot(result=list)
+    def getSeisList(self):
+        """情報IDを取得"""
+        try:
+            return self.seis_status.keys()
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return []
     
     @Slot(str,str,int,result=str)
     def getVPTI51Updated(self, data_type,event_id,index):

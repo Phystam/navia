@@ -15,11 +15,16 @@ class VTSE51(BaseJMAParser):
         parsed_data['category']="seismology"
         parsed_data["data_type"]=data_type_code
         # Control/Title
-        parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Control/jmx:Title/text()', namespaces)
-        parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Title/text()', namespaces)
+        parsed_data['status'] = self._get_text(xml_tree, '//jmx:Status/text()', namespaces)
+        parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:PublishingOffice/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Title/text()', namespaces)
-
+        parsed_data['event_id'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:EventID/text()', namespaces)
+        parsed_data['report_datetime'] = self._get_datetime(xml_tree, '//jmx_ib:Head/jmx_ib:ReportDateTime/text()', namespaces)
+        parsed_data['target_datetime'] = self._get_datetime(xml_tree, '//jmx_ib:Head/jmx_ib:TargetDateTime/text()', namespaces)
+        parsed_data['serial'] = self._get_datetime(xml_tree, '//jmx_ib:Head/jmx_ib:Serial/text()', namespaces)
+        
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):
