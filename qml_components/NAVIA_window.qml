@@ -26,6 +26,7 @@ Window {
         //timelineManager.vzsf50StatusChanged.connect(onVZSF50Changed);
         //timelineManager.vzsf51StatusChanged.connect(onVZSF51Changed);
         timelineManager.vptwStatusChanged.connect(onVptwStatusChanged);
+        timelineManager.seisStatusChanged.connect(onSeisStatusChanged)
     }
     
     ListModel {
@@ -83,6 +84,10 @@ Window {
         } else {
             vptw_miv.model = [];
         }
+    }
+    function onSeisStatusChanged(){
+        seisRepeater.model = [];
+        seisRepeater.model = timelineManager.getSeisEventIDList()
     }
 
     function initMessages(){
@@ -989,8 +994,9 @@ Window {
                     }
                     //地震情報
                     Repeater {
+                        id: seisRepeater
                         visible: naviaWindow.seisMode
-                        model: timelineManager.getSeisEventIDList()
+                        model: []
                         delegate: SeisComponent {
                             required property var modelData
                             visible: naviaWindow.seisMode
@@ -1000,6 +1006,10 @@ Window {
                             headTitleText: timelineManager.getSeisEventLatestInfo(modelData,"hypocenter_name")+" 深さ"+timelineManager.getSeisEventLatestInfo(modelData,"hypocenter_depth")
                             //magUnit: timelineManager.getSeisEventLatestInfo(modelData,"magnitude_unit")
                             magText: timelineManager.getSeisEventLatestInfo(modelData,"magnitude")
+                        }
+                        Component.onCompleted: {
+                            model = timelineManager.getSeisEventIDList();
+                            console.log(model)
                         }
                     }
                 }

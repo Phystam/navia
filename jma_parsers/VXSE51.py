@@ -1,6 +1,6 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
-
+from datetime import datetime,timedelta
 class VXSE51(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -28,13 +28,16 @@ class VXSE51(BaseJMAParser):
         parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Control/jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
         parsed_data['event_id']=self._get_text(xml_tree, '//jmx_ib:EventID/text()', namespaces)
+        parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst)
+        parsed_data['event_id']=self._get_text(xml_tree, '//jmx_ib:EventID/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
         parsed_data['headline_text'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        # Body/Earthquake/Hypocenter/Area/Name (震央地名)
         parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
-        len_item=self._get_elements(xml_tree,f'//jmx_ib:Item')
+        parsed_data['origintime']=self._get_datetime(xml_tree, '//jmx_seis:OriginTime/text()', namespaces)
+        parsed_data['max_intensity'] = self._get_text(xml_tree, '//jmx_seis:MaxInt/text()', namespaces)
+        len_item=self._get_elements(xml_tree,f'//jmx_ib:Item',namespaces)
         itemelements = self._get_elements(xml_tree, f'//jmx_ib:Item',namespaces)
         lenitem=len(itemelements)
         parsed_data['shindo_list']={}

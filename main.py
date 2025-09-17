@@ -200,7 +200,7 @@ class MainApp(QObject):
         #entry_data=R"jmaxml_20250710_Samples/17_01_01_190529_VXWW50.xml"
         #entry_data=R"jmaxml_20250710_Samples/18_01_01_100806_VPOA50.xml"
         #entry_data=R"jmaxml_20250710_Samples/32-35_08_07_240613_VXSE53.xml"
-        entry_data=R"jmaxml_20250710_Samples/10_04_03_170913_VPTW60.xml"
+        entry_data=R"jmaxml_20250710_Samples/43_02_01_200522_VFVO52.xml"
         with open(entry_data,"rb") as f:
             dataname=entry_data[-10:-4]
             print(dataname)

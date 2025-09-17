@@ -129,7 +129,7 @@ class AxisManager(QObject):
             soundlist=[]
             textlist.append(["<i><b>NHK</b></i><b> ニュース速報</b>",""])
             logolist.append(["",""])
-            soundlist.append("./sounds/BreakingNews_sample.wav")
+            soundlist.append("./sounds/nhk_news.wav")
             len_texts=len(texts)
             print(len_texts)
             if len_texts % 2 == 1:

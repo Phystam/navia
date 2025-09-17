@@ -10,6 +10,7 @@ class TimelineManager(QObject):
     vzsf50StatusChanged = Signal()
     vzsf51StatusChanged = Signal()
     vptwStatusChanged = Signal()
+    seisStatusChanged = Signal()
     def __init__(self,parent=None):
         super().__init__(parent)
         """タイムラインデータを管理するクラス"""
@@ -199,9 +200,19 @@ class TimelineManager(QObject):
         
         if data["data_type"]=="VPTI50" or data["data_type"]=="VPTI51":
             self.VPTI51(id,data)
-            
+
+        if data["data_type"]=="VXSE51":
+            self.VXSE51(id,data)
+            self.seisStatusChanged.emit()
+        if data["data_type"]=="VXSE52":
+            self.VXSE52(id,data)
+            self.seisStatusChanged.emit()
         if data["data_type"]=="VXSE53":
             self.VXSE53(id,data)
+            self.seisStatusChanged.emit()
+        if data["data_type"]=="VXSE61":
+            self.VXSE61(id,data)
+            self.seisStatusChanged.emit()
             
 
             
@@ -358,6 +369,38 @@ class TimelineManager(QObject):
         self.mete_status[datatype][event_id]=sorted(self.mete_status[datatype][event_id],key=lambda s: s["updated"], reverse=True)
         
         print(self.mete_status[datatype])
+
+    def VXSE51(self,id,data):
+        datatype=data["data_type"]
+        dt=data["report_datetime"]
+        ot=data["origintime"]
+        #hn=data['hypocenter_name']
+        sh=data['max_intensity']
+        #dp=data["hypocenter_depth"]
+        #mt=data['magnitude_type']
+        #mg=data['magnitude']
+        event_id=data["event_id"]
+        if event_id not in self.seis_status:
+            self.seis_status[event_id]=[]
+        self.seis_status[event_id].insert(0,{"updated": dt, "origintime":ot, "id": id, "max_intensity": sh, "hypocenter_name": "", "hypocenter_depth": "", "magnitude_unit": "", "magnitude": ""})
+        #self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=False)
+        print(self.seis_status[event_id])
+        
+    def VXSE52(self,id,data):
+        datatype=data["data_type"]
+        dt=data["report_datetime"]
+        ot=data["origintime"]
+        hn=data['hypocenter_name']
+        #sh=data['max_intensity']
+        dp=data["hypocenter_depth"]
+        mt=data['magnitude_type']
+        mg=data['magnitude']
+        event_id=data["event_id"]
+        if event_id not in self.seis_status:
+            self.seis_status[event_id]=[]
+        self.seis_status[event_id].insert(0,{"updated": dt, "origintime":ot, "id": id, "max_intensity": "", "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_unit": mt, "magnitude": mg})
+        #self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=False)
+        print(self.seis_status[event_id])
         
     def VXSE53(self,id,data):
         datatype=data["data_type"]
@@ -371,9 +414,23 @@ class TimelineManager(QObject):
         event_id=data["event_id"]
         if event_id not in self.seis_status:
             self.seis_status[event_id]=[]
-        self.seis_status[event_id].append({"updated": dt, "origintime":ot, "id": id, "max_intensity": sh, "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_unit": mt, "magnitude": mg})
-        self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["origintime"], reverse=True)
-        #self.seis_status=dict(sorted(self.seis_status.items(), key=lambda s: s[1]["origintime"]))
+        self.seis_status[event_id].insert(0,{"updated": dt, "origintime":ot, "id": id, "max_intensity": sh, "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_unit": mt, "magnitude": mg})
+        #self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=False)
+        print(self.seis_status[event_id])
+        
+    def VXSE61(self,id,data):
+        datatype=data["data_type"]
+        dt=data["report_datetime"]
+        ot=data["origintime"]
+        hn=data['hypocenter_name']
+        dp=data["hypocenter_depth"]
+        mt=data['magnitude_type']
+        mg=data['magnitude']
+        event_id=data["event_id"]
+        if event_id not in self.seis_status:
+            self.seis_status[event_id]=[]
+        self.seis_status[event_id].insert(0,{"updated": dt, "origintime":ot, "id": id, "max_intensity": "", "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_unit": mt, "magnitude": mg})
+        #self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=False)
         print(self.seis_status[event_id])
         
     def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
@@ -1148,7 +1205,9 @@ class TimelineManager(QObject):
             sorted_ids=[]
             sorted_key=[]
             for event_id in event_ids:
-                ot:datetime.datetime=self.seis_status[event_id][0]["origintime"]
+                ot=self.seis_status[event_id][0]["origintime"]
+                if ot.tzinfo is None:
+                    ot = ot.replace(tzinfo=self.jst)
                 if len(sorted_ids)==0:
                     sorted_ids.append(event_id)
                     sorted_key.append(ot)
@@ -1178,8 +1237,13 @@ class TimelineManager(QObject):
     def getSeisEventLatestInfo(self,event_id,property1):
         """情報IDを取得"""
         try:
-            #event_ids=self.seis_status.keys()
-            return self.seis_status[event_id][0][property1]
+            for info in self.seis_status[event_id]:
+                value=info[property1]
+                if value!="":
+                    return value
+                else:
+                    continue
+            return ""
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
