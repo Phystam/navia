@@ -181,7 +181,7 @@ class JMADataFetcher(QObject):
                 try:
                     id_datetime = datetime.datetime.strptime(id_date, "%Y%m%d%H%M%S")
                     now=datetime.datetime.now()
-                    yesterday = now - datetime.timedelta(days=1)
+                    yesterday = now - datetime.timedelta(days=2)
                     if id_datetime > yesterday:
                         with open(os.path.join(self.data_dir, filename), 'rb') as f:
                             try:
@@ -362,7 +362,7 @@ class JMADataFetcher(QObject):
             with open(output_filename, 'wb') as f:
                 f.write(zstd.compress(report_xml_content))
                 print(f"圧縮データを保存しました: {output_filename}")
-        if not test:    
+        if not test:
             self.downloaded_ids.add(entry_data['id'])
 
         # データタイプに基づいて適切なパーサーに処理を振り分け

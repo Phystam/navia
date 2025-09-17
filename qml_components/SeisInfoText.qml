@@ -14,6 +14,8 @@ Rectangle {
     property var logoTextModel: null
     property var logoListModel: null
     property bool expanded: false
+    property var seisLogoListModel: null
+    property var seisTextListModel: null
     width: parent ? parent.width : 400
     height: childrenRect.height
     visible: headTitleText !== ""
@@ -77,7 +79,7 @@ Rectangle {
 
             Rectangle {
                 width: parent.width
-                height: 2
+                height: 1
                 color: "gray"
             }
             Text {
@@ -94,6 +96,9 @@ Rectangle {
                 visible: infoSection.bodyText != ""
                 color: infoSection.textColor
             }
+            //Repeater {
+            //    
+            //}
         }
     }
 

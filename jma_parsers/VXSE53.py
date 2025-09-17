@@ -35,9 +35,10 @@ class VXSE53(BaseJMAParser):
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
         parsed_data['headline_text'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
+        parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
         parsed_data['origintime']=self._get_datetime(xml_tree, '//jmx_seis:OriginTime/text()', namespaces)
         # Body/Earthquake/Hypocenter/Area/Name (震央地名)
-        parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
+        parsed_data['max_intensity'] = self._get_text(xml_tree, '//jmx_seis:MaxInt/text()', namespaces)
         parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Hypocenter//jmx_seis:Name/text()', namespaces)
         parsed_data['hypocenter_coordinate'] = self._get_coordinates(xml_tree, '//jmx_seis:Hypocenter//jmx_eb:Coordinate/text()', namespaces)[0]
         parsed_data['hypocenter_depth']="ごく浅い" if -int(parsed_data['hypocenter_coordinate']['altitude']/1000)==0 else f"{-int(parsed_data['hypocenter_coordinate']['altitude']/1000)}km"

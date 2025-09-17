@@ -988,8 +988,19 @@ Window {
                         width: parent.width
                     }
                     //地震情報
-                    SeisComponent {
+                    Repeater {
                         visible: naviaWindow.seisMode
+                        model: timelineManager.getSeisEventIDList()
+                        delegate: SeisComponent {
+                            required property var modelData
+                            visible: naviaWindow.seisMode
+                            eventID: modelData
+                            maxintensity: timelineManager.getSeisEventLatestInfo(modelData,"max_intensity")
+                            dateTimeText: timelineManager.getSeisEventOriginTime(modelData)
+                            headTitleText: timelineManager.getSeisEventLatestInfo(modelData,"hypocenter_name")+" 深さ"+timelineManager.getSeisEventLatestInfo(modelData,"hypocenter_depth")
+                            //magUnit: timelineManager.getSeisEventLatestInfo(modelData,"magnitude_unit")
+                            magText: timelineManager.getSeisEventLatestInfo(modelData,"magnitude")
+                        }
                     }
                 }
             }

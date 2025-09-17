@@ -7,10 +7,11 @@ Rectangle {
     color: "#232427"
     radius: 3
     property var textColor: "#ffffff"
+    property string eventID: ""
     property string dateTimeText: "2025/10/11 21:34:50"
     property string headTitleText: "三重県南東沖 深さ30km"
-    property string headlineText: "aaa"
-    property string bodyText: "aaa"
+    property string magUnitText: "Mj"
+    property string magText: "3.0"
     property var logoListModel: null
     property bool expanded: false
     property string maxintensity: "1"
@@ -21,7 +22,8 @@ Rectangle {
         dateTimeText=""
         headTitleText=""
         headlineText=""
-        bodyText=""
+        magUnitText="Mj"
+        magText=""
         logoListModel=null
         expanded=false
     }
@@ -72,32 +74,31 @@ Rectangle {
                     id: magUnit
                     color: seisSection.textColor
                     font.pixelSize: 18
-                    //anchors.right: magValue.left
-                    //anchors.bottom: parent.bottom
-                    //anchors.margins: 2
-                    text: "Mj"
+                    text: magUnitText
                 }
                 Text {
                     id: magValue
                     color: seisSection.textColor
                     font.bold: true
                     font.pixelSize: 30
-                    //anchors.right: parent.right
-                    //anchors.bottom: parent.bottom
-                    //anchors.margins: 2
-
-                    text: "2.5"
+                    text: magText
                 }
             }
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
                     seisSection.expanded = !seisSection.expanded
-                    seisInfo.expanded = false
+                    //seisInfoColumn.expanded = false
                 }
             }
         }
+        Rectangle {
+                width: parent.width
+                height: seisSection.expanded ? 2 : 0
+                color: "gray"
+        }
         Column {
+            id: seisInfoColumn
             width: parent.width
             height: seisSection.expanded ? childrenRect.height : 0
             clip: true
@@ -107,60 +108,16 @@ Rectangle {
                     easing.type: Easing.InOutQuad
                 }
             }
-            Rectangle {
-                //visible: seisSection.expanded
-                width: parent.width
-                height: seisSection.expanded ? 2 : 0
-                color: "gray"
-            }
-            SeisInfoText {
-                id: seisInfo
-                height: seisSection.expanded ? childrenRect.height : 0
+            Repeater {
+                model: timelineManager.getSeisEventIDIDList(eventID)
+                delegate: SeisInfoText {
+                    required property var modelData
+                    dateTimeText: timelineManager.getSeisTimelineReportTime(modelData)
+                    headTitleText: timelineManager.getSeisTimelineData(modelData,"head_title")
+                    headlineText: timelineManager.getSeisTimelineData(modelData,"headline_text")+timelineManager.getSeisTimelineData(modelData,"forecast_comment")
+                    height: seisSection.expanded ? childrenRect.height : 0
+                }
             }
         }
     }
-    
 }
-    //    Behavior on height {
-    //        NumberAnimation {
-    //            duration: 300
-    //            easing.type: Easing.InOutQuad
-    //        }
-    //    }
-//
-    //    Rectangle {
-    //        width: parent.width
-    //        height: 2
-    //        color: "gray"
-    //    }
-    //    Text {
-    //        text: seisSection.headlineText
-    //        width: parent.width
-    //        wrapMode: Text.WrapAnywhere
-    //        visible: seisSection.headlineText != ""
-    //        color: seisSection.textColor
-    //    }
-    //    Text {
-    //        text: seisSection.bodyText
-    //        width: parent.width
-    //        wrapMode: Text.WrapAnywhere
-    //        visible: seisSection.bodyText != ""
-    //        color: seisSection.textColor
-    //    }
-
-
-        //Row {
-        //    visible: infoSection.logoListModel && (infoSection.logoListModel.count > 0 || infoSection.headTitleText.text !=="")
-        //    height: visible ? 22 : 0
-        //    width: parent.width
-        //    spacing: 4
-        //    Repeater {
-        //        model: infoSection.logoListModel
-        //        Image {
-        //            height: parent.height
-        //            fillMode: Image.PreserveAspectFit
-        //            source: model.value
-        //            antialiasing: true
-        //        }
-        //    }
-        //}

@@ -364,14 +364,16 @@ class TimelineManager(QObject):
         dt=data["report_datetime"]
         ot=data["origintime"]
         hn=data['hypocenter_name']
+        sh=data['max_intensity']
         dp=data["hypocenter_depth"]
         mt=data['magnitude_type']
         mg=data['magnitude']
         event_id=data["event_id"]
         if event_id not in self.seis_status:
             self.seis_status[event_id]=[]
-        self.seis_status[event_id].append({"updated": dt, "origintime":ot, "id": id, "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_type": mt, "magnitude": mg})
-        self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=True)
+        self.seis_status[event_id].append({"updated": dt, "origintime":ot, "id": id, "max_intensity": sh, "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_unit": mt, "magnitude": mg})
+        self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["origintime"], reverse=True)
+        #self.seis_status=dict(sorted(self.seis_status.items(), key=lambda s: s[1]["origintime"]))
         print(self.seis_status[event_id])
         
     def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
@@ -1128,60 +1130,100 @@ class TimelineManager(QObject):
     
     
     #地震情報
-    @Slot(result=list)
-    def getSeisList(self):
+    @Slot(result=dict)
+    def getSeisStatus(self):
         """情報IDを取得"""
         try:
-            return self.seis_status.keys()
+            #event_ids=self.seis_status.keys()
+            return self.seis_status
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return {}
+        
+    @Slot(result=list)
+    def getSeisEventIDList(self):
+        """情報IDを取得"""
+        try:
+            event_ids=list(self.seis_status.keys())
+            sorted_ids=[]
+            sorted_key=[]
+            for event_id in event_ids:
+                ot:datetime.datetime=self.seis_status[event_id][0]["origintime"]
+                if len(sorted_ids)==0:
+                    sorted_ids.append(event_id)
+                    sorted_key.append(ot)
+                else:
+                    if ot > sorted_key[0]:
+                        sorted_ids.insert(0,event_id)
+                        sorted_key.insert(0,ot)
+                    else:
+                        sorted_ids.append(event_id)
+                        sorted_key.append(ot)
+            return sorted_ids
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return []
-    
-    @Slot(str,str,int,result=str)
-    def getVPTI51Updated(self, data_type,event_id,index):
-        """指定された階層とコードの警報レベルを取得する"""
+        
+    @Slot(str,result=dict)
+    def getSeisEventInfos(self,event_id):
+        """情報IDを取得"""
         try:
-            dt: datetime.datetime =self.mete_status[data_type][event_id][index]["updated"]
+            #event_ids=self.seis_status.keys()
+            return self.seis_status[event_id]
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return {}
+
+    @Slot(str,str,result=str)
+    def getSeisEventLatestInfo(self,event_id,property1):
+        """情報IDを取得"""
+        try:
+            #event_ids=self.seis_status.keys()
+            return self.seis_status[event_id][0][property1]
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+    @Slot(str,result=list)
+    def getSeisEventIDIDList(self,event_id):
+        """情報IDを取得"""
+        try:
+            result=[]
+            for entry in self.seis_status[event_id]:
+                result.append(entry['id'])
+            return result
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return []
+    @Slot(str,result=str)
+    def getSeisEventOriginTime(self,event_id):    
+        try:
+            dt: datetime.datetime =self.seis_status[event_id][0]["origintime"]
             text = dt.strftime("%Y/%m/%d %H:%M:%S")
             if text != "2000/01/01 00:00:00":
                 return text
             else:
                 return ""
         except KeyError:
-            return ""
-        except:
-            return ""
-    @Slot(str,str,int,result=str)
-    def getVPTI51Title(self, data_type,event_id,index):
-        """情報IDを取得"""
-        try:
-            id=self.getVPTI51ID(data_type,event_id,index)
-            return self.mete_timeline[id]["head_title"]
-            
-        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
         
-    @Slot(str,str,int,result=str)
-    def getVPTI51HeadlineText(self, data_type,event_id,index):
-        """情報IDを取得"""
+    @Slot(str,result=str)
+    def getSeisTimelineReportTime(self,id):    
         try:
-            id=self.getVPTI51ID(data_type,event_id,index)
-            return self.mete_timeline[id]["headline_text"]
-            
+            dt: datetime.datetime =self.seis_timeline[id]['report_datetime']
+            text = dt.strftime("%Y/%m/%d %H:%M:%S")
+            if text != "2000/01/01 00:00:00":
+                return text
+            else:
+                return ""
         except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
-    @Slot(str,str,int,result=str)
-    def getVPTI51BodyText(self, data_type,event_id,index):
-        """情報IDを取得"""
+    @Slot(str,str,result=str)
+    def getSeisTimelineData(self,id,property1):    
         try:
-            id=self.getVPTI51ID(data_type,event_id,index)
-            return self.mete_timeline[id]["body_text"]
-            
+            text =self.seis_timeline[id][property1]
+            return text
         except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
-    @Slot(str,result=list)
-    def getVPTI51EventIDList(self, data_type):
-        """情報IDを取得"""
-        list1=self.mete_status[data_type].keys()
-        print(list1)
-        return list(self.mete_status[data_type].keys())
