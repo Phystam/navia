@@ -26,6 +26,7 @@ Window {
         //timelineManager.vzsf50StatusChanged.connect(onVZSF50Changed);
         //timelineManager.vzsf51StatusChanged.connect(onVZSF51Changed);
         timelineManager.vptwStatusChanged.connect(onVptwStatusChanged);
+        timelineManager.seisStatusChanged.connect(onSeisStatusChanged);
     }
     
     ListModel {
@@ -77,12 +78,19 @@ Window {
         vzsa50_miv.model = timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0],mapComponent.vzsa50_switch[1]).features;
     }
     function onVptwStatusChanged(){
-        var eventid = timelineManager.getVPTWEventIDList("VPTW60")[0];
-        if (eventid) {
-            vptw_miv.model = timelineManager.getVPTWGeoJson("VPTW60", eventid, 0).features;
-        } else {
-            vptw_miv.model = [];
+        var list1=["VPTW60","VPTW61","VPTW62","VPTW63","VPTW64","VPTW65"];
+        for(var i=0;i<6;i++){
+            var eventid=timelineManager.getVPTWEventIDList(list1[i])[0]
+            if (eventid) {
+                vptw_miv_repeater.itemAt(i).model = timelineManager.getVPTWGeoJson(list1[i], eventid, 0).features;
+            } else {
+                vptw_miv_repeater.itemAt(i).model = [];
+            }
         }
+    }
+    function onSeisStatusChanged(){
+        seisRepeater.model = [];
+        seisRepeater.model = timelineManager.getSeisEventIDList();
     }
 
     function initMessages(){
@@ -650,14 +658,18 @@ Window {
                 //        vzsa50_miv.model = timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0], mapComponent.vzsa50_switch[1]).features;
                 //    }
                 //}
-
-                MapItemView{
-                    id: vptw_miv
-                    visible: meteMode
-                    model: [] // Initially empty, will be populated by Connections
-                    delegate: Component { VptwDelegate {} }
-                    Component.onCompleted: {
-                        onVptwStatusChanged()
+                Repeater {
+                    id: vptw_miv_repeater
+                    model: 6
+                    MapItemView{
+                        required property int index
+                        //id: vptw_miv[index]
+                        visible: meteMode
+                        model: [] // Initially empty, will be populated by Connections
+                        delegate: Component { VptwDelegate {} }
+                        Component.onCompleted: {
+                            onVptwStatusChanged()
+                        }
                     }
                 }
                 //Connections {
@@ -990,6 +1002,7 @@ Window {
                     //地震情報
                     Repeater {
                         visible: naviaWindow.seisMode
+                        id: seisRepeater
                         model: timelineManager.getSeisEventIDList()
                         delegate: SeisComponent {
                             required property var modelData

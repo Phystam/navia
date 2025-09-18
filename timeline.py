@@ -10,6 +10,7 @@ class TimelineManager(QObject):
     vzsf50StatusChanged = Signal()
     vzsf51StatusChanged = Signal()
     vptwStatusChanged = Signal()
+    seisStatusChanged = Signal()
     def __init__(self,parent=None):
         super().__init__(parent)
         """タイムラインデータを管理するクラス"""
@@ -202,6 +203,7 @@ class TimelineManager(QObject):
             
         if data["data_type"]=="VXSE53":
             self.VXSE53(id,data)
+            self.seisStatusChanged.emit()
             
 
             

@@ -42,7 +42,13 @@ MapItemGroup {
                     anchors.fill: toolTip
                     Label{
                         font.pixelSize: 20
-                        text: "<b>台風第"+modelData.properties.typhoon_number+"号 "+modelData.properties.name+"</b>"
+                        text: {
+                            if(modelData.properties.name!=""){
+                                "<b>台風第"+modelData.properties.typhoon_number+"号 "+modelData.properties.name+"</b>"
+                            }else{
+                                "<b>熱帯低気圧</b>"
+                            }
+                        }
                     }
                     Text{
                         text: modelData.properties.datetime_format
