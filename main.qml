@@ -26,10 +26,11 @@ Window {
             rootWindow.color = "transparent";
             rootWindow.width = Screen.width;
             rootWindow.height = Screen.height;
-            if (clockLoader) {
-                clockLoader.source = "";
-                clockLoader.source = "clock.qml";
-            }
+
+            clockLoader.width = Screen.width*0.075
+            clockLoader.height=Screen.height*0.075
+            clockLoader.fontsize1=Screen.height*0.03
+            clockLoader.fontsize2=Screen.height*0.0125
             if (telopLoader) {
                 telopLoader.source = "";
                 telopLoader.source = "telop.qml";
@@ -45,12 +46,22 @@ Window {
     property QtObject eew_object        : null
     // clock.qml コンポーネントをロードして表示
     // clock.qml は main.qml と同じディレクトリにあると仮定
-    Loader {
+    //Loader {
+    //    id: clockLoader
+    //    source: "clock.qml"
+    //    // 親ウィンドウの左上に配置
+    //    anchors.top: parent.top
+    //    anchors.left: parent.left
+    //}
+    Clock {
         id: clockLoader
-        source: "clock.qml"
+        //source: "clock.qml"
         // 親ウィンドウの左上に配置
         anchors.top: parent.top
+        anchors.topMargin: Screen.height*0.025
         anchors.left: parent.left
+        width: Screen.width*0.075
+        height: Screen.height*0.075
     }
 
     Loader {
