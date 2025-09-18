@@ -14,7 +14,7 @@ class VFVO52(BaseJMAParser):
         print(f"噴火に関する火山観測報 ({self.data_type}) を解析中...")
         parsed_data = {}
         parsed_data['category']="volcanology"
-        parsed_data["data_type"]=self.data_type
+        parsed_data["data_type"]=data_type_code
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '/jmx:Report/jmx:Control/jmx:PublishingOffice/text()', namespaces)
@@ -51,7 +51,7 @@ class VFVO52(BaseJMAParser):
             headlinetext+= f"{kind}が観測されました。"
         # 火口上噴煙高度
         height = self._get_text(xml_tree, '//jmx_eb:PlumeHeightAboveCrater/text()', namespaces)
-        if height == "N/A":
+        if height == "":
             height = "不明"
         else:
             height = f"{height}m"
@@ -62,7 +62,7 @@ class VFVO52(BaseJMAParser):
         logo_list.append(["", ""])
         text_list.append([headlinetext,f"火口上噴煙高度 {height} 噴煙の流向 {direction}"])
         sound_list.append("")
-        notify_level=3
+        notify_level=5
         telop_dict = {
             'sound_list': sound_list,
             'logo_list': logo_list,

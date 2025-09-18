@@ -88,6 +88,56 @@ class BaseJMAParser(QObject):
                 results.append(f'エラー: パースに失敗 - {entry}')
         return results
     
+    def _get_coordinates_degmin(self, element, xpath, namespaces):
+        """座標情報を取得するヘルパー関数"""
+        data_string = element.xpath(xpath, namespaces=namespaces)
+        """
+        入力されたテキストデータを(緯度, 経度, 高度)の順にフォーマットします。
+        """
+        results = []
+        # /区切りで配列になることを考慮
+        entries = data_string[0].split('/')
+        for entry in entries:
+            if not entry.strip():
+                continue
+            #print(f"座標データ: {entry.strip()}")
+            # 各要素を正規表現で抽出
+            # 緯度、経度、高度がそれぞれ+または-で始まり、数字が続くことを想定
+            match = re.match(r'([+-]\d+\.\d+)([+-]\d+\.\d+)([+-]\d+)?', entry.strip())
+            if match:
+                latitude_str = match.group(1)
+                longitude_str = match.group(2)
+                altitude_str = match.group(3)
+                #print(f"lat: {latitude_str}, lon: {longitude_str}, alt: {altitude_str}")
+                #latitude = self.dms_to_decimal(latitude_str)
+                #longitude = self.dms_to_decimal(longitude_str)
+                
+                latitude_degmin = float(latitude_str) if latitude_str else None
+                lat_sign=1 if latitude_degmin>=0 else -1
+                latitude_deg=math.floor(abs(latitude_degmin)/100)
+                latitude_min=(abs(latitude_degmin)-latitude_deg)/60
+                latitude=lat_sign*(latitude_deg + latitude_min)
+                
+                longitude_degmin = float(longitude_str) if longitude_str else None
+                lon_sign=1 if longitude_degmin>=0 else -1
+                longitude_deg=math.floor(abs(longitude_degmin)/100)
+                longitude_min=(abs(longitude_degmin)-longitude_deg)/60
+                longitude=lon_sign*(longitude_deg+longitude_min)
+                
+                if altitude_str is not None:
+                    altitude = int(altitude_str) # 高度は常に整数
+                else:
+                    altitude = None
+                if latitude is not None and longitude is not None:
+                    results.append({'latitude': latitude,
+                                    'longitude': longitude,
+                                    'altitude': altitude})
+                else:
+                    results.append(f'エラー: 無効なデータ形式 - {entry}')
+            else:
+                results.append(f'エラー: パースに失敗 - {entry}')
+        return results
+    
     def _get_coordinates_list(self, element, xpath, namespaces):
         """座標情報を取得するヘルパー関数 
         高度を考慮しない[lat,lon]形式のリストを返す"""
@@ -355,3 +405,17 @@ class BaseJMAParser(QObject):
         pointB2=geopy.distance.distance(kilometers=radius2).destination(point2,bearing=pointB_deg)
         
         return [[pointA1[1],pointA1[0]],[pointA2[1],pointA2[0]]], [[pointB1[1],pointB1[0]],[pointB2[1],pointB2[0]]]
+    
+    def drawCircle(self,lonlat1,radius1,start_deg=0, end_deg=360):
+        cons=math.pi/180.
+        point1=[lonlat1[1],lonlat1[0]]
+        path=[]
+        for deg in range(start_deg,end_deg,2.5):
+            point=geopy.distance.distance(kilometers=radius1).destination(point1,bearing=deg)
+            path.append([point[1],point[0]])
+        # end_deg を個別に処理
+        point=geopy.distance.distance(kilometers=radius1).destination(point1,bearing=end_deg)
+        path.append([point[1],point[0]])
+        return path
+        
+        

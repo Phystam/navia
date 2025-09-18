@@ -1001,9 +1001,9 @@ Window {
                     }
                     //地震情報
                     Repeater {
-                        visible: naviaWindow.seisMode
                         id: seisRepeater
-                        model: timelineManager.getSeisEventIDList()
+                        visible: naviaWindow.seisMode
+                        model: []
                         delegate: SeisComponent {
                             required property var modelData
                             visible: naviaWindow.seisMode
@@ -1013,6 +1013,10 @@ Window {
                             headTitleText: timelineManager.getSeisEventLatestInfo(modelData,"hypocenter_name")+" 深さ"+timelineManager.getSeisEventLatestInfo(modelData,"hypocenter_depth")
                             //magUnit: timelineManager.getSeisEventLatestInfo(modelData,"magnitude_unit")
                             magText: timelineManager.getSeisEventLatestInfo(modelData,"magnitude")
+                        }
+                        Component.onCompleted: {
+                            model = timelineManager.getSeisEventIDList();
+                            console.log(model)
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 # jma_parsers/jma_earthquake_parser.py
 from .jma_base_parser import BaseJMAParser
-
+from datetime import datetime,timedelta
 class VXSE52(BaseJMAParser):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -13,16 +13,26 @@ class VXSE52(BaseJMAParser):
         print(f"地震情報 ({self.data_type}) を解析中...")
         parsed_data = {}
         parsed_data['category']="seismology"
-        parsed_data["data_type"]=self.data_type
+        parsed_data["data_type"]=data_type_code
         # Control/Title
         parsed_data['control_title'] = self._get_text(xml_tree, '//jmx:Control/jmx:Title/text()', namespaces)
         parsed_data['publishing_office'] = self._get_text(xml_tree, '//jmx:Control/jmx:PublishingOffice/text()', namespaces)
+        parsed_data['event_id']=self._get_text(xml_tree, '//jmx_ib:EventID/text()', namespaces)
+        parsed_data['report_datetime'] = self._get_datetime(xml_tree,'//jmx_ib:ReportDateTime/text()', namespaces) if not test else datetime.now(tz=self.jst)
+        parsed_data['event_id']=self._get_text(xml_tree, '//jmx_ib:EventID/text()', namespaces)
         # Head/Title
         parsed_data['head_title'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Title/text()', namespaces)
         # Head/Headline/Text
         parsed_data['headline_text'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Headline/jmx_ib:Text/text()', namespaces)
-        parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:Body/jmx_seis:Comments/jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
-
+        parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
+        parsed_data['origintime']=self._get_datetime(xml_tree, '//jmx_seis:OriginTime/text()', namespaces)
+        # Body/Earthquake/Hypocenter/Area/Name (震央地名)
+        parsed_data['max_intensity'] = self._get_text(xml_tree, '//jmx_seis:MaxInt/text()', namespaces)
+        parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Hypocenter//jmx_seis:Name/text()', namespaces)
+        parsed_data['hypocenter_coordinate'] = self._get_coordinates(xml_tree, '//jmx_seis:Hypocenter//jmx_eb:Coordinate/text()', namespaces)[0]
+        parsed_data['hypocenter_depth']="ごく浅い" if -int(parsed_data['hypocenter_coordinate']['altitude']/1000)==0 else f"{-int(parsed_data['hypocenter_coordinate']['altitude']/1000)}km"
+        parsed_data['magnitude_type'] = self._get_attribute(xml_tree, '//jmx_eb:Magnitude/@type', namespaces)
+        parsed_data['magnitude'] = self._get_text(xml_tree, '//jmx_eb:Magnitude/text()', namespaces)
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):
