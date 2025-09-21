@@ -389,6 +389,8 @@ class BaseJMAParser(QObject):
         point2=[lonlat2[1],lonlat2[0]]
         length1=geodesic(point1,point2).kilometers
         print(length1)
+        if length1<abs(radius1-radius2):
+            return None, None
         delta_lon=lonlat2[0]-lonlat1[0]
         x=math.cos(cons*lonlat1[1])*math.tan(cons*lonlat2[1])-math.sin(cons*lonlat1[1])*math.cos(cons*(delta_lon))
         y=math.sin(cons*delta_lon)

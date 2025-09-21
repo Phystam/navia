@@ -137,26 +137,27 @@ class VPTW(BaseJMAParser):
                     print("lasttype2:" +last_type)
                     lonlat2=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_mete:ProbabilityCircle/jmx_eb:BasePoint[@type="中心位置（度）"]/text()', namespaces)[0]
                     radius2=int(self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_mete:ProbabilityCircle//jmx_eb:Radius[@unit="km"]/text()', namespaces))
-            #
             
             line1,line2=self.connectTwoCircles(lonlat1, lonlat2,radius1,radius2)
-            feature={}
-            feature['type']="Feature"
-            feature['geometry']={}
-            feature['properties']={}
-            feature['properties']['probability_line']=True
-            feature['geometry']['type']="LineString"
-            feature['geometry']['coordinates']=line1
-            parsed_data['geojson']['features'].append(feature)
+            if line1 != None:
+                feature={}
+                feature['type']="Feature"
+                feature['geometry']={}
+                feature['properties']={}
+                feature['properties']['probability_line']=True
+                feature['geometry']['type']="LineString"
+                feature['geometry']['coordinates']=line1
+                parsed_data['geojson']['features'].append(feature)
             
-            feature={}
-            feature['type']="Feature"
-            feature['geometry']={}
-            feature['properties']={}
-            feature['properties']['probability_line']=True
-            feature['geometry']['type']="LineString"
-            feature['geometry']['coordinates']=line2
-            parsed_data['geojson']['features'].append(feature)
+            if line2 != None:
+                feature={}
+                feature['type']="Feature"
+                feature['geometry']={}
+                feature['properties']={}
+                feature['properties']['probability_line']=True
+                feature['geometry']['type']="LineString"
+                feature['geometry']['coordinates']=line2
+                parsed_data['geojson']['features'].append(feature)
             
         
         print(parsed_data)

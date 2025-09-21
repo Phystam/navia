@@ -37,22 +37,36 @@ class VXSE51(BaseJMAParser):
         parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
         parsed_data['origintime']=self._get_datetime(xml_tree, '//jmx_seis:OriginTime/text()', namespaces)
         parsed_data['max_intensity'] = self._get_text(xml_tree, '//jmx_seis:MaxInt/text()', namespaces)
-        len_item=self._get_elements(xml_tree,f'//jmx_ib:Item',namespaces)
-        itemelements = self._get_elements(xml_tree, f'//jmx_ib:Item',namespaces)
-        lenitem=len(itemelements)
-        parsed_data['shindo_list']={}
-        for i in range(lenitem):
-            shindo = shindo_codelist[ self._get_text(xml_tree, f'//jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Name/text()',namespaces) ]
-            areaselements = self._get_elements(xml_tree, f'//jmx_ib:Item[{i+1}]//jmx_ib:Area',namespaces)
-            parsed_data['shindo_list']['intensity']=shindo
-            parsed_data['shindo_list']['area']=[]
-            parsed_data['shindo_list']['code']=[]
-            for j in range(len(areaselements)):
-                area = self._get_text(xml_tree, f'//jmx_ib:Item[{i+1}]//jmx_ib:Area[{j+1}]/jmx_ib:Name/text()',namespaces)
-                area = self._get_text(xml_tree, f'//jmx_ib:Item[{i+1}]//jmx_ib:Area[{j+1}]/jmx_ib:Code/text()',namespaces)
-                parsed_data['shindo_list']['area'].append(area)
-                parsed_data['shindo_list']['code']=[]
-
+        inten_pref={}
+        inten_area={}
+        prefelements = self._get_elements(xml_tree, f'//jmx_seis:Pref',namespaces)
+        for i,item in enumerate(prefelements):
+            prefname=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Name/text()', namespaces)
+            prefcode=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Code/text()', namespaces)
+            prefmaxint=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:MaxInt/text()', namespaces)
+            try:
+                inten_pref[prefmaxint]
+            except:
+                inten_pref[prefmaxint]={'name':[],'code':[]}
+            finally:
+                inten_pref[prefmaxint]['name'].append(prefname)
+                inten_pref[prefmaxint]['code'].append(prefcode)
+            areaelements=self._get_elements(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area',namespaces)
+            for j,item1 in enumerate(areaelements):
+                areaname=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:Name/text()', namespaces)
+                areacode=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:Code/text()', namespaces)
+                areamaxint=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:MaxInt/text()', namespaces)
+                try:
+                    inten_area[areamaxint]
+                except:
+                    inten_area[areamaxint]={'name':[],'code':[]}
+                finally:
+                    inten_area[areamaxint]['name'].append(areaname)
+                    inten_area[areamaxint]['code'].append(areacode)
+                    
+        parsed_data['shindo_list_pref']=inten_pref
+        parsed_data['shindo_list_area']=inten_area
+        parsed_data['shindo_list']=inten_area
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):

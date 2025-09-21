@@ -45,22 +45,73 @@ class VXSE53(BaseJMAParser):
         parsed_data['magnitude_type'] = self._get_attribute(xml_tree, '//jmx_eb:Magnitude/@type', namespaces)
         parsed_data['magnitude'] = self._get_text(xml_tree, '//jmx_eb:Magnitude/text()', namespaces)
         type_city='"震源・震度に関する情報（市町村等）"'
-        itemelements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item',namespaces)
-        lenitem=len(itemelements)
-        inten={}
-        for i in range(lenitem):
-            shindo = shindo_codelist[ self._get_text(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]/jmx_ib:Kind/jmx_ib:Name/text()',namespaces) ]
-            areaselements = self._get_elements(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]//jmx_ib:Area',namespaces)
-            
-            inten[shindo]={}
-            inten[shindo]['area']=[]
-            inten[shindo]['code']=[]
-            for j in range(len(areaselements)):
-                area = self._get_text(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]//jmx_ib:Area[{j+1}]/jmx_ib:Name/text()',namespaces)
-                areacode = self._get_text(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]//jmx_ib:Area[{j+1}]/jmx_ib:Code/text()',namespaces)
-                inten[shindo]['area'].append(area)
-                inten[shindo]['code'].append(areacode)
-        parsed_data['shindo_list']=inten
+        prefelements = self._get_elements(xml_tree, f'//jmx_seis:Pref',namespaces)
+        lenpref=len(prefelements)
+        inten_pref={}
+        inten_area={}
+        inten_city={}
+        inten_station={}
+        for i,item in enumerate(prefelements):
+            prefname=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Name/text()', namespaces)
+            prefcode=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Code/text()', namespaces)
+            prefmaxint=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:MaxInt/text()', namespaces)
+            try:
+                inten_pref[prefmaxint]
+            except:
+                inten_pref[prefmaxint]={'name':[],'code':[]}
+            finally:
+                inten_pref[prefmaxint]['name'].append(prefname)
+                inten_pref[prefmaxint]['code'].append(prefcode)
+            areaelements=self._get_elements(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area',namespaces)
+            for j,item1 in enumerate(areaelements):
+                areaname=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:Name/text()', namespaces)
+                areacode=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:Code/text()', namespaces)
+                areamaxint=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:MaxInt/text()', namespaces)
+                try:
+                    inten_area[areamaxint]
+                except:
+                    inten_area[areamaxint]={'name':[],'code':[]}
+                finally:
+                    inten_area[areamaxint]['name'].append(areaname)
+                    inten_area[areamaxint]['code'].append(areacode)
+                cityelements=self._get_elements(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:City',namespaces)
+                for k,item2 in enumerate(cityelements):
+                    cityname=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:City[{k+1}]/jmx_seis:Name/text()', namespaces)
+                    citycode=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:City[{k+1}]/jmx_seis:Code/text()', namespaces)
+                    citymaxint=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:City[{k+1}]/jmx_seis:MaxInt/text()', namespaces)
+                    try:
+                        inten_city[citymaxint]
+                    except:
+                        inten_city[citymaxint]={'name':[],'code':[]}
+                    finally:
+                        inten_city[citymaxint]['name'].append(cityname)
+                        inten_city[citymaxint]['code'].append(citycode)
+                    stationelements=self._get_elements(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:City[{k+1}]/jmx_seis:IntensityStation',namespaces)
+                    for l,item2 in enumerate(stationelements):
+                        stationname=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:City[{k+1}]/jmx_seis:IntensityStation[{l+1}]/jmx_seis:Name/text()', namespaces)
+                        stationcode=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:City[{k+1}]/jmx_seis:IntensityStation[{l+1}]/jmx_seis:Code/text()', namespaces)
+                        stationint=self._get_text(xml_tree, f'//jmx_seis:Pref[{i+1}]/jmx_seis:Area[{j+1}]/jmx_seis:City[{k+1}]/jmx_seis:IntensityStation[{l+1}]/jmx_seis:Int/text()', namespaces)
+                        try:
+                            inten_station[stationint]
+                        except:
+                            inten_station[stationint]={'name':[],'code':[]}
+                        finally:
+                            inten_station[stationint]['name'].append(stationname)
+                            inten_station[stationint]['code'].append(stationcode)
+        #    inten[]
+        #    inten[shindo]={}
+        #    inten[shindo]['area']=[]
+        #    inten[shindo]['code']=[]
+        #    for j in range(len(areaselements)):
+        #        area = self._get_text(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]//jmx_ib:Area[{j+1}]/jmx_ib:Name/text()',namespaces)
+        #        areacode = self._get_text(xml_tree, f'//jmx_ib:Information[@type={type_city}]/jmx_ib:Item[{i+1}]//jmx_ib:Area[{j+1}]/jmx_ib:Code/text()',namespaces)
+        #        inten[shindo]['area'].append(area)
+        #        inten[shindo]['code'].append(areacode)
+        #parsed_data['shindo_list']=inten
+        parsed_data['shindo_list_pref']=inten_pref
+        parsed_data['shindo_list_area']=inten_area
+        parsed_data['shindo_list']=inten_city
+        parsed_data['shindo_list_station']=inten_station
         parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
 
         parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)

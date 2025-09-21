@@ -112,6 +112,7 @@ Rectangle {
                 model: timelineManager.getSeisEventIDIDList(eventID)
                 delegate: SeisInfoText {
                     required property var modelData
+                    infoID: modelData
                     dateTimeText: timelineManager.getSeisTimelineReportTime(modelData)
                     headTitleText: timelineManager.getSeisTimelineData(modelData,"head_title")
                     headlineText: timelineManager.getSeisTimelineData(modelData,"headline_text")+timelineManager.getSeisTimelineData(modelData,"forecast_comment")
