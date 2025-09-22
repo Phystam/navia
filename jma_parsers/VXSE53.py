@@ -41,7 +41,10 @@ class VXSE53(BaseJMAParser):
         parsed_data['max_intensity'] = self._get_text(xml_tree, '//jmx_seis:MaxInt/text()', namespaces)
         parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Hypocenter//jmx_seis:Name/text()', namespaces)
         parsed_data['hypocenter_coordinate'] = self._get_coordinates(xml_tree, '//jmx_seis:Hypocenter//jmx_eb:Coordinate/text()', namespaces)[0]
-        parsed_data['hypocenter_depth']="ごく浅い" if -int(parsed_data['hypocenter_coordinate']['altitude']/1000)==0 else f"{-int(parsed_data['hypocenter_coordinate']['altitude']/1000)}km"
+        if parsed_data['hypocenter_coordinate']['altitude'] is not None:
+            parsed_data['hypocenter_depth']="ごく浅い" if -int(parsed_data['hypocenter_coordinate']['altitude']/1000)==0 else f"{-int(parsed_data['hypocenter_coordinate']['altitude']/1000)}km"
+        else:
+            parsed_data['hypocenter_depth']="不明"
         parsed_data['magnitude_type'] = self._get_attribute(xml_tree, '//jmx_eb:Magnitude/@type', namespaces)
         parsed_data['magnitude'] = self._get_text(xml_tree, '//jmx_eb:Magnitude/text()', namespaces)
         type_city='"震源・震度に関する情報（市町村等）"'
@@ -62,11 +65,7 @@ class VXSE53(BaseJMAParser):
                 inten[shindo]['code'].append(areacode)
         parsed_data['shindo_list']=inten
         parsed_data['forecast_comment'] = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
-
-        parsed_data['hypocenter_name'] = self._get_text(xml_tree, '//jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_seis:Name/text()', namespaces)
-        parsed_data['magnitude'] = self._get_text(xml_tree, '//jmx_seis:Earthquake/jmx_eb:Magnitude/text()', namespaces)
-        
-        parsed_data['coordinates'] = self._get_coordinates(xml_tree, '//jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
+        parsed_data['geojson']={}
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):
@@ -104,8 +103,8 @@ class VXSE53(BaseJMAParser):
         
         coordinates = self._get_coordinates(xml_tree, '/jmx:Report/jmx_seis:Body/jmx_seis:Earthquake/jmx_seis:Hypocenter/jmx_seis:Area/jmx_eb:Coordinate/text()', namespaces)
         comment = self._get_text(xml_tree, '//jmx_seis:ForecastComment/jmx_seis:Text/text()', namespaces)
-        depth=-int(coordinates[0]['altitude']/1000)
         if coordinates[0]['altitude'] is not None:
+            depth=-int(coordinates[0]['altitude']/1000)
             if depth==0:
                 message=f"震源は{hypocenter_name} 深さはごく浅い マグニチュード{magnitude_value} 最大震度 {max_intensity}"
             else:
