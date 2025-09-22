@@ -16,6 +16,7 @@ Rectangle {
     property bool expanded: false
     property var seisLogoListModel: null
     property var seisTextListModel: null
+    property var infoID
     width: parent ? parent.width : 400
     height: childrenRect.height
     visible: headTitleText !== ""
@@ -96,9 +97,34 @@ Rectangle {
                 visible: infoSection.bodyText != ""
                 color: infoSection.textColor
             }
-            //Repeater {
-            //    
-            //}
+            Repeater {
+                model: timelineManager.getSeisTimelineShindoList(infoID)
+                delegate: Component {
+                    Row{
+                        spacing:2
+                        Image{
+                            id: seisIntenImage
+                            source: '../materials/grade'+modelData+'.svg'
+                            height:20
+                            width:height*10/4.5
+                        }
+                        Text{
+                            text: {
+                                var arealist=timelineManager.getSeisTimelineShindoListArea(infoID,modelData)
+                                console.log(arealist)
+                                var txt=""
+                                for(var i=0;i<arealist.length;i++){
+                                    txt+=arealist[i] + " "
+                                }
+                                return txt
+                            }
+                            color: infoSection.textColor
+                            width: infoSection.width-seisIntenImage.width-2
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+            }
         }
     }
 

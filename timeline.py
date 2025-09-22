@@ -1291,3 +1291,20 @@ class TimelineManager(QObject):
         except KeyError:
             #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
             return ""
+    @Slot(str,result=list)
+    def getSeisTimelineShindoList(self,id):
+        try:
+            list1 =self.seis_timeline[id]['shindo_list']
+            return list(list1.keys())
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
+        
+    @Slot(str,str,result=list)
+    def getSeisTimelineShindoListArea(self,id,shindo):
+        try:
+            list1 =self.seis_timeline[id]['shindo_list'][shindo]['name']
+            return list1
+        except KeyError:
+            #print(f"Warning: Code {code} not found in hierarchy {hierarchy}")
+            return ""
