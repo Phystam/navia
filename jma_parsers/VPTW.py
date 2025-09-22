@@ -42,7 +42,7 @@ class VPTW(BaseJMAParser):
         parsed_data['geojson']['type']="FeatureCollection"
         parsed_data['geojson']['features']=[]
         len_info = len(self._get_elements(xml_tree,f'//jmx_mete:MeteorologicalInfo', namespaces))
-        print(f"entries: {len_info}")
+        #print(f"entries: {len_info}")
         path_feature={}
         path_feature['type']="Feature"
         path_feature['geometry']={}
@@ -121,7 +121,7 @@ class VPTW(BaseJMAParser):
         #接線を描く
         for i in range(len_info):
             datetime_type=self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:DateTime/@type', namespaces)
-            print(datetime_type)
+            #print(datetime_type)
             if datetime_type=="実況" or datetime_type=="推定　１時間後":
                 continue
             else:
@@ -129,12 +129,12 @@ class VPTW(BaseJMAParser):
                 lonlat1=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:ProbabilityCircle/jmx_eb:BasePoint[@type="中心位置（度）"]/text()', namespaces)[0]
                 radius1=int(self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:ProbabilityCircle//jmx_eb:Radius[@unit="km"]/text()', namespaces))
                 last_type=self._get_attribute(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_mete:DateTime/@type', namespaces)
-                print("lasttype:" +last_type)
+                #print("lasttype:" +last_type)
                 if last_type=="実況" or last_type=="推定　１時間後":
                     lonlat2=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_eb:Coordinate[@type="中心位置（度）"]/text()', namespaces)[0]
                     radius2=0
                 else:
-                    print("lasttype2:" +last_type)
+                    #xsprint("lasttype2:" +last_type)
                     lonlat2=self._get_coordinates_list(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_mete:ProbabilityCircle/jmx_eb:BasePoint[@type="中心位置（度）"]/text()', namespaces)[0]
                     radius2=int(self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i}]//jmx_mete:ProbabilityCircle//jmx_eb:Radius[@unit="km"]/text()', namespaces))
             
@@ -160,7 +160,7 @@ class VPTW(BaseJMAParser):
                 parsed_data['geojson']['features'].append(feature)
             
         
-        print(parsed_data)
+        #xsprint(parsed_data)xsxsxs
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):

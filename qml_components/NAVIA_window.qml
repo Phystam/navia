@@ -651,13 +651,6 @@ Window {
                         onVzsa50StatusChanged()
                     }
                 }
-                //Connections {
-                //    target: timelineManager
-                //    function onVzsa50StatusChanged() {
-                //        vzsa50_miv.model = [];
-                //        vzsa50_miv.model = timelineManager.getVZSA50GeoJson(mapComponent.vzsa50_switch[0], mapComponent.vzsa50_switch[1]).features;
-                //    }
-                //}
                 Repeater {
                     id: vptw_miv_repeater
                     model: 6
@@ -672,103 +665,6 @@ Window {
                         }
                     }
                 }
-                //Connections {
-                //    target: timelineManager
-                //    function onVptwStatusChanged() {
-                //        var eventid = timelineManager.getVPTWEventIDList("VPTW60")[0];
-                //        if (eventid) {
-                //            vptw_miv.model = timelineManager.getVPTWGeoJson("VPTW60", eventid, 0).features;
-                //        } else {
-                //            vptw_miv.model = [];
-                //        }
-                //    }
-                //}
-                //MapItemView{
-                //    id: miv2
-                //    model: tsunami.model[0].data
-                //    delegate: MapItemGroup{ 
-                //        id: mapgroup2
-                //        required property int index
-                //        property var polys: showTsunami(miv2.model,index)
-                //        property var col: tsunamiLineColor(miv2.model,index)
-                //        property var wid: tsunamiLineWidth(miv2.model,index)
-                //        Repeater{
-                //            model: polys
-                //            delegate: MapPolyline{
-                //                path: modelData
-                //                line.color: col
-                //                line.width: wid
-                //            }
-                //        }
-                //        function showTsunami(model,j){
-                //            var paths=[];
-                //            var path=[];
-                //            //print(Object.entries(tsunami.model[0].data[0].type))
-                //            //print(Object.entries(model[j].properties.code))
-                //            //print(tsunamiWarningCodes[0])
-                //            if(model[j].type=="LineString"){
-                //            
-                //            var c=model[j].data.path;
-                //            for (var i=0;i<c.length;i++){
-                //                path.push(QtPositioning.coordinate(c[i].latitude,c[i].longitude));
-                //            }
-                //            paths.push(path);
-                //            }
-                //            if(model[j].type=="MultiLineString"){
-                //                var polys=model[j].data;
-                //                for(var k=0;k<polys.length;k++){
-                //                    var c=model[j].data[k].data.path;
-                //                    for (var i=0;i<c.length;i++){
-                //                        path.push(QtPositioning.coordinate(c[i].latitude,c[i].longitude));
-                //                    }
-                //                    paths.push(path);
-                //                    path=[];
-                //                }
-                //            }
-                //            return paths;
-                //        }
-                //        function tsunamiLineColor(model,j){
-                //            //print(Object.entries(tsunami.model[0].data[0].type))
-                //            tsunamiWarningCodes="61"
-                //            var color="black"
-                //            //print(typeof model[j].properties.code);
-                //            //print(typeof tsunamiWarningCodes);
-                //            if(tsunamiWarningCodes.includes(model[j].properties.code)){
-                //                color="#F30000";
-                //            }
-                //            if(bigtsunamiWarningCodes.includes(model[j].properties.code)){
-                //                color="#C800FF";
-                //            }
-                //            if(tsunamiCautionCodes.includes(model[j].properties.code)){
-                //                color="#F2E700";
-                //            }
-                //            if(tsunamiInfoCodes.includes(model[j].properties.code)){
-                //                color="#F2F2FF";
-                //            }
-                //            return color;
-                //        }
-                //        function tsunamiLineWidth(model,j){
-                //            tsunamiWarningCodes="61"
-                //            //print(Object.entries(tsunami.model[0].data[0].type))
-                //            var width=1;
-                //            //print(typeof model[j].properties.code);
-                //            //print(typeof tsunamiWarningCodes);
-                //            if(tsunamiWarningCodes.includes(model[j].properties.code)){
-                //                width=2;
-                //            }
-                //            if(bigtsunamiWarningCodes.includes(model[j].properties.code)){
-                //                width=4;
-                //            }
-                //            if(tsunamiCautionCodes.includes(model[j].properties.code)){
-                //                width=2;
-                //            }
-                //            if(tsunamiInfoCodes.includes(model[j].properties.code)){
-                //                width=1;
-                //            }
-                //            return width;
-                //        }
-                //    }
-                //}
             }
             Rectangle{
                 anchors.left: parent.left

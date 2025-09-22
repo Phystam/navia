@@ -51,21 +51,21 @@ Rectangle {
             color: infoSection.textColor
             visible: infoSection.visible
         }
-        Row {
-            visible: infoSection.logoListModel && (infoSection.logoListModel.count > 0 || infoSection.headTitleText.text !=="")
-            height: visible ? 22 : 0
-            width: parent.width
-            spacing: 4
-            Repeater {
-                model: infoSection.logoListModel
-                Image {
-                    height: parent.height
-                    fillMode: Image.PreserveAspectFit
-                    source: model.value
-                    antialiasing: true
-                }
-            }
-        }
+        //Row {
+        //    visible: infoSection.logoListModel && (infoSection.logoListModel.count > 0 || infoSection.headTitleText.text !=="")
+        //    height: visible ? 22 : 0
+        //    width: parent.width
+        //    spacing: 4
+        //    Repeater {
+        //        model: infoSection.logoListModel
+        //        Image {
+        //            height: parent.height
+        //            fillMode: Image.PreserveAspectFit
+        //            source: model.value
+        //            antialiasing: true
+        //        }
+        //    }
+        //}
         Column {
             width: parent.width
             height: infoSection.expanded ? childrenRect.height : 0
@@ -105,7 +105,7 @@ Rectangle {
                         Image{
                             id: seisIntenImage
                             source: '../materials/grade'+modelData+'.svg'
-                            height:20
+                            height:18
                             width:height*10/4.5
                         }
                         Text{

@@ -100,7 +100,7 @@ MapItemGroup {
     }
     //強風域
     MapCircle {
-        visible:modelData.geometry.type==="Point"&& modelData.properties.strong_center!="" && modelData.properties.datetime_type=="推定　１時間後"
+        visible:modelData.geometry.type==="Point"&& modelData.properties.strong_center!="" && modelData.properties.datetime_type=="実況"//"推定　１時間後"//&& modelData.properties.datetime_type=="推定　１時間後"
         border.color: "#ffffff"
         border.width: 0
         color:"#36f2e600"
@@ -108,7 +108,7 @@ MapItemGroup {
         radius: Number(modelData.properties.strong_radius)*1000
     }
     MapCircle {
-        visible: modelData.geometry.type==="Point"&&modelData.properties.storm_center!="" && modelData.properties.datetime_type=="推定　１時間後"
+        visible: modelData.geometry.type==="Point"&&modelData.properties.storm_center!="" && modelData.properties.datetime_type=="実況"//"推定　１時間後"//&& modelData.properties.datetime_type=="推定　１時間後"
         border.color: "#ffffff"
         border.width: 0
         color:"#36FF2800"
@@ -124,7 +124,7 @@ MapItemGroup {
         path: {
             var linePath = []
             for (var i in modelData.geometry.coordinates) {
-                console.log(modelData.geometry.coordinates[i])
+                //console.log(modelData.geometry.coordinates[i])
                 linePath.push(QtPositioning.coordinate(modelData.geometry.coordinates[i][1],modelData.geometry.coordinates[i][0]));
             }
             return linePath

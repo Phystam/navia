@@ -342,7 +342,7 @@ class TimelineManager(QObject):
         self.mete_status[datatype].append({"updated": dt, "id": id})
         #ソート
         self.mete_status[datatype]=sorted(self.mete_status[datatype],key=lambda s: s["updated"], reverse=True)
-        print(self.mete_status[datatype])
+        #print(self.mete_status[datatype])
         
     def VPTW(self,id,data):
         datatype=data["data_type"]
@@ -355,7 +355,7 @@ class TimelineManager(QObject):
         #ソート
         self.mete_status[datatype][event_id]=sorted(self.mete_status[datatype][event_id],key=lambda s: s["updated"], reverse=True)
         
-        print(self.mete_status[datatype])
+        #print(self.mete_status[datatype])
     
     def VPTI51(self,id,data):
         datatype=data["data_type"]
@@ -368,7 +368,7 @@ class TimelineManager(QObject):
         #ソート
         self.mete_status[datatype][event_id]=sorted(self.mete_status[datatype][event_id],key=lambda s: s["updated"], reverse=True)
         
-        print(self.mete_status[datatype])
+        #print(self.mete_status[datatype])
 
     def VXSE51(self,id,data):
         datatype=data["data_type"]
@@ -384,7 +384,7 @@ class TimelineManager(QObject):
             self.seis_status[event_id]=[]
         self.seis_status[event_id].insert(0,{"updated": dt, "origintime":ot, "id": id, "max_intensity": sh, "hypocenter_name": "", "hypocenter_depth": "", "magnitude_unit": "", "magnitude": ""})
         #self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=False)
-        print(self.seis_status[event_id])
+        #print(self.seis_status[event_id])
         
     def VXSE52(self,id,data):
         datatype=data["data_type"]
@@ -400,7 +400,7 @@ class TimelineManager(QObject):
             self.seis_status[event_id]=[]
         self.seis_status[event_id].insert(0,{"updated": dt, "origintime":ot, "id": id, "max_intensity": "", "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_unit": mt, "magnitude": mg})
         #self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=False)
-        print(self.seis_status[event_id])
+        #print(self.seis_status[event_id])
         
     def VXSE53(self,id,data):
         datatype=data["data_type"]
@@ -416,7 +416,7 @@ class TimelineManager(QObject):
             self.seis_status[event_id]=[]
         self.seis_status[event_id].insert(0,{"updated": dt, "origintime":ot, "id": id, "max_intensity": sh, "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_unit": mt, "magnitude": mg})
         #self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=False)
-        print(self.seis_status[event_id])
+        #print(self.seis_status[event_id])
         
     def VXSE61(self,id,data):
         datatype=data["data_type"]
@@ -431,7 +431,7 @@ class TimelineManager(QObject):
             self.seis_status[event_id]=[]
         self.seis_status[event_id].insert(0,{"updated": dt, "origintime":ot, "id": id, "max_intensity": "", "hypocenter_name": hn, "hypocenter_depth": dp, "magnitude_unit": mt, "magnitude": mg})
         #self.seis_status[event_id]=sorted(self.seis_status[event_id],key=lambda s: s["updated"], reverse=False)
-        print(self.seis_status[event_id])
+        #print(self.seis_status[event_id])
         
     def appendForAllChildren(self,hier,areacode,dt,id,prefix="VPOA50"):
         child_hier=self.getChild(hier)
