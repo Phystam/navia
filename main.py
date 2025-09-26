@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from clock import ClockApp
 # jma_data_fetcher.py から JMADataFetcher をインポート
 from jma_data_fetcher import JMADataFetcher
+from map_manager import MapManager
 from settings_manager import SettingsManager
 from navia_broadcast import Broadcaster
 from timeline import TimelineManager
@@ -36,7 +37,7 @@ class MainApp(QObject):
         self.settings_manager._load_settings()
         self.settings_window_qml_object = None
         
-        
+        self.map_manager = MapManager(timeline_manager=self.timeline_manager)
         #self.jma_fetcher.dataParsed.connect(self.onDataParsed)
         # ラジオ用インスタンス
         self.broadcaster = Broadcaster(self)
@@ -232,6 +233,7 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("settingsManager", main_app_instance.settings_manager)
     engine.rootContext().setContextProperty("timelineManager", main_app_instance.timeline_manager)
     engine.rootContext().setContextProperty("axisManager", main_app_instance.axis_manager)
+    engine.rootContext().setContextProperty("mapManager", main_app_instance.map_manager)
     #engine.rootContext().setContextProperty("vzsa50GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSA50"))
     #engine.rootContext().setContextProperty("vzsf50GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSF50"))
     #engine.rootContext().setContextProperty("vzsf51GeoJson",main_app_instance.timeline_manager.getVZSA50GeoJson("VZSF51"))
