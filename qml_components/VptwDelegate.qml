@@ -119,7 +119,13 @@ MapItemGroup {
 
     MapPolyline {
         visible: modelData.geometry.type==="LineString"
-        line.color: "#36ffffff"
+        line.color: {
+            if(modelData.properties.keikai_line){
+                return "#ffff0000"
+            }else{
+               return  "#36ffffff"
+            }
+        }
         line.width: 1
         path: {
             var linePath = []
