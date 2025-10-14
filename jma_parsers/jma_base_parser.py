@@ -292,7 +292,6 @@ class BaseJMAParser(QObject):
         positions: [[lon, lat], [lon, lat], ...]
         radii_km: [r1, r2, ...]
         """
-        print(positions)
         if len(positions) < 2:
             if not positions:
                 return []
@@ -306,18 +305,21 @@ class BaseJMAParser(QObject):
             envelope.append(envelope[0]) # 閉じる
             return envelope
 
-        # 基準点を設定
+        # 基準点を設定 最初の円の中心とする
         ref_lon, ref_lat = positions[0]
 
         # 緯度経度をxy座標(km)に変換
         xy_coords = [self.ll_to_xy(lat, lon, ref_lat, ref_lon) for lon, lat in positions]
 
         # 接線と円弧で包絡線を構築
+        # 包絡線を描く配列の初期化
         envelope_xy = []
         
-        # 最初の円の右側半円
+        # 最初の円の
         p1, r1 = xy_coords[0], radii_km[0]
         p2, r2 = xy_coords[1], radii_km[1]
+        
+        result = self.connectTwoCircles(self,positions[0],positions[1],radii_km[0],radii_km[1])
         d = np.linalg.norm(p2 - p1)
         
         # 2円間の角度
@@ -341,7 +343,7 @@ class BaseJMAParser(QObject):
         vec_start = xy_coords[1] - xy_coords[0]
         init_angle = math.atan2(vec_start[1], vec_start[0]) - math.pi / 2
         
-        angles = np.linspace(init_angle, angle1_r, points_per_arc)
+        angles = np.linspace(angle1_r, init_angle, points_per_arc)#np.linspace(init_angle, angle1_r, points_per_arc)
         envelope_xy.extend([p1 + r1 * np.array([np.cos(a), np.sin(a)]) for a in angles])
 
 
