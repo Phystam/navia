@@ -49,6 +49,8 @@ class VPTW(BaseJMAParser):
         path_feature['properties']={}
         path_feature['geometry']['type']="LineString"
         path_feature['geometry']['coordinates']=[]
+        bofu_keikai_centers=[]
+        bofu_keikai_radii=[]
         for i in range(len_info):
             feature={}
             feature['type']="Feature"
@@ -108,13 +110,41 @@ class VPTW(BaseJMAParser):
             if feature['properties'][f'storm_long_direction']=="":
                 feature['properties'][f'storm_center']=feature['geometry']['coordinates']
                 feature['properties'][f'storm_radius']=feature['properties']['storm_long_radius']
+                if feature['properties']['storm_long_radius'] !="":
+                    bofu_keikai_centers.append(feature['geometry']['coordinates'])
+                    bofu_keikai_radii.append(int(feature['properties']['storm_long_radius']))
             else:
                 degree=self.degree_dict[feature['properties'][f'storm_long_direction']]
                 storm_radius=(float(feature['properties']['storm_long_radius'])+float(feature['properties']['storm_short_radius']))/2
                 distance=(float(feature['properties']['storm_long_radius'])-float(feature['properties']['storm_short_radius']))/2
                 feature['properties'][f'storm_center']=self.calc_center_point(feature['geometry']['coordinates'],degree,distance)
                 feature['properties'][f'storm_radius']=storm_radius
-                
+                if feature['properties']['storm_long_radius'] !="":
+                    bofu_keikai_centers.append(self.calc_center_point(feature['geometry']['coordinates'],degree,distance))
+                    bofu_keikai_radii.append(int(storm_radius))
+            
+            #暴風警戒域
+            feature['properties'][f'storm_warning_long_radius']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:WarningAreaPart[@type="暴風警戒域"]//jmx_eb:Axis[1]/jmx_eb:Radius[@unit="km"]/text()', namespaces)
+            feature['properties'][f'storm_warning_long_direction']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:WarningAreaPart[@type="暴風警戒域"]//jmx_eb:Axis[1]/jmx_eb:Direction/text()', namespaces)
+            feature['properties'][f'storm_warning_short_radius']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:WarningAreaPart[@type="暴風警戒域"]//jmx_eb:Axis[2]/jmx_eb:Radius[@unit="km"]/text()', namespaces)
+            feature['properties'][f'storm_warning_short_direction']=self._get_text(xml_tree,f'//jmx_mete:MeteorologicalInfo[{i+1}]//jmx_mete:WarningAreaPart[@type="暴風警戒域"]//jmx_eb:Axis[2]/jmx_eb:Direction/text()', namespaces)
+            if feature['properties'][f'storm_warning_long_direction']=="":
+                feature['properties'][f'storm_warning_center']=feature['geometry']['coordinates']
+                feature['properties'][f'storm_warning_radius']=feature['properties']['storm_long_radius']
+                if feature['properties']['storm_warning_long_radius'] !="":
+                    bofu_keikai_centers.append(feature['geometry']['coordinates'])
+                    bofu_keikai_radii.append(int(feature['properties']['storm_warning_long_radius']))
+            else:
+                degree=self.degree_dict[feature['properties'][f'storm_warning_long_direction']]
+                storm_radius=(float(feature['properties']['storm__warning_long_radius'])+float(feature['properties']['storm_warning_short_radius']))/2
+                distance=(float(feature['properties']['storm_warning_long_radius'])-float(feature['properties']['storm_warning_short_radius']))/2
+                feature['properties'][f'storm_warning_center']=self.calc_center_point(feature['geometry']['coordinates'],degree,distance)
+                feature['properties'][f'storm_warning_radius']=storm_radius
+                if feature['properties']['storm_warning_long_radius'] !="":
+                    bofu_keikai_centers.append(self.calc_center_point(feature['geometry']['coordinates'],degree,distance))
+                    bofu_keikai_radii.append(int(storm_radius))
+            
+            
             #print(item_type)
             parsed_data['geojson']['features'].append(feature)
         parsed_data['geojson']['features'].append(path_feature)
@@ -159,8 +189,16 @@ class VPTW(BaseJMAParser):
                 feature['geometry']['coordinates']=line2
                 parsed_data['geojson']['features'].append(feature)
             
-        
-        #xsprint(parsed_data)xsxsxs
+        #暴風警戒域の描画
+        if len(bofu_keikai_radii)>0:
+            feature={}
+            feature['type']="Feature"
+            feature['geometry']={}
+            feature['properties']={}
+            feature['properties']['keikai_line']=True
+            feature['geometry']['type']="LineString"
+            feature['geometry']['coordinates']=self.calculate_typhoon_envelope(bofu_keikai_centers,bofu_keikai_radii,points_per_arc=20)
+            parsed_data['geojson']['features'].append(feature)
         return parsed_data
     
     def content(self, xml_tree, namespaces, telop_dict):

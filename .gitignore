@@ -5,7 +5,7 @@ jma_parsers/__pycache__/*.pyc
 sounds/*
 jmaxml_20250710_Samples/*
 jmaxml_20250710_Manual/*
-jmaxml_20240216_format_v1_3_hyo1_1.pdf
+*.pdf
 voicevox_core/*
 *.wav
 output_combined.*
@@ -22,5 +22,4 @@ geo/一次細分区域等-1.geojson
 geo/市町村等（気象警報等）-1.geojson
 geo/市町村等をまとめた地域等-1.geojson
 jmaxml_20250825_Code/*
-jmaxml_20250318_format_v1_3_hyo1_1.pdf
 settings/token.json
