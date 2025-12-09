@@ -136,7 +136,7 @@ class VPTW(BaseJMAParser):
                     bofu_keikai_radii.append(int(feature['properties']['storm_warning_long_radius']))
             else:
                 degree=self.degree_dict[feature['properties'][f'storm_warning_long_direction']]
-                storm_radius=(float(feature['properties']['storm__warning_long_radius'])+float(feature['properties']['storm_warning_short_radius']))/2
+                storm_radius=(float(feature['properties']['storm_warning_long_radius'])+float(feature['properties']['storm_warning_short_radius']))/2
                 distance=(float(feature['properties']['storm_warning_long_radius'])-float(feature['properties']['storm_warning_short_radius']))/2
                 feature['properties'][f'storm_warning_center']=self.calc_center_point(feature['geometry']['coordinates'],degree,distance)
                 feature['properties'][f'storm_warning_radius']=storm_radius

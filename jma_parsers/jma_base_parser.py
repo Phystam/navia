@@ -314,128 +314,81 @@ class BaseJMAParser(QObject):
         # 接線と円弧で包絡線を構築
         # 包絡線を描く配列の初期化
         envelope_xy = []
+        first=True
+        # 円の位置関係を判定して、本当に必要な円だけ取ってくる
+        draw_indices=[]
+        for i in range(len(positions)):
+            #描画処理用フラグ
+            draw=True
+            p1, r1 = xy_coords[i], radii_km[i]
+            for j in range(1,len(positions)-1-i):
+                p2, r2 = xy_coords[i+j], radii_km[i+j]
+                d = np.linalg.norm(p2 - p1)
+                #含まれている場合、何も描画しない
+                if d < abs(r1-r2):
+                    draw=False
+                    continue
+            if draw:
+                draw_indices.append(i)
         
-        # 最初の円の
-        p1, r1 = xy_coords[0], radii_km[0]
-        p2, r2 = xy_coords[1], radii_km[1]
-        
-        result = self.connectTwoCircles(self,positions[0],positions[1],radii_km[0],radii_km[1])
-        d = np.linalg.norm(p2 - p1)
-        
-        # 2円間の角度
-        theta = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
-        
-        # 共通外接線の角度
-        if d < abs(r1 - r2): # 片方の円がもう片方を完全に含む
-             # 大きい方の円を返す
-            if r1 > r2:
-                 return self.calculate_typhoon_envelope([positions[0]], [radii_km[0]], points_per_arc)
+        print(draw_indices)
+        for i,index in enumerate(draw_indices):
+            #最初の円
+            if i==0:
+                p1, r1 = xy_coords[index], radii_km[index]
+                try:
+                    p2, r2 = xy_coords[draw_indices[i+1]], radii_km[draw_indices[i+1]]
+                    vec_start = p2 - p1
+                    d = np.linalg.norm(vec_start)
+                    theta = math.atan2(vec_start[1], vec_start[0])
+                    alpha = math.acos((r1 - r2) / d)
+                    #最初の円弧部分を書く。描画順は反時計回り。角度マイナス側は2piを足しておく。
+                    angles = np.linspace(theta+ alpha,theta-alpha+2.*math.pi, points_per_arc)#np.linspace(init_angle, angle1_r, points_per_arc)
+                    envelope_xy.extend([p1 + r1 * np.array([np.cos(a), np.sin(a)]) for a in angles])
+                except:
+                    break
+            #最後の円
+            elif i==len(draw_indices)-1:
+                p0, r0 = xy_coords[draw_indices[i-1]], radii_km[draw_indices[i-1]]
+                p1, r1 = xy_coords[index], radii_km[index]
+                vec = p1 - p0
+                d = np.linalg.norm(vec)
+                theta = math.atan2(vec[1], vec[0])
+                alpha = math.acos((r0 - r1) / d)
+                angles = np.linspace(theta- alpha,theta+alpha, points_per_arc)#np.linspace(init_angle, angle1_r, points_per_arc)
+                envelope_xy.extend([p1 + r1 * np.array([np.cos(a), np.sin(a)]) for a in angles])
+            #真ん中 前の円と後ろの円の位置関係で判定する
             else:
-                 return self.calculate_typhoon_envelope([positions[1]], [radii_km[1]], points_per_arc)
-
-        alpha = math.acos((r1 - r2) / d)
-
-        # 最初の円の開始点 (右側接点)
-        angle1_r = theta - alpha
-        
-        # 最初の円の半円部分を追加
-        # 進行方向右側の半円
-        vec_start = xy_coords[1] - xy_coords[0]
-        init_angle = math.atan2(vec_start[1], vec_start[0]) - math.pi / 2
-        
-        angles = np.linspace(angle1_r, init_angle, points_per_arc)#np.linspace(init_angle, angle1_r, points_per_arc)
-        envelope_xy.extend([p1 + r1 * np.array([np.cos(a), np.sin(a)]) for a in angles])
-
-
-        # 中間の円と接線
-        for i in range(len(xy_coords) - 1):
-            p1, r1 = xy_coords[i], radii_km[i]
-            p2, r2 = xy_coords[i+1], radii_km[i+1]
-            d = np.linalg.norm(p2 - p1)
-
-            if d < 1e-6: continue
-            if d < abs(r1 - r2): # 円が内包される場合、スキップ
-                continue
-
-            theta = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
-            alpha = math.acos((r1 - r2) / d)
-
-            # 右側接線
-            angle1_r = theta - alpha
-            angle2_r = theta - alpha
-            t1_r = p1 + r1 * np.array([math.cos(angle1_r), math.sin(angle1_r)])
-            t2_r = p2 + r2 * np.array([math.cos(angle2_r), math.sin(angle2_r)])
-            
-            # 前の円弧の終わりから接線開始点まで
-            if i > 0:
-                prev_p2, prev_r2 = xy_coords[i-1], radii_km[i-1]
-                prev_d = np.linalg.norm(p1 - prev_p2)
-                if prev_d > abs(prev_r2-r1):
-                    prev_theta = math.atan2(p1[1] - prev_p2[1], p1[0] - prev_p2[0])
-                    prev_alpha = math.acos((prev_r2 - r1) / prev_d)
-                    angle_end_arc = prev_theta - prev_alpha
-                    angles = np.linspace(angle_end_arc, angle1_r, points_per_arc)
+                p0, r0 = xy_coords[draw_indices[i-1]], radii_km[draw_indices[i-1]]
+                p1, r1 = xy_coords[index], radii_km[index]
+                p2, r2 = xy_coords[draw_indices[i+1]], radii_km[draw_indices[i+1]]
+                vec0= p1-p0
+                vec1= p2-p1
+                theta0 = math.atan2(vec0[1], vec0[0])
+                theta1 = math.atan2(vec1[1], vec1[0])
+                d0=np.linalg.norm(vec0)
+                d1=np.linalg.norm(vec1)
+                alpha0 = math.acos((r1 - r0) / d0)
+                alpha1 = math.acos((r2 - r1) / d1)
+                #接点の計算 円の中心から見た相対単位ベクトル
+                ue0= np.array([np.cos(theta0+alpha0), np.sin(theta0+alpha0)])
+                ue1= np.array([np.cos(theta1+alpha1), np.sin(theta1+alpha1)])
+                shita0= np.array([np.cos(theta0-alpha0), np.sin(theta0-alpha0)])
+                shita1= np.array([np.cos(theta1-alpha1), np.sin(theta1-alpha1)])
+                
+                # +側で円弧
+                if np.cross(ue0,ue1)>=0:
+                    angles = np.linspace(theta1+alpha1,theta0+alpha0, points_per_arc)
+                    for a in angles:
+                        envelope_xy.insert(0,p1 + r1 * np.array([np.cos(a), np.sin(a)]))
+                else:
+                    pass
+                # -側で円弧
+                if np.cross(shita0,shita1)<=0:
+                    angles = np.linspace(theta1-alpha1,theta0-alpha0, points_per_arc)
                     envelope_xy.extend([p1 + r1 * np.array([np.cos(a), np.sin(a)]) for a in angles])
-
-            envelope_xy.append(t1_r)
-            envelope_xy.append(t2_r)
-
-        # 最後の円の半円
-        pn, rn = xy_coords[-1], radii_km[-1]
-        p_prev, r_prev = xy_coords[-2], radii_km[-2]
-        d = np.linalg.norm(pn - p_prev)
-        theta = math.atan2(pn[1] - p_prev[1], pn[0] - p_prev[0])
-        alpha = math.acos((r_prev - rn) / d)
-        
-        angle_n_r = theta - alpha
-        angle_n_l = theta + alpha
-        
-        angles = np.linspace(angle_n_r, angle_n_l, points_per_arc * 2)
-        envelope_xy.extend([pn + rn * np.array([np.cos(a), np.sin(a)]) for a in angles])
-
-        # 左側の接線を逆順に追加
-        for i in range(len(xy_coords) - 1, 0, -1):
-            p1, r1 = xy_coords[i], radii_km[i]
-            p2, r2 = xy_coords[i-1], radii_km[i-1]
-            d = np.linalg.norm(p1 - p2)
-
-            if d < 1e-6: continue
-            if d < abs(r1 - r2): continue
-
-            theta = math.atan2(p1[1] - p2[1], p1[0] - p2[0])
-            alpha = math.acos((r2 - r1) / d)
-
-            # 左側接線
-            angle1_l = theta - alpha
-            angle2_l = theta - alpha
-            t1_l = p1 + r1 * np.array([math.cos(angle1_l), math.sin(angle1_l)])
-            t2_l = p2 + r2 * np.array([math.cos(angle2_l), math.sin(angle2_l)])
-            
-            # 円弧部分
-            if i < len(xy_coords) -1:
-                next_p, next_r = xy_coords[i], radii_km[i]
-                next_p1, next_r1 = xy_coords[i+1], radii_km[i+1]
-                next_d = np.linalg.norm(next_p1 - next_p)
-                if next_d > abs(next_r - next_r1):
-                    next_theta = math.atan2(next_p1[1] - next_p[1], next_p[0] - next_p[0])
-                    next_alpha = math.acos((next_r - next_r1) / next_d)
-                    angle_start_arc = next_theta + next_alpha
-                    angles = np.linspace(angle_start_arc, angle1_l, points_per_arc)
-                    envelope_xy.extend([p1 + r1 * np.array([np.cos(a), np.sin(a)]) for a in angles])
-
-            envelope_xy.append(t1_l)
-            envelope_xy.append(t2_l)
-
-        # 最初の円の最後の円弧
-        p_first, r_first = xy_coords[0], radii_km[0]
-        p_second, r_second = xy_coords[1], radii_km[1]
-        d = np.linalg.norm(p_second - p_first)
-        theta = math.atan2(p_second[1] - p_first[1], p_second[0] - p_first[0])
-        alpha = math.acos((r_first - r_second) / d)
-        angle_first_l_end = theta + alpha
-        
-        angles = np.linspace(angle_first_l_end, init_angle, points_per_arc)
-        envelope_xy.extend([p_first + r_first * np.array([np.cos(a), np.sin(a)]) for a in angles])
+                else:
+                    pass
 
 
         # xy座標を緯度経度に戻す
