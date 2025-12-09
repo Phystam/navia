@@ -23,7 +23,7 @@ class VTSE51(BaseJMAParser):
         parsed_data['event_id'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:EventID/text()', namespaces)
         parsed_data['report_datetime'] = self._get_datetime(xml_tree, '//jmx_ib:Head/jmx_ib:ReportDateTime/text()', namespaces)
         parsed_data['target_datetime'] = self._get_datetime(xml_tree, '//jmx_ib:Head/jmx_ib:TargetDateTime/text()', namespaces)
-        parsed_data['serial'] = self._get_datetime(xml_tree, '//jmx_ib:Head/jmx_ib:Serial/text()', namespaces)
+        parsed_data['serial'] = self._get_text(xml_tree, '//jmx_ib:Head/jmx_ib:Serial/text()', namespaces)
         
         return parsed_data
     
